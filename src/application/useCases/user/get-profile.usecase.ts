@@ -18,6 +18,18 @@ export class GetProfileUseCase {
             return Result.fail("User not found");
         }
 
+        if (user.is_blocked) {
+            return Result.fail("Account is blocked");
+        }
+
+        if (!user.is_active) {
+            return Result.fail("Account is inactive");
+        }
+
+        if (!user.is_verified) {
+            return Result.fail("User not verified");
+        }
+
         return Result.ok<UserResponseDto>({
             id: user.id.toString(),
             name: user.name,

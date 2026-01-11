@@ -141,6 +141,9 @@ model KYCProfile {
   document_number     String
   address             String?
   verification_status String
+  id_front_url        String?
+  id_back_url         String?
+  address_proof_url   String?
   updated_at          DateTime @updatedAt
 
   User User @relation(fields: [user_id], references: [user_id])

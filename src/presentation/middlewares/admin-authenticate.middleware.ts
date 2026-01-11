@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { jwtService } from '../../Di/services.di';
+import { adminJwtService } from '../../Di/services.di';
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+export const adminAuthenticate = (req: Request, res: Response, next: NextFunction) => {
     let token;
 
     const authHeader = req.headers.authorization;
@@ -9,14 +9,11 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
         token = authHeader.split(' ')[1];
     }
 
-    console.log("Token", token);
-
-
     if (!token) {
         return res.status(401).json({ message: 'No token provided' });
     }
 
-    const decoded = jwtService.verify(token);
+    const decoded = adminJwtService.verify(token);
 
     if (!decoded) {
         return res.status(401).json({ message: 'Invalid token' });

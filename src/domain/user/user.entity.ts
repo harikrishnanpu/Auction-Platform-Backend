@@ -10,7 +10,7 @@ export enum UserRole {
     USER = 'USER',
     SELLER = 'SELLER',
     MODERATOR = 'MODERATOR',
-    ADMIN = 'ADMIN'
+    ADMIN = "ADMIN"
 }
 
 interface UserProps {
@@ -111,6 +111,10 @@ export class User extends Entity<UserProps> {
 
     private addDomainEvent(event: any): void {
         this._domainEvents.push(event);
+    }
+
+    public changePassword(newPassword: Password): void {
+        this.props.password = newPassword;
     }
 
     public clearEvents(): void {

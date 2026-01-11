@@ -1,22 +1,22 @@
 import { Request, Response } from 'express';
-import { LoginUserUseCase } from '../../application/useCases/auth/login-user.usecase';
+import { LoginAdminUseCase } from '../../application/useCases/admin/login-admin.usecase';
 import { loginSchema } from '../validators/auth.validator';
 import { LoginUserDto } from '../../application/dtos/auth/auth.dto';
 
 export class AdminAuthController {
     constructor(
-        private loginUserUseCase: LoginUserUseCase
+        private loginAdminUseCase: LoginAdminUseCase
     ) { }
 
     private setCookies(res: Response, accessToken: string, refreshToken: string) {
-        res.cookie('accessToken', accessToken, {
+        res.cookie('adminAccessToken', accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             maxAge: 15 * 60 * 1000 // 15 minutes
         });
 
-        res.cookie('refreshToken', refreshToken, {
+        res.cookie('adminRefreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
@@ -32,15 +32,10 @@ export class AdminAuthController {
             }
 
             const dto: LoginUserDto = parseResult.data;
-            const result = await this.loginUserUseCase.execute(dto);
+            const result = await this.loginAdminUseCase.execute(dto);
 
             if (result.isSuccess) {
                 const user = result.getValue();
-
-                // CRITICAL: Check for Admin Role
-                if (!user.roles.includes('ADMIN')) {
-                    return res.status(403).json({ message: "Access Denied: Admin privileges required." });
-                }
 
                 const { accessToken, refreshToken } = user;
                 if (accessToken && refreshToken) {
@@ -53,7 +48,9 @@ export class AdminAuthController {
                         id: user.id,
                         name: user.name,
                         email: user.email,
-                        roles: user.roles
+                        roles: user.roles,
+                        accessToken: user.accessToken,
+                        refreshToken: user.refreshToken
                     }
                 });
             } else {
