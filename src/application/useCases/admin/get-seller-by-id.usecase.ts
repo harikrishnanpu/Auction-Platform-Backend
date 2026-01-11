@@ -1,0 +1,59 @@
+import { IUserRepository } from "../../../domain/user/user.repository";
+import { Result } from "../../../domain/shared/result";
+import { UserId } from "../../../domain/user/user-id.vo";
+import { UserRole } from "../../../domain/user/user.entity";
+import prisma from "../../../utils/prismaClient";
+
+export interface SellerDetailDto {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    avatar_url?: string;
+    roles: string[];
+    is_active: boolean;
+    is_blocked: boolean;
+    is_verified: boolean;
+    joined_at: Date;
+    kyc_status: string;
+    kyc_profile: any;
+}
+
+export class GetSellerByIdUseCase {
+    constructor(private userRepository: IUserRepository) { }
+
+    public async execute(id: string): Promise<Result<SellerDetailDto>> {
+        const userIdOrError = UserId.create(id);
+        if (userIdOrError.isFailure) return Result.fail("Invalid User ID");
+
+        const user = await this.userRepository.findById(userIdOrError.getValue());
+        if (!user) return Result.fail("User not found");
+
+        // Check if user has SELLER role
+        if (!user.roles.includes(UserRole.SELLER)) {
+            return Result.fail("User is not a seller");
+        }
+
+        // Get KYC profile
+        const kycProfile = await prisma.kYCProfile.findFirst({
+            where: { user_id: id }
+        });
+
+        return Result.ok<SellerDetailDto>({
+            id: user.id.toString(),
+            name: user.name,
+            email: user.email.value,
+            phone: user.phone,
+            address: user.address,
+            avatar_url: user.avatar_url,
+            roles: user.roles,
+            is_active: user.is_active,
+            is_blocked: user.is_blocked,
+            is_verified: user.is_verified,
+            joined_at: user.created_at,
+            kyc_status: kycProfile?.verification_status || 'NOT_SUBMITTED',
+            kyc_profile: kycProfile
+        });
+    }
+}
