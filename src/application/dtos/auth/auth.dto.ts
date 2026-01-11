@@ -12,11 +12,28 @@ export interface LoginUserDto {
     password: string;
 }
 
+export interface VerifyEmailDto {
+    email: string;
+    otp: string;
+}
+
+export interface ResendOtpDto {
+    email: string;
+    purpose?: string;
+}
+
 export interface UserResponseDto {
     id: string;
     name: string;
     email: string;
     roles: string[];
+    is_active?: boolean;
+    is_verified?: boolean;
+    phone?: string;
+    address?: string;
+    avatar_url?: string;
+    created_at?: Date;
+    updated_at?: Date;
     accessToken?: string;
     refreshToken?: string;
 }

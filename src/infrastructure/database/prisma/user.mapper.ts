@@ -6,7 +6,7 @@ import { UserId } from "../../../domain/user/user-id.vo";
 import { Password } from "../../../domain/user/password.vo";
 
 // Define the type expected from Prisma with included relation
-type PrismaUserWithRoles = PrismaUser & { roles: { role: Role }[] };
+type PrismaUserWithRoles = PrismaUser & { UserRole: { role: Role }[] };
 
 export class UserMapper {
     public static toDomain(raw: PrismaUserWithRoles): Result<User> {
@@ -18,8 +18,8 @@ export class UserMapper {
         if (passwordOrError.isFailure) return Result.fail<User>(passwordOrError.error as string);
         if (userIdOrError.isFailure) return Result.fail<User>(userIdOrError.error as string);
 
-        const roles = raw.roles
-            ? raw.roles.map(r => r.role as unknown as UserRole)
+        const roles = raw.UserRole
+            ? raw.UserRole.map(r => r.role as unknown as UserRole)
             : [UserRole.USER];
 
         const userOrError = User.create(

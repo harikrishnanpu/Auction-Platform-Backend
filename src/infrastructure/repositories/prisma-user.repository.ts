@@ -1,9 +1,10 @@
-import { IUserRepository } from "../../../domain/user/user.repository";
-import { User } from "../../../domain/user/user.entity";
-import { Email } from "../../../domain/user/email.vo";
-import { UserId } from "../../../domain/user/user-id.vo";
-import prisma from "../../../utils/prismaClient";
-import { UserMapper } from "./user.mapper";
+import { IUserRepository } from "../../domain/user/user.repository";
+// Trigger restart
+import { User } from "../../domain/user/user.entity";
+import { Email } from "../../domain/user/email.vo";
+import { UserId } from "../../domain/user/user-id.vo";
+import prisma from "../../utils/prismaClient";
+import { UserMapper } from "../database/prisma/user.mapper";
 
 export class PrismaUserRepository implements IUserRepository {
     async save(user: User): Promise<void> {
@@ -22,7 +23,7 @@ export class PrismaUserRepository implements IUserRepository {
                 is_active: raw.is_active,
                 is_blocked: raw.is_blocked,
                 is_verified: raw.is_verified,
-                roles: {
+                UserRole: {
                     deleteMany: {},
                     create: roles
                 }
@@ -40,7 +41,7 @@ export class PrismaUserRepository implements IUserRepository {
                 is_verified: raw.is_verified,
                 assigned_at: raw.assigned_at,
                 created_at: raw.created_at,
-                roles: {
+                UserRole: {
                     create: roles
                 }
             }
@@ -50,7 +51,7 @@ export class PrismaUserRepository implements IUserRepository {
     async findByEmail(email: Email): Promise<User | null> {
         const raw = await prisma.user.findUnique({
             where: { email: email.value },
-            include: { roles: true }
+            include: { UserRole: true }
         });
 
         if (!raw) return null;
@@ -65,7 +66,7 @@ export class PrismaUserRepository implements IUserRepository {
     async findById(id: UserId): Promise<User | null> {
         const raw = await prisma.user.findUnique({
             where: { user_id: id.value },
-            include: { roles: true }
+            include: { UserRole: true }
         });
 
         if (!raw) return null;
@@ -82,7 +83,7 @@ export class PrismaUserRepository implements IUserRepository {
             prisma.user.findMany({
                 skip,
                 take: limit,
-                include: { roles: true },
+                include: { UserRole: true },
                 orderBy: { created_at: 'desc' }
             }),
             prisma.user.count()
@@ -102,6 +103,13 @@ export class PrismaUserRepository implements IUserRepository {
     async emailExists(email: Email): Promise<boolean> {
         const count = await prisma.user.count({
             where: { email: email.value }
+        });
+        return count > 0;
+    }
+
+    async phoneExists(phone: string): Promise<boolean> {
+        const count = await prisma.user.count({
+            where: { phone }
         });
         return count > 0;
     }

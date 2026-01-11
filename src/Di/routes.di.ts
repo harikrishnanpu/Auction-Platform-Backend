@@ -3,7 +3,8 @@ import { RegisterUserUseCase } from "../application/useCases/auth/register-user.
 import { VerifyEmailUseCase } from "../application/useCases/auth/verify-email.usecase";
 import { ResendOtpUseCase } from "../application/useCases/auth/resend-otp.usecase";
 import { RefreshTokenUseCase } from "../application/useCases/auth/refresh-token.usecase";
-import { AuthController } from "../presentation/controllers/auth.controller";
+import { GetProfileUseCase } from "../application/useCases/user/get-profile.usecase"; // Added this
+import { UserAuthController } from "../presentation/controllers/user.auth.controller";
 import { AuthRoutes } from "../presentation/routes/auth.routes";
 import { userRepository, otpRepository } from "./repository.di";
 import { jwtService, passwordHasher, emailService } from "./services.di";
@@ -12,6 +13,7 @@ import { GetUsersUseCase } from "../application/useCases/admin/get-users.usecase
 import { GetUserByIdUseCase } from "../application/useCases/admin/get-user-by-id.usecase";
 import { AdminController } from "../presentation/controllers/admin.controller";
 import { AdminRoutes } from "../presentation/routes/admin.routes";
+import { AdminAuthController } from "../presentation/controllers/admin-auth.controller";
 
 const loginUserUseCase = new LoginUserUseCase(
     userRepository,
@@ -29,14 +31,14 @@ const registerUserUseCase = new RegisterUserUseCase(
 
 const verifyEmailUseCase = new VerifyEmailUseCase(
     userRepository,
-    jwtService,
-    otpRepository
+    otpRepository,
+    jwtService
 );
 
 const resendOtpUseCase = new ResendOtpUseCase(
     userRepository,
-    emailService,
-    otpRepository
+    otpRepository,
+    emailService
 );
 
 const refreshTokenUseCase = new RefreshTokenUseCase(
@@ -44,16 +46,21 @@ const refreshTokenUseCase = new RefreshTokenUseCase(
     jwtService
 );
 
+const getProfileUseCase = new GetProfileUseCase(
+    userRepository
+);
+
 // Admin Use Cases
 const getUsersUseCase = new GetUsersUseCase(userRepository);
 const getUserByIdUseCase = new GetUserByIdUseCase(userRepository);
 
-const authController = new AuthController(
+const authController = new UserAuthController(
     registerUserUseCase,
     loginUserUseCase,
     verifyEmailUseCase,
     resendOtpUseCase,
-    refreshTokenUseCase
+    refreshTokenUseCase,
+    getProfileUseCase
 );
 
 const adminController = new AdminController(
@@ -61,7 +68,6 @@ const adminController = new AdminController(
     getUserByIdUseCase
 );
 
-import { AdminAuthController } from "../presentation/controllers/admin-auth.controller";
 
 const adminAuthController = new AdminAuthController(
     loginUserUseCase

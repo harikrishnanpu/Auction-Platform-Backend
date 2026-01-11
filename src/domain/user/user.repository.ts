@@ -8,4 +8,5 @@ export interface IUserRepository {
     findById(id: UserId): Promise<User | null>;
     findAll(page: number, limit: number): Promise<{ users: User[], total: number }>;
     emailExists(email: Email): Promise<boolean>;
+    phoneExists(phone: string): Promise<boolean>;
 }

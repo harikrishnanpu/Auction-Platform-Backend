@@ -1,0 +1,32 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.adminRoutes = exports.authRoutes = void 0;
+const login_user_usecase_1 = require("../application/useCases/auth/login-user.usecase");
+const register_user_usecase_1 = require("../application/useCases/auth/register-user.usecase");
+const verify_email_usecase_1 = require("../application/useCases/auth/verify-email.usecase");
+const resend_otp_usecase_1 = require("../application/useCases/auth/resend-otp.usecase");
+const refresh_token_usecase_1 = require("../application/useCases/auth/refresh-token.usecase");
+const get_profile_usecase_1 = require("../application/useCases/user/get-profile.usecase"); // Added this
+const user_auth_controller_1 = require("../presentation/controllers/user.auth.controller");
+const auth_routes_1 = require("../presentation/routes/auth.routes");
+const repository_di_1 = require("./repository.di");
+const services_di_1 = require("./services.di");
+const get_users_usecase_1 = require("../application/useCases/admin/get-users.usecase");
+const get_user_by_id_usecase_1 = require("../application/useCases/admin/get-user-by-id.usecase");
+const admin_controller_1 = require("../presentation/controllers/admin.controller");
+const admin_routes_1 = require("../presentation/routes/admin.routes");
+const admin_auth_controller_1 = require("../presentation/controllers/admin-auth.controller");
+const loginUserUseCase = new login_user_usecase_1.LoginUserUseCase(repository_di_1.userRepository, services_di_1.passwordHasher, services_di_1.jwtService);
+const registerUserUseCase = new register_user_usecase_1.RegisterUserUseCase(repository_di_1.userRepository, services_di_1.passwordHasher, services_di_1.jwtService, services_di_1.emailService, repository_di_1.otpRepository);
+const verifyEmailUseCase = new verify_email_usecase_1.VerifyEmailUseCase(repository_di_1.userRepository, services_di_1.jwtService, repository_di_1.otpRepository);
+const resendOtpUseCase = new resend_otp_usecase_1.ResendOtpUseCase(repository_di_1.userRepository, services_di_1.emailService, repository_di_1.otpRepository);
+const refreshTokenUseCase = new refresh_token_usecase_1.RefreshTokenUseCase(repository_di_1.userRepository, services_di_1.jwtService);
+const getProfileUseCase = new get_profile_usecase_1.GetProfileUseCase(repository_di_1.userRepository);
+// Admin Use Cases
+const getUsersUseCase = new get_users_usecase_1.GetUsersUseCase(repository_di_1.userRepository);
+const getUserByIdUseCase = new get_user_by_id_usecase_1.GetUserByIdUseCase(repository_di_1.userRepository);
+const authController = new user_auth_controller_1.UserAuthController(registerUserUseCase, loginUserUseCase, verifyEmailUseCase, resendOtpUseCase, refreshTokenUseCase, getProfileUseCase);
+const adminController = new admin_controller_1.AdminController(getUsersUseCase, getUserByIdUseCase);
+const adminAuthController = new admin_auth_controller_1.AdminAuthController(loginUserUseCase);
+exports.authRoutes = new auth_routes_1.AuthRoutes(authController);
+exports.adminRoutes = new admin_routes_1.AdminRoutes(adminController, adminAuthController);

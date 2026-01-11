@@ -94,7 +94,11 @@ export class OTP extends Entity<OtpProps> {
         return this.props.otp_hash === otpHash;
     }
 
-    public markVerified(): void {
+    public markAsVerified(): void {
         this.props.status = OtpStatus.VERIFIED;
+    }
+
+    public markAsExpired(): void {
+        this.props.status = OtpStatus.EXPIRED;
     }
 }

@@ -1,75 +1,80 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
-import { IJwtService } from "../../../domain/services/auth/auth.service";
-import { Result } from "../../../domain/shared/result";
-import { Email } from "../../../domain/user/email.vo";
 import { IOTPRepository } from "../../../domain/otp/otp.repository";
+import { Result } from "../../../domain/shared/result";
+import { VerifyEmailDto } from "../../dtos/auth/auth.dto";
 import { OtpPurpose, OtpStatus } from "../../../domain/otp/otp.entity";
+import { IJwtService } from "../../../domain/services/auth/auth.service";
+import { Email } from "../../../domain/user/email.vo";
+
+import { UserResponseDto } from "../../dtos/auth/auth.dto";
 
 export class VerifyEmailUseCase {
     constructor(
         private userRepository: IUserRepository,
-        private jwtService: IJwtService,
-        private otpRepository: IOTPRepository
+        private otpRepository: IOTPRepository,
+        private jwtService: IJwtService
     ) { }
 
-    public async execute(request: { email: string, otp: string }): Promise<Result<any>> {
-        try {
-            const emailResult = Email.create(request.email);
-            if (emailResult.isFailure) return Result.fail("Invalid email");
+    public async execute(dto: VerifyEmailDto): Promise<Result<UserResponseDto>> {
+        const emailResult = Email.create(dto.email);
+        if (emailResult.isFailure) return Result.fail(emailResult.error as string);
+        const email = emailResult.getValue();
 
-            const email = emailResult.getValue();
-            const user = await this.userRepository.findByEmail(email);
-            if (!user) {
-                return Result.fail("User not found");
-            }
+        // 1. Find User
+        const user = await this.userRepository.findByEmail(email);
+        if (!user) return Result.fail("User not found");
 
-            // Check for OTP with Purpose REGISTER or EMAIL_VERIFY
-            let otpRecord = await this.otpRepository.findByIdentifierAndPurpose(email.value, OtpPurpose.REGISTER);
-            if (!otpRecord) {
-                otpRecord = await this.otpRepository.findByIdentifierAndPurpose(email.value, OtpPurpose.VERIFY_EMAIL);
-            }
+        if (user.is_verified) return Result.fail("User is already verified");
 
-            if (!otpRecord) {
-                return Result.fail("No OTP found for this email");
-            }
+        // 2. Find OTP
+        const otp = await this.otpRepository.findByIdentifierAndPurpose(email.value, OtpPurpose.REGISTER);
 
-            if (otpRecord.status !== OtpStatus.PENDING) {
-                return Result.fail("OTP is invalid or already used");
-            }
+        // 3. Validate OTP
+        if (!otp) return Result.fail("OTP not found or expired");
 
-            if (otpRecord.isExpired()) {
-                return Result.fail("OTP has expired");
-            }
+        if (otp.status !== OtpStatus.PENDING) return Result.fail("OTP is invalid");
 
-            if (!otpRecord.verify(request.otp)) {
-                otpRecord.incrementAttempts();
-                await this.otpRepository.save(otpRecord);
-                return Result.fail("Invalid OTP");
-            }
-
-            otpRecord.markVerified();
-            await this.otpRepository.save(otpRecord);
-
-            user.verify();
-            await this.userRepository.save(user);
-
-            // Generate Tokens for auto-login
-            const accessToken = this.jwtService.sign({ userId: user.id.toString(), roles: user.roles });
-            const refreshToken = this.jwtService.signRefresh({ userId: user.id.toString(), roles: user.roles });
-
-            return Result.ok({
-                message: "Email verified successfully",
-                user: {
-                    id: user.id.toString(),
-                    name: user.name,
-                    email: user.email.value,
-                    roles: user.roles,
-                    accessToken: accessToken,
-                    refreshToken: refreshToken
-                }
-            });
-        } catch (error) {
-            return Result.fail("Verification failed");
+        if (new Date() > otp.expires_at) {
+            otp.markAsExpired();
+            await this.otpRepository.save(otp);
+            return Result.fail("OTP has expired");
         }
+
+        if (otp.otp_hash !== dto.otp) { // Assuming plain text comparison for now based on register usecase
+            otp.incrementAttempts();
+            await this.otpRepository.save(otp);
+            return Result.fail("Invalid OTP");
+        }
+
+        // 4. Mark OTP as Verified
+        otp.markAsVerified();
+        await this.otpRepository.save(otp);
+
+        // 5. Activate User
+        user.verify();
+        await this.userRepository.save(user);
+
+        // 6. Generate Tokens (Auto login)
+        const accessToken = this.jwtService.sign({
+            userId: user.id.toString(),
+            email: user.email.value,
+            role: user.roles[0]
+        });
+
+        const refreshToken = this.jwtService.sign({
+            userId: user.id.toString(),
+            email: user.email.value,
+            role: user.roles[0]
+        });
+
+        return Result.ok({
+            id: user.id.toString(),
+            name: user.name,
+            email: user.email.value,
+            roles: user.roles,
+            is_verified: user.is_verified,
+            accessToken,
+            refreshToken
+        });
     }
 }

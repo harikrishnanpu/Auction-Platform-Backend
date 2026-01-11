@@ -28,8 +28,9 @@ export class RegisterUserUseCase {
         const email = emailResult.getValue();
 
         const exists = await this.userRepository.emailExists(email);
-        if (exists) {
-            return Result.fail("User already exists with this email");
+        const phoneExists = await this.userRepository.phoneExists(dto.phone);
+        if (exists || phoneExists) {
+            return Result.fail("User already exists with this email or phone");
         }
 
         const hashedPassword = await this.passwordHasher.hash(dto.password);
@@ -57,6 +58,9 @@ export class RegisterUserUseCase {
         // Generate OTP
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        console.log("OTP Code", otpCode);
+
 
         const otpResult = OTP.create({
             user_id: user.id.toString(),

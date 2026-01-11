@@ -8,11 +8,10 @@ const PORT = process.env.PORT || 4000;
 const startServer = async () => {
     try {
         app.listen(PORT, () => {
-            console.log(`🚀 Server running on port ${PORT}`);
+            console.log(`Server started on ${PORT}`);
         });
     } catch (err) {
-        console.error('❌ Server error:', err);
-        process.exit(1);
+        console.log('Server error:', err);
     }
 };
 
