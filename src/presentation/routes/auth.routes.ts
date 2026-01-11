@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { AuthController } from "../controllers/auth.controller";
+import { UserAuthController } from "../controllers/user.auth.controller";
+import { authenticate } from "../middlewares/authenticate.middleware";
 
 export class AuthRoutes {
   private _router: Router;
 
-  constructor(private readonly _authController: AuthController) {
+  constructor(private readonly _authController: UserAuthController) {
     this._router = Router();
   }
 
@@ -14,6 +15,7 @@ export class AuthRoutes {
     this._router.post('/verify-email', this._authController.verifyEmail);
     this._router.post('/resend-otp', this._authController.resendOtp);
     this._router.post('/refresh-token', this._authController.refreshToken);
+    this._router.get('/me', authenticate, this._authController.getProfile);
     return this._router;
   }
 }
