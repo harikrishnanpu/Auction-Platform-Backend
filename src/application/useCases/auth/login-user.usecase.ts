@@ -23,21 +23,35 @@ export class LoginUserUseCase {
             return Result.fail("Invalid email or password");
         }
 
-        // 2. Compare Password
+        // 2. Check Active/Blocked/Verified
+        if (!user.is_active) {
+            return Result.fail("Account is inactive");
+        }
+        if (user.is_blocked) {
+            return Result.fail("Account is blocked");
+        }
+        if (!user.is_verified) {
+            return Result.fail("Please verify your email address");
+        }
+
+        // 3. Compare Password
         const isValidPassword = await this.passwordHasher.compare(dto.password, user.password.value);
         if (!isValidPassword) {
             return Result.fail("Invalid email or password");
         }
 
-        // 3. Generate Token
-        const token = this.jwtService.sign({ userId: user.id, role: user.role });
+        // 4. Generate Tokens
+        const accessToken = this.jwtService.sign({ userId: user.id.toString(), roles: user.roles });
+        const refreshToken = this.jwtService.signRefresh({ userId: user.id.toString(), roles: user.roles });
 
-        // 4. Return DTO
+        // 5. Return DTO
         return Result.ok<UserResponseDto>({
-            id: user.id,
+            id: user.id.toString(),
+            name: user.name,
             email: user.email.value,
-            role: user.role,
-            accessToken: token
+            roles: user.roles,
+            accessToken: accessToken,
+            refreshToken: refreshToken
         });
     }
 }

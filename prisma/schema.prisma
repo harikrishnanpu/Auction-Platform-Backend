@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  SELLER
+  MODERATOR
+  ADMIN
+}
+
+model User {
+  user_id       String     @id @default(uuid())
+  name          String
+  email         String     @unique
+  phone         String
+  address       String
+  avatar_url    String?
+  password_hash String
+  is_active     Boolean    @default(true)
+  is_blocked    Boolean    @default(false)
+  is_verified   Boolean    @default(false)
+  
+  assigned_at   DateTime   @default(now())
+  created_at    DateTime   @default(now())
+  
+  otp_verifications OTPVerification[]
+  roles             UserRole[]
+}
+
+model UserRole {
+  user_role_id String   @id @default(uuid())
+  user_id      String
+  user         User     @relation(fields: [user_id], references: [user_id])
+  role         Role
+  assigned_at  DateTime @default(now())
+}
+
+enum OtpPurpose {
+  REGISTER
+  LOGIN
+  VERIFY_PHONE
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
+enum OtpChannel {
+  SMS
+  EMAIL
+}
+
+enum OtpStatus {
+  PENDING
+  VERIFIED
+  EXPIRED
+  BLOCKED
+}
+
+model OTPVerification {
+  otp_id       String     @id @default(uuid())
+  user_id      String
+  user         User       @relation(fields: [user_id], references: [user_id])
+  identifier   String
+  otp_hash     String
+  purpose      OtpPurpose
+  channel      OtpChannel
+  expires_at   DateTime
+  attempts     Int        @default(0)
+  max_attempts Int        @default(3)
+  status       OtpStatus  @default(PENDING)
+  created_at   DateTime   @default(now())
+}

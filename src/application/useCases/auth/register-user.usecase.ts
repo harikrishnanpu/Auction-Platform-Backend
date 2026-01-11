@@ -1,58 +1,84 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
-import { IPasswordHasher } from "../../../domain/services/auth/auth.service";
+import { IPasswordHasher, IJwtService } from "../../../domain/services/auth/auth.service";
+import { IEmailService } from "../../../domain/services/email/email.service";
 import { RegisterUserDto, UserResponseDto } from "../../dtos/auth/auth.dto";
 import { Result } from "../../../domain/shared/result";
 import { Email } from "../../../domain/user/email.vo";
 import { Password } from "../../../domain/user/password.vo";
 import { User, UserRole } from "../../../domain/user/user.entity";
+import { IOTPRepository } from "../../../domain/otp/otp.repository";
+import { OTP, OtpChannel, OtpPurpose, OtpStatus } from "../../../domain/otp/otp.entity";
 
 export class RegisterUserUseCase {
     constructor(
         private userRepository: IUserRepository,
-        private passwordHasher: IPasswordHasher
+        private passwordHasher: IPasswordHasher,
+        private jwtService: IJwtService,
+        private emailService: IEmailService,
+        private otpRepository: IOTPRepository
     ) { }
 
     public async execute(dto: RegisterUserDto): Promise<Result<UserResponseDto>> {
-        // 1. Create VOs to validate input
         const emailResult = Email.create(dto.email);
-        const passwordValidation = Password.validateRaw(dto.password); // Domain rule check
+        const passwordValidation = Password.validateRaw(dto.password);
 
         if (emailResult.isFailure) return Result.fail(emailResult.error as string);
         if (passwordValidation.isFailure) return Result.fail(passwordValidation.error as string);
 
         const email = emailResult.getValue();
 
-        // 2. Check if user exists
         const exists = await this.userRepository.emailExists(email);
         if (exists) {
             return Result.fail("User already exists with this email");
         }
 
-        // 3. Hash password (Application service)
         const hashedPassword = await this.passwordHasher.hash(dto.password);
-        const passwordOrError = Password.create(hashedPassword); // Create VO with hash (implicit trust since we just hashed it)
+        const passwordOrError = Password.create(hashedPassword);
 
         if (passwordOrError.isFailure) return Result.fail(passwordOrError.error as string);
 
-        // 4. Create User Entity
         const userOrError = User.create({
+            name: dto.name,
             email: email,
+            phone: dto.phone,
+            address: dto.address,
+            avatar_url: dto.avatar_url,
             password: passwordOrError.getValue(),
-            role: UserRole.USER,
+            roles: [UserRole.USER],
+            is_verified: false,
+            is_active: true
         });
 
         if (userOrError.isFailure) return Result.fail(userOrError.error as string);
 
         const user = userOrError.getValue();
-
-        // 5. Save to Repo
         await this.userRepository.save(user);
 
-        // 6. Return DTO
+        // Generate OTP
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        const otpResult = OTP.create({
+            user_id: user.id.toString(),
+            identifier: user.email.value,
+            otp_hash: otpCode, // Should be hashed
+            purpose: OtpPurpose.REGISTER,
+            channel: OtpChannel.EMAIL,
+            expires_at: otpExpiresAt,
+            status: OtpStatus.PENDING
+        });
+
+        if (otpResult.isFailure) return Result.fail(otpResult.error as string);
+        await this.otpRepository.save(otpResult.getValue());
+
+        // Send Email
+        await this.emailService.sendOtpEmail(user.email.value, otpCode);
+
         return Result.ok<UserResponseDto>({
             id: user.id.toString(),
+            name: user.name,
             email: user.email.value,
-            role: user.role
+            roles: user.roles
         });
     }
 }

@@ -5,5 +5,7 @@ export interface IPasswordHasher {
 
 export interface IJwtService {
     sign(payload: object): string;
+    signRefresh(payload: object): string;
     verify(token: string): any;
+    verifyRefresh(token: string): any;
 }
