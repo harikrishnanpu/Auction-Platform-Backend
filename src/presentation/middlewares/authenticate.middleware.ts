@@ -9,6 +9,9 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
         token = authHeader.split(' ')[1];
     }
 
+    console.log("Token", token);
+
+
     if (!token) {
         return res.status(401).json({ message: 'No token provided' });
     }

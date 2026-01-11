@@ -9,14 +9,14 @@ export class AdminAuthController {
     ) { }
 
     private setCookies(res: Response, accessToken: string, refreshToken: string) {
-        res.cookie('accessToken', accessToken, {
+        res.cookie('adminAccessToken', accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             maxAge: 15 * 60 * 1000 // 15 minutes
         });
 
-        res.cookie('refreshToken', refreshToken, {
+        res.cookie('adminRefreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',

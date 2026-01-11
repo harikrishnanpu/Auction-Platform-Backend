@@ -192,7 +192,7 @@ export class UserAuthController {
             const result = await this.getProfileUseCase.execute(userId);
 
             if (result.isSuccess) {
-                return res.status(200).json(result.getValue());
+                return res.status(200).json({ success: true, user: result.getValue() });
             } else {
                 return res.status(404).json({ message: result.error });
             }
