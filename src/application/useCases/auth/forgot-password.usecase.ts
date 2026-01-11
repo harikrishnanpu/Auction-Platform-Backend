@@ -5,6 +5,7 @@ import { Result } from "../../../domain/shared/result";
 import { ForgotPasswordDto } from "../../dtos/auth/auth.dto";
 import { OTP, OtpChannel, OtpPurpose, OtpStatus } from "../../../domain/otp/otp.entity";
 import { Email } from "../../../domain/user/email.vo";
+import crypto from 'crypto';
 
 export class ForgotPasswordUseCase {
     constructor(
@@ -21,37 +22,44 @@ export class ForgotPasswordUseCase {
         // 1. Find User
         const user = await this.userRepository.findByEmail(email);
         if (!user) {
-            // Security: Don't reveal user existence. Just return OK or a generic message.
-            // However, usually specific error helps with UX if not strictly enterprise. 
-            // Let's return Generic success to prevent enumeration.
+            // Security: Don't reveal user existence.
             return Result.ok<void>();
         }
 
-        // 2. Generate new OTP
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+        // 2. Generate new secure token (random bytes)
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const tokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-        console.log("Reset Password OTP Code", otpCode);
+        console.log("Reset Password Token Generated");
 
-        // 3. Save OTP with RESET_PASSWORD purpose
+        // 3. Save Token (We store the token directly or a hash? Storing hash is better security)
+        // For simplicity with the existing OTP structure which calls it 'otp_hash', we'll store it directly for now 
+        // OR we can hash it if we want to be strict.
+        // If we store it directly, `reset-password` usecase compares it directly. 
+        // Given 'otp_hash' name, let's treat it as the stored secret.
+        // Let's store it as is for now to match the existing string field, 
+        // but typically one would hash it. 
+        // Check `ResetPasswordUseCase`, it compares `otpRecord.otp_hash !== dto.otp`.
+        // So validation expects equality.
+
         const otpResult = OTP.create({
             user_id: user.id.toString(),
             identifier: user.email.value,
-            otp_hash: otpCode,
+            otp_hash: resetToken, // Storing the token itself as the hash for now. 
             purpose: OtpPurpose.RESET_PASSWORD,
             channel: OtpChannel.EMAIL,
-            expires_at: otpExpiresAt,
+            expires_at: tokenExpiresAt,
             status: OtpStatus.PENDING
         });
 
         if (otpResult.isFailure) return Result.fail(otpResult.error as string);
         await this.otpRepository.save(otpResult.getValue());
 
-        // 4. Send Email
-        // Assuming emailService has a generic send method or we add a specific one.
-        // Checking IEmailService interface first might be good, but assuming sendOtpEmail works for now. 
-        // We'll update IEmailService if needed.
-        await this.emailService.sendOtpEmail(user.email.value, otpCode);
+        // 4. Send Email with Link
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const resetLink = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email.value)}`;
+
+        await this.emailService.sendPasswordResetEmail(user.email.value, resetLink);
 
         return Result.ok<void>();
     }
