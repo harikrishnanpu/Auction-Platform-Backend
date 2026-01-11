@@ -47,6 +47,10 @@ export class PrismaOTPRepository implements IOTPRepository {
         return this.toDomain(otpModel);
     }
 
+    async findLatestByIdentifierAndPurpose(identifier: string, purpose: OtpPurpose): Promise<OTP | null> {
+        return this.findByIdentifierAndPurpose(identifier, purpose);
+    }
+
     private toDomain(model: any): OTP {
         return OTP.create({
             user_id: model.user_id,

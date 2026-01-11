@@ -113,6 +113,10 @@ export class User extends Entity<UserProps> {
         this._domainEvents.push(event);
     }
 
+    public changePassword(newPassword: Password): void {
+        this.props.password = newPassword;
+    }
+
     public clearEvents(): void {
         this._domainEvents = [];
     }

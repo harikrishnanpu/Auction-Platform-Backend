@@ -22,6 +22,16 @@ export interface ResendOtpDto {
     purpose?: string;
 }
 
+export interface ForgotPasswordDto {
+    email: string;
+}
+
+export interface ResetPasswordDto {
+    email: string;
+    otp: string;
+    newPassword: string;
+}
+
 export interface UserResponseDto {
     id: string;
     name: string;

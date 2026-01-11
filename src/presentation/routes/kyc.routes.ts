@@ -20,6 +20,16 @@ export class KycRoutes {
             authenticate,
             this.kycController.completeUpload.bind(this.kycController)
         );
+        this._router.get(
+            '/status',
+            authenticate,
+            this.kycController.getStatus.bind(this.kycController)
+        );
+        this._router.post(
+            '/submit',
+            authenticate,
+            this.kycController.submitKyc.bind(this.kycController)
+        );
         return this._router;
     }
 }

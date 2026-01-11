@@ -3,10 +3,12 @@ import { RegisterUserUseCase } from '../../application/useCases/auth/register-us
 import { LoginUserUseCase } from '../../application/useCases/auth/login-user.usecase';
 import { VerifyEmailUseCase } from '../../application/useCases/auth/verify-email.usecase';
 import { ResendOtpUseCase } from '../../application/useCases/auth/resend-otp.usecase';
+import { ForgotPasswordUseCase } from '../../application/useCases/auth/forgot-password.usecase';
+import { ResetPasswordUseCase } from '../../application/useCases/auth/reset-password.usecase';
 import { RefreshTokenUseCase } from '../../application/useCases/auth/refresh-token.usecase';
 import { GetProfileUseCase } from '../../application/useCases/user/get-profile.usecase';
 import { registerSchema, loginSchema } from '../validators/auth.validator';
-import { RegisterUserDto, LoginUserDto } from '../../application/dtos/auth/auth.dto';
+import { RegisterUserDto, LoginUserDto, ForgotPasswordDto, ResetPasswordDto } from '../../application/dtos/auth/auth.dto';
 
 export class UserAuthController {
     constructor(
@@ -15,7 +17,9 @@ export class UserAuthController {
         private verifyEmailUseCase: VerifyEmailUseCase,
         private resendOtpUseCase: ResendOtpUseCase,
         private refreshTokenUseCase: RefreshTokenUseCase,
-        private getProfileUseCase: GetProfileUseCase
+        private getProfileUseCase: GetProfileUseCase,
+        private forgotPasswordUseCase: ForgotPasswordUseCase,
+        private resetPasswordUseCase: ResetPasswordUseCase
     ) { }
 
     private setCookies(res: Response, accessToken: string, refreshToken: string) {
@@ -199,6 +203,48 @@ export class UserAuthController {
         } catch (err) {
             console.log(err);
             return res.status(500).json({ message: 'Internal Server Error' });
+        }
+    }
+
+    forgotPassword = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                return res.status(400).json({ success: false, message: "Email is required" });
+            }
+
+            const dto: ForgotPasswordDto = { email };
+            const result = await this.forgotPasswordUseCase.execute(dto);
+
+            if (result.isSuccess) {
+                return res.status(200).json({ success: true, message: "If your email is registered, you will receive a password reset link." });
+            } else {
+                return res.status(400).json({ success: false, message: result.error });
+            }
+        } catch (err) {
+            console.log(err);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
+
+    resetPassword = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const { email, otp, newPassword } = req.body;
+            if (!email || !otp || !newPassword) {
+                return res.status(400).json({ success: false, message: "Email, OTP and New Password are required" });
+            }
+
+            const dto: ResetPasswordDto = { email, otp, newPassword };
+            const result = await this.resetPasswordUseCase.execute(dto);
+
+            if (result.isSuccess) {
+                return res.status(200).json({ success: true, message: "Password has been reset successfully. Please login with new password." });
+            } else {
+                return res.status(400).json({ success: false, message: result.error });
+            }
+        } catch (err) {
+            console.log(err);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
         }
     }
 }
