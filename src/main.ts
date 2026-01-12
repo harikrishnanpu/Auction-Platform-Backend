@@ -1,3 +1,4 @@
+import { logger } from './infrastructure/logger/pino.logger';
 import app from './server';
 import dotenv from 'dotenv';
 
@@ -8,10 +9,10 @@ const PORT = process.env.PORT || 4000;
 const startServer = async () => {
     try {
         app.listen(PORT, () => {
-            console.log(`Server started on ${PORT}`);
+            logger.info(`Server started on ${PORT}`);
         });
     } catch (err) {
-        console.log('Server error:', err);
+        logger.error('Server error:' + err);
     }
 };
 

@@ -8,6 +8,7 @@ import { Password } from "../../../domain/user/password.vo";
 import { User, UserRole } from "../../../domain/user/user.entity";
 import { IOTPRepository } from "../../../domain/otp/otp.repository";
 import { OTP, OtpChannel, OtpPurpose, OtpStatus } from "../../../domain/otp/otp.entity";
+import { ILogger } from "@application/ports/logger.port";
 
 export class RegisterUserUseCase {
     constructor(
@@ -15,15 +16,20 @@ export class RegisterUserUseCase {
         private passwordHasher: IPasswordHasher,
         private jwtService: IJwtService,
         private emailService: IEmailService,
-        private otpRepository: IOTPRepository
+        private otpRepository: IOTPRepository,
+        private logger: ILogger
+        
     ) { }
 
     public async execute(dto: RegisterUserDto): Promise<Result<UserResponseDto>> {
         const emailResult = Email.create(dto.email);
-        const passwordValidation = Password.validateRaw(dto.password);
-
-        if (emailResult.isFailure) return Result.fail(emailResult.error as string);
-        if (passwordValidation.isFailure) return Result.fail(passwordValidation.error as string);
+        if (dto.password) {
+            
+            const passwordValidation = Password.validate(dto.password);
+            
+            if (emailResult.isFailure) return Result.fail(emailResult.error as string);
+            if (passwordValidation.isFailure) return Result.fail(passwordValidation.error as string);
+        }
 
         const email = emailResult.getValue();
 

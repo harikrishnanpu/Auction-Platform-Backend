@@ -39,7 +39,7 @@ export class PrismaUserRepository implements IUserRepository {
                 is_active: raw.is_active,
                 is_blocked: raw.is_blocked,
                 is_verified: raw.is_verified,
-                assigned_at: raw.assigned_at,
+                updated_at: raw.updated_at,
                 created_at: raw.created_at,
                 UserRole: {
                     create: roles
@@ -56,11 +56,10 @@ export class PrismaUserRepository implements IUserRepository {
 
         if (!raw) return null;
 
-        // Cast raw to include roles for Mapper
-        const userOrError = UserMapper.toDomain(raw as any);
-        if (userOrError.isFailure) return null;
+        const user = UserMapper.toDomain(raw as any);
 
-        return userOrError.getValue();
+        if (user.isFailure) return null;
+        return user.getValue();
     }
 
     async findById(id: UserId): Promise<User | null> {

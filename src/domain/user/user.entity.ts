@@ -3,9 +3,7 @@ import { Result } from "../shared/result";
 import { UserId } from "./user-id.vo";
 import { Email } from "./email.vo";
 import { Password } from "./password.vo";
-import { UserRegisteredDomainEvent } from "./user.events";
 
-// UserRole might still be needed for Admin distinction, keeping it optionally
 export enum UserRole {
     USER = 'USER',
     SELLER = 'SELLER',
@@ -28,7 +26,6 @@ interface UserProps {
 }
 
 export class User extends Entity<UserProps> {
-    private _domainEvents: any[] = [];
 
     get name(): string { return this.props.name; }
     get email(): Email { return this.props.email; }
@@ -41,8 +38,6 @@ export class User extends Entity<UserProps> {
     get is_blocked(): boolean { return this.props.is_blocked; }
     get is_verified(): boolean { return this.props.is_verified; }
     get created_at(): Date { return this.props.created_at; }
-
-    get domainEvents(): any[] { return this._domainEvents; }
 
     private constructor(props: UserProps, id?: UserId) {
         super(props, id ? id.value : undefined);
@@ -81,12 +76,6 @@ export class User extends Entity<UserProps> {
             id
         );
 
-        if (!id) {
-            user.addDomainEvent(new UserRegisteredDomainEvent(
-                UserId.create(user.id).getValue(),
-                user.email
-            ));
-        }
 
         return Result.ok<User>(user);
     }
@@ -109,15 +98,7 @@ export class User extends Entity<UserProps> {
         this.props.is_verified = true;
     }
 
-    private addDomainEvent(event: any): void {
-        this._domainEvents.push(event);
-    }
-
     public changePassword(newPassword: Password): void {
         this.props.password = newPassword;
-    }
-
-    public clearEvents(): void {
-        this._domainEvents = [];
     }
 }

@@ -18,6 +18,7 @@ export class AuthRoutes {
     this._router.post('/forgot-password', this._authController.forgotPassword);
     this._router.post('/reset-password', this._authController.resetPassword);
     this._router.get('/me', authenticate, this._authController.getProfile);
+
     return this._router;
   }
 }

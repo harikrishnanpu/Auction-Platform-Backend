@@ -5,6 +5,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     let token;
 
     const authHeader = req.headers.authorization;
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
         token = authHeader.split(' ')[1];
     }
@@ -23,5 +24,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     }
 
     (req as any).user = decoded;
+
     next();
 };

@@ -5,12 +5,15 @@ import { Result } from "../../../domain/shared/result";
 import { ResendOtpDto } from "../../dtos/auth/auth.dto";
 import { OTP, OtpChannel, OtpPurpose, OtpStatus } from "../../../domain/otp/otp.entity";
 import { Email } from "../../../domain/user/email.vo";
+import { ILogger } from "@application/ports/logger.port";
 
 export class ResendOtpUseCase {
     constructor(
         private userRepository: IUserRepository,
         private otpRepository: IOTPRepository,
-        private emailService: IEmailService
+        private emailService: IEmailService,
+        private logger: ILogger
+    
     ) { }
 
     public async execute(dto: ResendOtpDto): Promise<Result<void>> {
@@ -18,7 +21,6 @@ export class ResendOtpUseCase {
         if (emailResult.isFailure) return Result.fail(emailResult.error as string);
         const email = emailResult.getValue();
 
-        // 1. Find User
         const user = await this.userRepository.findByEmail(email);
         if (!user) return Result.fail("User not found");
 
@@ -27,11 +29,10 @@ export class ResendOtpUseCase {
         }
 
 
-        // 3. Generate new OTP
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-        console.log("OTP Code", otpCode);
+        this.logger.info("OTP Code: " + otpCode);
 
         const otpResult = OTP.create({
             user_id: user.id.toString(),

@@ -9,7 +9,7 @@ import { ResetPasswordUseCase } from "../application/useCases/auth/reset-passwor
 import { UserAuthController } from "../presentation/controllers/user.auth.controller";
 import { AuthRoutes } from "../presentation/routes/auth.routes";
 import { userRepository, otpRepository } from "./repository.di";
-import { jwtService, emailService } from "./services.di";
+import { jwtService, emailService, loggerService, tokenGeneratorService } from "./services.di";
 
 import { GetUsersUseCase } from "../application/useCases/admin/get-users.usecase";
 import { GetUserByIdUseCase } from "../application/useCases/admin/get-user-by-id.usecase";
@@ -33,7 +33,8 @@ import { KycRoutes } from "../presentation/routes/kyc.routes";
 const loginUserUseCase = new LoginUserUseCase(
     userRepository,
     passwordHasher,
-    jwtService
+    jwtService,
+    loggerService
 );
 
 const registerUserUseCase = new RegisterUserUseCase(
@@ -41,42 +42,51 @@ const registerUserUseCase = new RegisterUserUseCase(
     passwordHasher,
     jwtService,
     emailService,
-    otpRepository
+    otpRepository,
+    loggerService
 );
 
 const verifyEmailUseCase = new VerifyEmailUseCase(
     userRepository,
     otpRepository,
-    jwtService
+    jwtService,
+    loggerService
 );
 
 const resendOtpUseCase = new ResendOtpUseCase(
     userRepository,
     otpRepository,
-    emailService
+    emailService,
+    loggerService
 );
 
 const refreshTokenUseCase = new RefreshTokenUseCase(
     userRepository,
-    jwtService
+    jwtService,
+    loggerService
 );
 
 const getProfileUseCase = new GetProfileUseCase(
     userRepository
 );
 
+
+
 const forgotPasswordUseCase = new ForgotPasswordUseCase(
     userRepository,
     otpRepository,
-    emailService
+    emailService,
+    loggerService,
+    tokenGeneratorService
 );
 
 const resetPasswordUseCase = new ResetPasswordUseCase(
     userRepository,
-    otpRepository
+    otpRepository,
+    loggerService
 );
 
-// Admin Use Cases
+
 const getUsersUseCase = new GetUsersUseCase(userRepository);
 const getUserByIdUseCase = new GetUserByIdUseCase(userRepository);
 const loginAdminUseCase = new LoginAdminUseCase(userRepository, passwordHasher, adminJwtService);
@@ -96,7 +106,7 @@ const authController = new UserAuthController(
     refreshTokenUseCase,
     getProfileUseCase,
     forgotPasswordUseCase,
-    resetPasswordUseCase
+    resetPasswordUseCase,
 );
 
 const adminController = new AdminController(
@@ -118,7 +128,6 @@ const adminAuthController = new AdminAuthController(
 import { GetKycStatusUseCase } from "../application/useCases/kyc/get-kyc-status.usecase";
 import { SubmitKycUseCase } from "../application/useCases/kyc/submit-kyc.usecase";
 
-// KYC Use Cases
 const generateUploadUrlUseCase = new GenerateUploadUrlUseCase(storageService);
 const completeKycUploadUseCase = new CompleteKycUploadUseCase(userRepository);
 const getKycStatusUseCase = new GetKycStatusUseCase(userRepository);

@@ -10,6 +10,7 @@ import { GetProfileUseCase } from '../../application/useCases/user/get-profile.u
 import { registerSchema, loginSchema } from '../validators/auth.validator';
 import { RegisterUserDto, LoginUserDto, ForgotPasswordDto, ResetPasswordDto } from '../../application/dtos/auth/auth.dto';
 
+
 export class UserAuthController {
     constructor(
         private registerUserUseCase: RegisterUserUseCase,
@@ -19,7 +20,7 @@ export class UserAuthController {
         private refreshTokenUseCase: RefreshTokenUseCase,
         private getProfileUseCase: GetProfileUseCase,
         private forgotPasswordUseCase: ForgotPasswordUseCase,
-        private resetPasswordUseCase: ResetPasswordUseCase
+        private resetPasswordUseCase: ResetPasswordUseCase,
     ) { }
 
     private setCookies(res: Response, accessToken: string, refreshToken: string) {
@@ -165,9 +166,12 @@ export class UserAuthController {
 
             if (result.isSuccess) {
                 const { accessToken, refreshToken } = result.getValue();
+
+
                 if (accessToken && refreshToken) {
                     this.setCookies(res, accessToken, refreshToken);
                 }
+
 
                 return res.status(200).json({
                     success: true,
@@ -229,12 +233,13 @@ export class UserAuthController {
 
     resetPassword = async (req: Request, res: Response): Promise<any> => {
         try {
-            const { email, otp, newPassword } = req.body;
-            if (!email || !otp || !newPassword) {
-                return res.status(400).json({ success: false, message: "Email, OTP and New Password are required" });
+            const { email, token, newPassword } = req.body;
+
+            if (!email || !token || !newPassword) {
+                return res.status(400).json({ success: false, message: "Email, token and New Password are required" });
             }
 
-            const dto: ResetPasswordDto = { email, otp, newPassword };
+            const dto: ResetPasswordDto = { email, token, newPassword };
             const result = await this.resetPasswordUseCase.execute(dto);
 
             if (result.isSuccess) {

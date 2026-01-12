@@ -3,17 +3,17 @@ import { IJwtService } from '../../domain/services/auth/auth.service';
 import dotenv from 'dotenv';
 dotenv.config();
 
-export class JwtServiceImpl implements IJwtService {
+export class AdminJwtServiceImpl implements IJwtService {
     private readonly secret: string;
     private readonly refreshSecret: string;
     private readonly expiresIn: string;
     private readonly refreshExpiresIn: string;
 
     constructor() {
-        this.secret = process.env.JWT_SECRET || 'default_secret_please_change';
-        this.refreshSecret = process.env.JWT_REFRESH_SECRET || 'default_refresh_secret_please_change';
-        this.expiresIn = '15m'; // Short-lived access token
-        this.refreshExpiresIn = '7d'; // Long-lived refresh token
+        this.secret = process.env.ADMIN_JWT_SECRET || 'default_admin_secret_please_change';
+        this.refreshSecret = process.env.ADMIN_JWT_REFRESH_SECRET || 'default_admin_refresh_secret_please_change';
+        this.expiresIn = '15m'; 
+        this.refreshExpiresIn = '7d';
     }
 
     sign(payload: object): string {

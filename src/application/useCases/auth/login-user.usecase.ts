@@ -3,12 +3,14 @@ import { IPasswordHasher, IJwtService } from "../../../domain/services/auth/auth
 import { LoginUserDto, UserResponseDto } from "../../dtos/auth/auth.dto";
 import { Result } from "../../../domain/shared/result";
 import { Email } from "../../../domain/user/email.vo";
+import { ILogger } from "../../ports/logger.port";
 
 export class LoginUserUseCase {
     constructor(
         private userRepository: IUserRepository,
         private passwordHasher: IPasswordHasher,
-        private jwtService: IJwtService
+        private jwtService: IJwtService,
+        private logger: ILogger
     ) { }
 
     public async execute(dto: LoginUserDto): Promise<Result<UserResponseDto>> {
@@ -17,13 +19,14 @@ export class LoginUserUseCase {
 
         const email = emailResult.getValue();
 
-        // 1. Find User
+        this.logger.info(`login for email: ${email.value}`);
+
         const user = await this.userRepository.findByEmail(email);
+
         if (!user) {
             return Result.fail("Invalid email or password");
         }
 
-        // 2. Check Active/Blocked/Verified
         if (!user.is_active) {
             return Result.fail("Account is inactive");
         }
@@ -34,17 +37,18 @@ export class LoginUserUseCase {
             return Result.fail("Please verify your email address");
         }
 
-        // 3. Compare Password
-        const isValidPassword = await this.passwordHasher.compare(dto.password, user.password.value);
-        if (!isValidPassword) {
-            return Result.fail("Invalid email or password");
+        if (user.password) {   
+            const isValidPassword = await this.passwordHasher.compare(dto.password, user.password.value);
+            
+            if (!isValidPassword) {
+                return Result.fail("Invalid email or password");
+            }
         }
 
-        // 4. Generate Tokens
+
         const accessToken = this.jwtService.sign({ userId: user.id.toString(), roles: user.roles });
         const refreshToken = this.jwtService.signRefresh({ userId: user.id.toString(), roles: user.roles });
 
-        // 5. Return DTO
         return Result.ok<UserResponseDto>({
             id: user.id.toString(),
             name: user.name,
