@@ -1,4 +1,3 @@
-import { IUserRepository } from "../../../domain/user/user.repository";
 import { IOTPRepository } from "../../../domain/otp/otp.repository";
 import { Result } from "../../../domain/shared/result";
 import { VerifyEmailDto } from "../../dtos/auth/auth.dto";
@@ -8,6 +7,7 @@ import { Email } from "../../../domain/user/email.vo";
 
 import { UserResponseDto } from "../../dtos/auth/auth.dto";
 import { ILogger } from "@application/ports/logger.port";
+import { IUserRepository } from "@domain/user/user.repository";
 
 export class VerifyEmailUseCase {
     constructor(
@@ -25,8 +25,7 @@ export class VerifyEmailUseCase {
 
         const user = await this.userRepository.findByEmail(email);
         if (!user) return Result.fail("User not found");
-
-        if (user.is_verified) return Result.fail("User is already verified");
+        if (user.props.is_verified) return Result.fail("User is already verified");
 
         const otp = await this.otpRepository.findByIdAndPurpose(email.value, OtpPurpose.REGISTER);
 
@@ -40,7 +39,7 @@ export class VerifyEmailUseCase {
             return Result.fail("OTP has expired");
         }
 
-        if (otp.otp_hash !== dto.otp) { 
+        if (otp.otp_hash !== dto.otp) {
             otp.incrementAttempts();
             await this.otpRepository.save(otp);
             return Result.fail("Invalid OTP");
@@ -54,22 +53,22 @@ export class VerifyEmailUseCase {
 
         const accessToken = this.jwtService.sign({
             userId: user.id.toString(),
-            email: user.email.value,
-            role: user.roles[0]
+            email: user.props.email.value,
+            role: user.props.roles[0]
         });
 
         const refreshToken = this.jwtService.sign({
             userId: user.id.toString(),
-            email: user.email.value,
-            role: user.roles[0]
+            email: user.props.email.value,
+            role: user.props.roles[0]
         });
 
         return Result.ok({
             id: user.id.toString(),
-            name: user.name,
-            email: user.email.value,
-            roles: user.roles,
-            is_verified: user.is_verified,
+            name: user.props.name,
+            email: user.props.email.value,
+            roles: user.props.roles,
+            is_verified: user.props.is_verified,
             accessToken,
             refreshToken
         });

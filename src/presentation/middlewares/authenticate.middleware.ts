@@ -8,6 +8,8 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
         token = authHeader.split(' ')[1];
+    } else if (req.cookies && req.cookies.accessToken) {
+        token = req.cookies.accessToken;
     }
 
     console.log("Token", token);

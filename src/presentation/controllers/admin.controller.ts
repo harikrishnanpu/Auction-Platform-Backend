@@ -22,116 +22,116 @@ export class AdminController {
         private assignSellerRoleUseCase: AssignSellerRoleUseCase
     ) { }
 
-    public async getUsers(req: Request, res: Response): Promise<void> {
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 10;
+    // public async getUsers(req: Request, res: Response): Promise<void> {
+    //     const page = parseInt(req.query.page as string) || 1;
+    //     const limit = parseInt(req.query.limit as string) || 10;
 
-        const result = await this.getUsersUseCase.execute(page, limit);
+    //     const result = await this.getUsersUseCase.execute(page, limit);
 
-        if (result.isSuccess) {
-            res.status(200).json(result.getValue());
-        } else {
-            res.status(400).json({ message: result.error });
-        }
-    }
+    //     if (result.isSuccess) {
+    //         res.status(200).json(result.getValue());
+    //     } else {
+    //         res.status(400).json({ message: result.error });
+    //     }
+    // }
 
-    public async getUserById(req: Request, res: Response): Promise<void> {
-        const id = req.params.id;
+    // public async getUserById(req: Request, res: Response): Promise<void> {
+    //     const id = req.params.id;
 
-        const result = await this.getUserByIdUseCase.execute(id);
+    //     const result = await this.getUserByIdUseCase.execute(id);
 
-        if (result.isSuccess) {
-            res.status(200).json(result.getValue());
-        } else {
-            res.status(404).json({ message: result.error });
-        }
-    }
+    //     if (result.isSuccess) {
+    //         res.status(200).json(result.getValue());
+    //     } else {
+    //         res.status(404).json({ message: result.error });
+    //     }
+    // }
 
-    public async updateUser(req: Request, res: Response): Promise<void> {
-        const id = req.params.id;
-        const dto = req.body;
+    // public async updateUser(req: Request, res: Response): Promise<void> {
+    //     const id = req.params.id;
+    //     const dto = req.body;
 
-        const result = await this.updateUserUseCase.execute(id, dto);
+    //     const result = await this.updateUserUseCase.execute(id, dto);
 
-        if (result.isSuccess) {
-            res.status(200).json({ message: 'User updated successfully' });
-        } else {
-            res.status(400).json({ message: result.error });
-        }
-    }
+    //     if (result.isSuccess) {
+    //         res.status(200).json({ message: 'User updated successfully' });
+    //     } else {
+    //         res.status(400).json({ message: result.error });
+    //     }
+    // }
 
-    public async blockUser(req: Request, res: Response): Promise<void> {
-        const id = req.params.id;
-        const block = req.body.block === true;
+    // public async blockUser(req: Request, res: Response): Promise<void> {
+    //     const id = req.params.id;
+    //     const block = req.body.block === true;
 
-        const result = await this.blockUserUseCase.execute(id, block);
+    //     const result = await this.blockUserUseCase.execute(id, block);
 
-        if (result.isSuccess) {
-            res.status(200).json({ message: block ? 'User blocked successfully' : 'User unblocked successfully' });
-        } else {
-            res.status(400).json({ message: result.error });
-        }
-    }
+    //     if (result.isSuccess) {
+    //         res.status(200).json({ message: block ? 'User blocked successfully' : 'User unblocked successfully' });
+    //     } else {
+    //         res.status(400).json({ message: result.error });
+    //     }
+    // }
 
-    public async deleteUser(req: Request, res: Response): Promise<void> {
-        const id = req.params.id;
+    // public async deleteUser(req: Request, res: Response): Promise<void> {
+    //     const id = req.params.id;
 
-        const result = await this.deleteUserUseCase.execute(id);
+    //     const result = await this.deleteUserUseCase.execute(id);
 
-        if (result.isSuccess) {
-            res.status(200).json({ message: 'User deleted successfully' });
-        } else {
-            res.status(400).json({ message: result.error });
-        }
-    }
+    //     if (result.isSuccess) {
+    //         res.status(200).json({ message: 'User deleted successfully' });
+    //     } else {
+    //         res.status(400).json({ message: result.error });
+    //     }
+    // }
 
-    public async getSellers(req: Request, res: Response): Promise<void> {
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 10;
+    // public async getSellers(req: Request, res: Response): Promise<void> {
+    //     const page = parseInt(req.query.page as string) || 1;
+    //     const limit = parseInt(req.query.limit as string) || 10;
 
-        const result = await this.getSellersUseCase.execute(page, limit);
+    //     const result = await this.getSellersUseCase.execute(page, limit);
 
-        if (result.isSuccess) {
-            res.status(200).json(result.getValue());
-        } else {
-            res.status(400).json({ message: result.error });
-        }
-    }
+    //     if (result.isSuccess) {
+    //         res.status(200).json(result.getValue());
+    //     } else {
+    //         res.status(400).json({ message: result.error });
+    //     }
+    // }
 
-    public async getSellerById(req: Request, res: Response): Promise<void> {
-        const id = req.params.id;
+    // public async getSellerById(req: Request, res: Response): Promise<void> {
+    //     const id = req.params.id;
 
-        const result = await this.getSellerByIdUseCase.execute(id);
+    //     const result = await this.getSellerByIdUseCase.execute(id);
 
-        if (result.isSuccess) {
-            res.status(200).json(result.getValue());
-        } else {
-            res.status(404).json({ message: result.error });
-        }
-    }
+    //     if (result.isSuccess) {
+    //         res.status(200).json(result.getValue());
+    //     } else {
+    //         res.status(404).json({ message: result.error });
+    //     }
+    // }
 
-    public async verifySellerKyc(req: Request, res: Response): Promise<void> {
-        const id = req.params.id;
-        const verify = req.body.verify === true;
+    // public async verifySellerKyc(req: Request, res: Response): Promise<void> {
+    //     const id = req.params.id;
+    //     const verify = req.body.verify === true;
 
-        const result = await this.verifySellerKycUseCase.execute(id, verify);
+    //     const result = await this.verifySellerKycUseCase.execute(id, verify);
 
-        if (result.isSuccess) {
-            res.status(200).json({ message: verify ? 'Seller KYC verified successfully' : 'Seller KYC verification rejected' });
-        } else {
-            res.status(400).json({ message: result.error });
-        }
-    }
+    //     if (result.isSuccess) {
+    //         res.status(200).json({ message: verify ? 'Seller KYC verified successfully' : 'Seller KYC verification rejected' });
+    //     } else {
+    //         res.status(400).json({ message: result.error });
+    //     }
+    // }
 
-    public async assignSellerRole(req: Request, res: Response): Promise<void> {
-        const id = req.params.id;
+    // public async assignSellerRole(req: Request, res: Response): Promise<void> {
+    //     const id = req.params.id;
 
-        const result = await this.assignSellerRoleUseCase.execute(id);
+    //     const result = await this.assignSellerRoleUseCase.execute(id);
 
-        if (result.isSuccess) {
-            res.status(200).json({ message: 'Seller role assigned successfully' });
-        } else {
-            res.status(400).json({ message: result.error });
-        }
-    }
+    //     if (result.isSuccess) {
+    //         res.status(200).json({ message: 'Seller role assigned successfully' });
+    //     } else {
+    //         res.status(400).json({ message: result.error });
+    //     }
+    // }
 }

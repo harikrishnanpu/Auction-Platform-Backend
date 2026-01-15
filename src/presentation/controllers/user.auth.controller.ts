@@ -7,8 +7,10 @@ import { ForgotPasswordUseCase } from '../../application/useCases/auth/forgot-pa
 import { ResetPasswordUseCase } from '../../application/useCases/auth/reset-password.usecase';
 import { RefreshTokenUseCase } from '../../application/useCases/auth/refresh-token.usecase';
 import { GetProfileUseCase } from '../../application/useCases/user/get-profile.usecase';
-import { registerSchema, loginSchema } from '../validators/auth.validator';
-import { RegisterUserDto, LoginUserDto, ForgotPasswordDto, ResetPasswordDto } from '../../application/dtos/auth/auth.dto';
+import { registerSchema, loginSchema, verifyEmailSchema } from '../validators/auth.validator';
+import { RegisterUserDto, LoginUserDto, ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto } from '../../application/dtos/auth/auth.dto';
+import { LoginWithGoogleUseCase } from '../../application/useCases/auth/login-google.usecase';
+import passport from 'passport';
 
 
 export class UserAuthController {
@@ -21,6 +23,7 @@ export class UserAuthController {
         private getProfileUseCase: GetProfileUseCase,
         private forgotPasswordUseCase: ForgotPasswordUseCase,
         private resetPasswordUseCase: ResetPasswordUseCase,
+        private loginWithGoogleUseCase: LoginWithGoogleUseCase,
     ) { }
 
     private setCookies(res: Response, accessToken: string, refreshToken: string) {
@@ -157,12 +160,18 @@ export class UserAuthController {
 
     verifyEmail = async (req: Request, res: Response): Promise<any> => {
         try {
-            const { email, otp } = req.body;
-            if (!email || !otp) {
-                return res.status(400).json({ message: "Email and OTP are required" });
+            const parseResult = verifyEmailSchema.safeParse(req.body);
+
+            if (!parseResult.success) {
+                return res.status(400).json({ success: false, message: 'please sent correct credentials', error: parseResult.error });
             }
 
-            const result = await this.verifyEmailUseCase.execute({ email, otp });
+            const dto: VerifyEmailDto = {
+                email: parseResult.data.email,
+                otp: parseResult.data.otp
+            };
+
+            const result = await this.verifyEmailUseCase.execute(dto);
 
             if (result.isSuccess) {
                 const { accessToken, refreshToken } = result.getValue();
@@ -179,11 +188,11 @@ export class UserAuthController {
                     user: result.getValue()
                 });
             } else {
-                return res.status(400).json({ message: result.error });
+                return res.status(400).json({ success: false, message: result.error });
             }
         } catch (err) {
             console.log(err);
-            return res.status(500).json({ message: 'Internal Server Error' });
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
         }
     }
 
@@ -251,5 +260,45 @@ export class UserAuthController {
             console.log(err);
             return res.status(500).json({ success: false, message: 'Internal Server Error' });
         }
+    }
+
+    logout = async (req: Request, res: Response): Promise<any> => {
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+        return res.status(200).json({ success: true, message: "Logged out successfully" });
+    }
+
+    googleAuth = (req: Request, res: Response, next: any) => {
+        passport.authenticate('google', {
+            scope: ['profile', 'email'],
+            session: false
+        })(req, res, next);
+    }
+
+    googleAuthCallback = async (req: Request, res: Response, next: any) => {
+        passport.authenticate('google', { session: false }, async (err: any, user: any, info: any) => {
+            if (err) {
+                return res.redirect(`${process.env.CLIENT_URL}/login?error=GoogleAuthFailed`);
+            }
+            if (!user) {
+                return res.redirect(`${process.env.CLIENT_URL}/login?error=NoUser`);
+            }
+
+            try {
+                // User is the google profile attached by strategy
+                const result = await this.loginWithGoogleUseCase.execute(user);
+
+                if (result.isSuccess) {
+                    const { accessToken, refreshToken, user: domainUser } = result.getValue();
+                    this.setCookies(res, accessToken, refreshToken);
+                    return res.redirect(`${process.env.CLIENT_URL}/`); // Redirect to landing
+                } else {
+                    return res.redirect(`${process.env.CLIENT_URL}/login?error=${encodeURIComponent(result.error as string)}`);
+                }
+            } catch (error) {
+                console.error(error);
+                return res.redirect(`${process.env.CLIENT_URL}/login?error=InternalServerError`);
+            }
+        })(req, res, next);
     }
 }

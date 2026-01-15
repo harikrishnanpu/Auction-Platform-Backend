@@ -27,18 +27,18 @@ export class LoginUserUseCase {
             return Result.fail("Invalid email or password");
         }
 
-        if (!user.is_active) {
+        if (!user.props.is_active) {
             return Result.fail("Account is inactive");
         }
-        if (user.is_blocked) {
+        if (user.props.is_blocked) {
             return Result.fail("Account is blocked");
         }
-        if (!user.is_verified) {
+        if (!user.props.is_verified) {
             return Result.fail("Please verify your email address");
         }
 
-        if (user.password) {   
-            const isValidPassword = await this.passwordHasher.compare(dto.password, user.password.value);
+        if (user.props.password) {   
+            const isValidPassword = await this.passwordHasher.compare(dto.password, user.props.password.value);
             
             if (!isValidPassword) {
                 return Result.fail("Invalid email or password");
@@ -46,14 +46,14 @@ export class LoginUserUseCase {
         }
 
 
-        const accessToken = this.jwtService.sign({ userId: user.id.toString(), roles: user.roles });
-        const refreshToken = this.jwtService.signRefresh({ userId: user.id.toString(), roles: user.roles });
+        const accessToken = this.jwtService.sign({ userId: user.id.toString(), roles: user.props.roles });
+        const refreshToken = this.jwtService.signRefresh({ userId: user.id.toString(), roles: user.props.roles });
 
         return Result.ok<UserResponseDto>({
             id: user.id.toString(),
-            name: user.name,
-            email: user.email.value,
-            roles: user.roles,
+            name: user.props.name,
+            email: user.props.email.value,
+            roles: user.props.roles,
             accessToken: accessToken,
             refreshToken: refreshToken
         });

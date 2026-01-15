@@ -16,13 +16,14 @@ export class Password extends ValueObject<PasswordProps> {
     }
 
     public static isHashed(password: string): boolean {
-        return password.startsWith("$2b$") || password.startsWith("$2a$"); // Basic bcrypt check
+        return password.startsWith("$2b$") || password.startsWith("$2a$");
     }
 
     public static create(hashedPassword: string): Result<Password> {
         if (!hashedPassword || hashedPassword.length === 0) {
             return Result.fail<Password>("Password cannot be empty");
         }
+        
         return Result.ok<Password>(new Password({ value: hashedPassword, hashed: true }));
     }
 

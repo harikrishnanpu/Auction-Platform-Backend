@@ -29,6 +29,10 @@ export class LoginAdminUseCase {
             return Result.fail("Access Denied: Admin privileges required.");
         }
 
+        if (!user.password) {
+            return Result.fail("Invalid email or password");
+        }
+
         // 3. Compare Password
         const isValidPassword = await this.passwordHasher.compare(dto.password, user.password.value);
         if (!isValidPassword) {

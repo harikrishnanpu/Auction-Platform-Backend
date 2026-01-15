@@ -1,5 +1,4 @@
 import { IUserRepository } from "../../domain/user/user.repository";
-// Trigger restart
 import { User } from "../../domain/user/user.entity";
 import { Email } from "../../domain/user/email.vo";
 import { UserId } from "../../domain/user/user-id.vo";
@@ -9,7 +8,7 @@ import { UserMapper } from "../database/prisma/user.mapper";
 export class PrismaUserRepository implements IUserRepository {
     async save(user: User): Promise<void> {
         const raw = UserMapper.toPersistence(user);
-        const roles = user.roles.map(r => ({ role: r as any })); // Map to Prisma Enum format
+        const roles = user.roles.map(r => ({ role: r as any }));
 
         await prisma.user.upsert({
             where: { user_id: raw.user_id },
@@ -111,5 +110,17 @@ export class PrismaUserRepository implements IUserRepository {
             where: { phone }
         });
         return count > 0;
+    }
+    async findByGoogleId(googleId: string): Promise<User | null> {
+        const raw = await prisma.user.findUnique({
+            where: { google_id: googleId },
+            include: { UserRole: true }
+        });
+
+        if (!raw) return null;
+
+        const user = UserMapper.toDomain(raw as any);
+        if (user.isFailure) return null;
+        return user.getValue();
     }
 }

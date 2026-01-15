@@ -9,4 +9,5 @@ export interface IUserRepository {
     findAll(page: number, limit: number): Promise<{ users: User[], total: number }>;
     emailExists(email: Email): Promise<boolean>;
     phoneExists(phone: string): Promise<boolean>;
+    findByGoogleId(googleId: string): Promise<User | null>;
 }

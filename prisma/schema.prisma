@@ -41,10 +41,11 @@ model User {
   user_id       String   @id @default(uuid())
   name          String
   email         String   @unique
-  phone         String   @unique
+  google_id     String?  @unique
+  phone         String?  @unique
   address       String
   avatar_url    String?
-  password_hash String
+  password_hash String?
   is_active     Boolean  @default(true)
   is_blocked    Boolean  @default(false)
   is_verified   Boolean  @default(false)
