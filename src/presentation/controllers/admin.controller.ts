@@ -8,6 +8,7 @@ import { GetSellersUseCase } from '../../application/useCases/admin/get-sellers.
 import { GetSellerByIdUseCase } from '../../application/useCases/admin/get-seller-by-id.usecase';
 import { VerifySellerKycUseCase } from '../../application/useCases/admin/verify-seller-kyc.usecase';
 import { AssignSellerRoleUseCase } from '../../application/useCases/admin/assign-seller-role.usecase';
+import { GetAdminStatsUseCase } from '../../application/useCases/admin/get-admin-stats.usecase';
 
 export class AdminController {
     constructor(
@@ -19,8 +20,19 @@ export class AdminController {
         private getSellersUseCase: GetSellersUseCase,
         private getSellerByIdUseCase: GetSellerByIdUseCase,
         private verifySellerKycUseCase: VerifySellerKycUseCase,
-        private assignSellerRoleUseCase: AssignSellerRoleUseCase
+        private assignSellerRoleUseCase: AssignSellerRoleUseCase,
+        private getAdminStatsUseCase: GetAdminStatsUseCase
     ) { }
+
+    public async getStats(req: Request, res: Response): Promise<void> {
+        const result = await this.getAdminStatsUseCase.execute();
+
+        if (result.isSuccess) {
+            res.status(200).json(result.getValue());
+        } else {
+            res.status(400).json({ message: result.error });
+        }
+    }
 
     public async getUsers(req: Request, res: Response): Promise<void> {
         const page = parseInt(req.query.page as string) || 1;

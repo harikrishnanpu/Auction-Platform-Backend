@@ -1,5 +1,4 @@
 import { IUserRepository } from "../../domain/user/user.repository";
-// Trigger restart
 import { User } from "../../domain/user/user.entity";
 import { Email } from "../../domain/user/email.vo";
 import { UserId } from "../../domain/user/user-id.vo";
@@ -9,7 +8,7 @@ import { UserMapper } from "../database/prisma/user.mapper";
 export class PrismaUserRepository implements IUserRepository {
     async save(user: User): Promise<void> {
         const raw = UserMapper.toPersistence(user);
-        const roles = user.roles.map(r => ({ role: r as any })); // Map to Prisma Enum format
+        const roles = user.roles.map(r => ({ role: r as any }));
 
         await prisma.user.upsert({
             where: { user_id: raw.user_id },
@@ -39,7 +38,7 @@ export class PrismaUserRepository implements IUserRepository {
                 is_active: raw.is_active,
                 is_blocked: raw.is_blocked,
                 is_verified: raw.is_verified,
-                assigned_at: raw.assigned_at,
+                updated_at: raw.updated_at,
                 created_at: raw.created_at,
                 UserRole: {
                     create: roles
@@ -56,11 +55,10 @@ export class PrismaUserRepository implements IUserRepository {
 
         if (!raw) return null;
 
-        // Cast raw to include roles for Mapper
-        const userOrError = UserMapper.toDomain(raw as any);
-        if (userOrError.isFailure) return null;
+        const user = UserMapper.toDomain(raw as any);
 
-        return userOrError.getValue();
+        if (user.isFailure) return null;
+        return user.getValue();
     }
 
     async findById(id: UserId): Promise<User | null> {
@@ -112,5 +110,17 @@ export class PrismaUserRepository implements IUserRepository {
             where: { phone }
         });
         return count > 0;
+    }
+    async findByGoogleId(googleId: string): Promise<User | null> {
+        const raw = await prisma.user.findUnique({
+            where: { google_id: googleId },
+            include: { UserRole: true }
+        });
+
+        if (!raw) return null;
+
+        const user = UserMapper.toDomain(raw as any);
+        if (user.isFailure) return null;
+        return user.getValue();
     }
 }

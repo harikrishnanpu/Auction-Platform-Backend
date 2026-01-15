@@ -7,8 +7,11 @@ import { ForgotPasswordUseCase } from '../../application/useCases/auth/forgot-pa
 import { ResetPasswordUseCase } from '../../application/useCases/auth/reset-password.usecase';
 import { RefreshTokenUseCase } from '../../application/useCases/auth/refresh-token.usecase';
 import { GetProfileUseCase } from '../../application/useCases/user/get-profile.usecase';
-import { registerSchema, loginSchema } from '../validators/auth.validator';
-import { RegisterUserDto, LoginUserDto, ForgotPasswordDto, ResetPasswordDto } from '../../application/dtos/auth/auth.dto';
+import { registerSchema, loginSchema, verifyEmailSchema } from '../validators/auth.validator';
+import { RegisterUserDto, LoginUserDto, ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto } from '../../application/dtos/auth/auth.dto';
+import { LoginWithGoogleUseCase } from '../../application/useCases/auth/login-google.usecase';
+import passport from 'passport';
+
 
 export class UserAuthController {
     constructor(
@@ -19,7 +22,8 @@ export class UserAuthController {
         private refreshTokenUseCase: RefreshTokenUseCase,
         private getProfileUseCase: GetProfileUseCase,
         private forgotPasswordUseCase: ForgotPasswordUseCase,
-        private resetPasswordUseCase: ResetPasswordUseCase
+        private resetPasswordUseCase: ResetPasswordUseCase,
+        private loginWithGoogleUseCase: LoginWithGoogleUseCase,
     ) { }
 
     private setCookies(res: Response, accessToken: string, refreshToken: string) {
@@ -156,18 +160,27 @@ export class UserAuthController {
 
     verifyEmail = async (req: Request, res: Response): Promise<any> => {
         try {
-            const { email, otp } = req.body;
-            if (!email || !otp) {
-                return res.status(400).json({ message: "Email and OTP are required" });
+            const parseResult = verifyEmailSchema.safeParse(req.body);
+
+            if (!parseResult.success) {
+                return res.status(400).json({ success: false, message: 'please sent correct credentials', error: parseResult.error });
             }
 
-            const result = await this.verifyEmailUseCase.execute({ email, otp });
+            const dto: VerifyEmailDto = {
+                email: parseResult.data.email,
+                otp: parseResult.data.otp
+            };
+
+            const result = await this.verifyEmailUseCase.execute(dto);
 
             if (result.isSuccess) {
                 const { accessToken, refreshToken } = result.getValue();
+
+
                 if (accessToken && refreshToken) {
                     this.setCookies(res, accessToken, refreshToken);
                 }
+
 
                 return res.status(200).json({
                     success: true,
@@ -175,11 +188,11 @@ export class UserAuthController {
                     user: result.getValue()
                 });
             } else {
-                return res.status(400).json({ message: result.error });
+                return res.status(400).json({ success: false, message: result.error });
             }
         } catch (err) {
             console.log(err);
-            return res.status(500).json({ message: 'Internal Server Error' });
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
         }
     }
 
@@ -229,12 +242,13 @@ export class UserAuthController {
 
     resetPassword = async (req: Request, res: Response): Promise<any> => {
         try {
-            const { email, otp, newPassword } = req.body;
-            if (!email || !otp || !newPassword) {
-                return res.status(400).json({ success: false, message: "Email, OTP and New Password are required" });
+            const { email, token, newPassword } = req.body;
+
+            if (!email || !token || !newPassword) {
+                return res.status(400).json({ success: false, message: "Email, token and New Password are required" });
             }
 
-            const dto: ResetPasswordDto = { email, otp, newPassword };
+            const dto: ResetPasswordDto = { email, token, newPassword };
             const result = await this.resetPasswordUseCase.execute(dto);
 
             if (result.isSuccess) {
@@ -246,5 +260,59 @@ export class UserAuthController {
             console.log(err);
             return res.status(500).json({ success: false, message: 'Internal Server Error' });
         }
+    }
+
+    logout = async (req: Request, res: Response): Promise<any> => {
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+        return res.status(200).json({ success: true, message: "Logged out successfully" });
+    }
+
+    googleAuth = (req: Request, res: Response, next: any) => {
+        const callBackUrl = (req.query.callBack as string) || '/login';
+        const state = Buffer.from(callBackUrl).toString('base64');
+
+        passport.authenticate('google', {
+            scope: ['profile', 'email'],
+            session: false,
+            state: state
+        })(req, res, next);
+    }
+
+    googleAuthCallback = async (req: Request, res: Response, next: any) => {
+        passport.authenticate('google', { session: false }, async (err: any, user: any, info: any) => {
+            console.log(user)
+            const rawState = req.query.state as string;
+            const returnTo = rawState ? Buffer.from(rawState, 'base64').toString('ascii') : '/login';
+
+            console.log(rawState);
+            console.log(returnTo);
+            
+            
+        
+            const clientRedirectUrl = `${process.env.CLIENT_URL}/${returnTo}`;
+            
+            if (err) {
+                return res.redirect(`${clientRedirectUrl}?error=GoogleAuthFailed`);
+            }
+            if (!user) {
+                return res.redirect(`${clientRedirectUrl}?error=NoUser`);
+            }
+
+            try {
+                const result = await this.loginWithGoogleUseCase.execute(user);
+
+                if (result.isSuccess) {
+                    const { accessToken, refreshToken, user: domainUser } = result.getValue();
+                    this.setCookies(res, accessToken, refreshToken);
+                    return res.redirect(`${process.env.CLIENT_URL}/`);
+                } else {
+                    return res.redirect(`${clientRedirectUrl}?error=${encodeURIComponent(result.error as string)}`);
+                }
+            } catch (error) {
+                console.log(error);
+                return res.redirect(`${clientRedirectUrl}?error=InternalServerError`);
+            }
+        })(req, res, next);
     }
 }

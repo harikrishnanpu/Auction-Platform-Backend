@@ -1,37 +1,36 @@
 import { Router } from 'express';
-import { AdminController } from '../controllers/admin.controller';
-import { authorize } from '../middlewares/authorize.middleware';
 import { AdminAuthController } from '../controllers/admin-auth.controller';
-import { adminAuthenticate } from '../middlewares/admin-authenticate.middleware';
+import { AdminController } from '../controllers/admin.controller';
+import { authenticate } from '../middlewares/authenticate.middleware';
+import { authorize } from '../middlewares/authorize.middleware';
+import { UserRole } from '../../domain/user/user.entity';
 
 export class AdminRoutes {
     private _router: Router;
 
     constructor(
-        private adminController: AdminController,
-        private adminAuthController: AdminAuthController
+        private _adminAuthController: AdminAuthController,
+        private _adminController: AdminController
     ) {
         this._router = Router();
     }
 
     public register() {
-        // Auth routes (no authentication required)
-        this._router.post('/auth/login', this.adminAuthController.login.bind(this.adminAuthController));
-        
-        // User management routes (require authentication and admin role)
-        this._router.get('/users', adminAuthenticate, authorize(['ADMIN']), this.adminController.getUsers.bind(this.adminController));
-        this._router.get('/users/:id', adminAuthenticate, authorize(['ADMIN']), this.adminController.getUserById.bind(this.adminController));
-        this._router.put('/users/:id', adminAuthenticate, authorize(['ADMIN']), this.adminController.updateUser.bind(this.adminController));
-        this._router.patch('/users/:id/block', adminAuthenticate, authorize(['ADMIN']), this.adminController.blockUser.bind(this.adminController));
-        this._router.delete('/users/:id', adminAuthenticate, authorize(['ADMIN']), this.adminController.deleteUser.bind(this.adminController));
-        
-        // Seller management routes
-        this._router.get('/sellers', adminAuthenticate, authorize(['ADMIN']), this.adminController.getSellers.bind(this.adminController));
-        this._router.get('/sellers/:id', adminAuthenticate, authorize(['ADMIN']), this.adminController.getSellerById.bind(this.adminController));
-        this._router.patch('/sellers/:id/verify-kyc', adminAuthenticate, authorize(['ADMIN']), this.adminController.verifySellerKyc.bind(this.adminController));
-        this._router.patch('/sellers/:id/block', adminAuthenticate, authorize(['ADMIN']), this.adminController.blockUser.bind(this.adminController));
-        this._router.post('/sellers/:id/assign-role', adminAuthenticate, authorize(['ADMIN']), this.adminController.assignSellerRole.bind(this.adminController));
-        
+        this._router.post('/auth/login', this._adminAuthController.login);
+        this._router.get('/stats', authenticate, authorize([UserRole.ADMIN]), this._adminController.getStats.bind(this._adminController));
+
+        // Management Routes
+        this._router.get('/users', authenticate, authorize([UserRole.ADMIN]), this._adminController.getUsers.bind(this._adminController));
+        this._router.get('/users/:id', authenticate, authorize([UserRole.ADMIN]), this._adminController.getUserById.bind(this._adminController));
+        this._router.put('/users/:id', authenticate, authorize([UserRole.ADMIN]), this._adminController.updateUser.bind(this._adminController));
+        this._router.post('/users/:id/block', authenticate, authorize([UserRole.ADMIN]), this._adminController.blockUser.bind(this._adminController));
+        this._router.delete('/users/:id', authenticate, authorize([UserRole.ADMIN]), this._adminController.deleteUser.bind(this._adminController));
+
+        this._router.get('/sellers', authenticate, authorize([UserRole.ADMIN]), this._adminController.getSellers.bind(this._adminController));
+        this._router.get('/sellers/:id', authenticate, authorize([UserRole.ADMIN]), this._adminController.getSellerById.bind(this._adminController));
+        this._router.post('/sellers/:id/verify', authenticate, authorize([UserRole.ADMIN]), this._adminController.verifySellerKyc.bind(this._adminController));
+        this._router.post('/sellers/:id/assign-role', authenticate, authorize([UserRole.ADMIN]), this._adminController.assignSellerRole.bind(this._adminController));
+
         return this._router;
     }
 }

@@ -37,7 +37,7 @@ export class PrismaOTPRepository implements IOTPRepository {
         return this.toDomain(otpModel);
     }
 
-    async findByIdentifierAndPurpose(identifier: string, purpose: OtpPurpose): Promise<OTP | null> {
+    async findByIdAndPurpose(identifier: string, purpose: OtpPurpose): Promise<OTP | null> {
         const otpModel = await this.prisma.oTPVerification.findFirst({
             where: { identifier: identifier, purpose: purpose },
             orderBy: { created_at: 'desc' }
@@ -47,8 +47,8 @@ export class PrismaOTPRepository implements IOTPRepository {
         return this.toDomain(otpModel);
     }
 
-    async findLatestByIdentifierAndPurpose(identifier: string, purpose: OtpPurpose): Promise<OTP | null> {
-        return this.findByIdentifierAndPurpose(identifier, purpose);
+    async findLatestByIdAndPurpose(identifier: string, purpose: OtpPurpose): Promise<OTP | null> {
+        return this.findByIdAndPurpose(identifier, purpose);
     }
 
     private toDomain(model: any): OTP {

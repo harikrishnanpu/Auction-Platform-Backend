@@ -5,16 +5,14 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function createAdmin() {
-    const email = 'admin@example.com';  // Change this
-    const password = 'admin123';  // Change this
+    const email = 'admin@hm.com'; 
+    const password = 'admin123'; 
     const name = 'Admin User';
-    const phone = '+1234567890';  // Change this (must be unique)
+    const phone = '+1234567890';  
     const address = 'Admin Address';
 
-    // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user
     const user = await prisma.user.create({
         data: {
             name,

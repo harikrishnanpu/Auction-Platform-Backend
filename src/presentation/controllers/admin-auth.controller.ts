@@ -9,18 +9,18 @@ export class AdminAuthController {
     ) { }
 
     private setCookies(res: Response, accessToken: string, refreshToken: string) {
-        res.cookie('adminAccessToken', accessToken, {
+        res.cookie('accessToken', accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 15 * 60 * 1000 // 15 minutes
+            maxAge: 15 * 60 * 1000 
         });
 
-        res.cookie('adminRefreshToken', refreshToken, {
+        res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            maxAge: 7 * 24 * 60 * 60 * 1000 
         });
     }
 
@@ -44,7 +44,7 @@ export class AdminAuthController {
 
                 return res.status(200).json({
                     message: "Admin Login successful",
-                    user: {
+                    admin: {
                         id: user.id,
                         name: user.name,
                         email: user.email,

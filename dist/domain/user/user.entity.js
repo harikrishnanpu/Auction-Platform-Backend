@@ -44,9 +44,6 @@ class User extends entity_1.Entity {
             is_verified: props.is_verified ?? false,
             created_at: props.created_at || new Date()
         }, id);
-        if (!id) {
-            user.addDomainEvent(new user_events_1.UserRegisteredDomainEvent(user_id_vo_1.UserId.create(user.id).getValue(), user.email));
-        }
         return result_1.Result.ok(user);
     }
     hasRole(role) {
@@ -63,11 +60,6 @@ class User extends entity_1.Entity {
     verify() {
         this.props.is_verified = true;
     }
-    addDomainEvent(event) {
-        this._domainEvents.push(event);
-    }
-    clearEvents() {
-        this._domainEvents = [];
-    }
+
 }
 exports.User = User;

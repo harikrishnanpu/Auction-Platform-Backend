@@ -14,7 +14,9 @@ export class GetUsersUseCase {
             name: user.name,
             email: user.email.value,
             roles: user.roles,
-            // Omit tokens for listing
+            is_blocked: user.is_blocked,
+            is_verified: user.is_verified,
+            is_active: user.is_active,
         }));
 
         return Result.ok<UserListResponseDto>({

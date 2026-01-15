@@ -6,11 +6,13 @@ import { OtpPurpose, OtpStatus } from "../../../domain/otp/otp.entity";
 import { Email } from "../../../domain/user/email.vo";
 import { Password } from "../../../domain/user/password.vo";
 import bcrypt from 'bcryptjs';
+import { ILogger } from "@application/ports/logger.port";
 
 export class ResetPasswordUseCase {
     constructor(
         private userRepository: IUserRepository,
-        private otpRepository: IOTPRepository
+        private otpRepository: IOTPRepository,
+        private logger: ILogger
     ) { }
 
     public async execute(dto: ResetPasswordDto): Promise<Result<void>> {
@@ -18,12 +20,10 @@ export class ResetPasswordUseCase {
         if (emailResult.isFailure) return Result.fail(emailResult.error as string);
         const email = emailResult.getValue();
 
-        // 1. Find User
         const user = await this.userRepository.findByEmail(email);
         if (!user) return Result.fail("User not found");
 
-        // 2. Verify OTP
-        const otpRecord = await this.otpRepository.findLatestByIdentifierAndPurpose(
+        const otpRecord = await this.otpRepository.findLatestByIdAndPurpose(
             user.email.value,
             OtpPurpose.RESET_PASSWORD
         );
@@ -32,8 +32,7 @@ export class ResetPasswordUseCase {
             return Result.fail("Invalid or expired reset token");
         }
 
-        if (otpRecord.otp_hash !== dto.otp) {
-            // Increment attempts logic could go here
+        if (otpRecord.otp_hash !== dto.token) {
             return Result.fail("Invalid OTP");
         }
 
@@ -45,11 +44,9 @@ export class ResetPasswordUseCase {
             return Result.fail("OTP already used");
         }
 
-        // 3. Mark OTP as Verified
         otpRecord.markAsVerified();
         await this.otpRepository.save(otpRecord);
 
-        // 4. Hash and Update Password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(dto.newPassword, salt);
 
@@ -58,7 +55,6 @@ export class ResetPasswordUseCase {
 
         user.changePassword(passwordResult.getValue());
 
-        // 5. Save User
         await this.userRepository.save(user);
 
         return Result.ok<void>();

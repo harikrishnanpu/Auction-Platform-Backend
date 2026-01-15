@@ -12,7 +12,7 @@ export interface AdminUserDetailDto {
     id: string;
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
     address: string;
     avatar_url?: string;
     roles: string[];
@@ -20,4 +20,11 @@ export interface AdminUserDetailDto {
     is_blocked: boolean;
     is_verified: boolean;
     joined_at: Date;
+}
+
+export interface AdminStatsDto {
+    totalUsers: number;
+    pendingKyc: number;
+    activeSellers: number;
+    suspendedUsers: number;
 }
