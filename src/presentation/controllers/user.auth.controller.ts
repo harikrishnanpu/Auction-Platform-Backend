@@ -269,35 +269,49 @@ export class UserAuthController {
     }
 
     googleAuth = (req: Request, res: Response, next: any) => {
+        const callBackUrl = (req.query.callBack as string) || '/login';
+        const state = Buffer.from(callBackUrl).toString('base64');
+
         passport.authenticate('google', {
             scope: ['profile', 'email'],
-            session: false
+            session: false,
+            state: state
         })(req, res, next);
     }
 
     googleAuthCallback = async (req: Request, res: Response, next: any) => {
         passport.authenticate('google', { session: false }, async (err: any, user: any, info: any) => {
+            console.log(user)
+            const rawState = req.query.state as string;
+            const returnTo = rawState ? Buffer.from(rawState, 'base64').toString('ascii') : '/login';
+
+            console.log(rawState);
+            console.log(returnTo);
+            
+            
+        
+            const clientRedirectUrl = `${process.env.CLIENT_URL}/${returnTo}`;
+            
             if (err) {
-                return res.redirect(`${process.env.CLIENT_URL}/login?error=GoogleAuthFailed`);
+                return res.redirect(`${clientRedirectUrl}?error=GoogleAuthFailed`);
             }
             if (!user) {
-                return res.redirect(`${process.env.CLIENT_URL}/login?error=NoUser`);
+                return res.redirect(`${clientRedirectUrl}?error=NoUser`);
             }
 
             try {
-                // User is the google profile attached by strategy
                 const result = await this.loginWithGoogleUseCase.execute(user);
 
                 if (result.isSuccess) {
                     const { accessToken, refreshToken, user: domainUser } = result.getValue();
                     this.setCookies(res, accessToken, refreshToken);
-                    return res.redirect(`${process.env.CLIENT_URL}/`); // Redirect to landing
+                    return res.redirect(`${process.env.CLIENT_URL}/`);
                 } else {
-                    return res.redirect(`${process.env.CLIENT_URL}/login?error=${encodeURIComponent(result.error as string)}`);
+                    return res.redirect(`${clientRedirectUrl}?error=${encodeURIComponent(result.error as string)}`);
                 }
             } catch (error) {
-                console.error(error);
-                return res.redirect(`${process.env.CLIENT_URL}/login?error=InternalServerError`);
+                console.log(error);
+                return res.redirect(`${clientRedirectUrl}?error=InternalServerError`);
             }
         })(req, res, next);
     }

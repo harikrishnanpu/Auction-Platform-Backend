@@ -1,9 +1,9 @@
-import { ItokenGenerator } from "@domain/services/token/token.service";
+import { IResetTokenService } from "@application/services/token/reset.token.service";
 import {  v4 as uuidv4 } from "uuid";
 
 
 
-export class TokenGenerator implements ItokenGenerator {
+export class ResetTokenService implements IResetTokenService {
 
     generateToken(length: number = 32): string {
         return uuidv4().replace(/-/g, '').slice(0, length);

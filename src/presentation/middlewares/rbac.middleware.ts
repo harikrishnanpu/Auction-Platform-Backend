@@ -4,8 +4,6 @@ import { UserRole } from '../../domain/user/user.entity';
 export const requireRole = (allowedRoles: UserRole[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
         try {
-            // Assuming req.user is populated by authenticate middleware
-            // req.user usually contains payload from token: { userId, roles, etc }
             const user = (req as any).user;
 
             if (!user) {
@@ -16,7 +14,6 @@ export const requireRole = (allowedRoles: UserRole[]) => {
                 return res.status(403).json({ message: "Access forbidden: No roles found" });
             }
 
-            // Check if user has at least one of the allowed roles
             const hasRole = user.roles.some((role: UserRole) => allowedRoles.includes(role));
 
             if (!hasRole) {

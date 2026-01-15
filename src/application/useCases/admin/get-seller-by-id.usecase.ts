@@ -8,7 +8,7 @@ export interface SellerDetailDto {
     id: string;
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
     address: string;
     avatar_url?: string;
     roles: string[];

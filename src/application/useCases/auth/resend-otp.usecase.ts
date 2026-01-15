@@ -1,6 +1,6 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
 import { IOTPRepository } from "../../../domain/otp/otp.repository";
-import { IEmailService } from "../../../domain/services/email/email.service";
+import { IEmailService } from "../../services/email/email.service";
 import { Result } from "../../../domain/shared/result";
 import { ResendOtpDto } from "../../dtos/auth/auth.dto";
 import { OTP, OtpChannel, OtpPurpose, OtpStatus } from "../../../domain/otp/otp.entity";

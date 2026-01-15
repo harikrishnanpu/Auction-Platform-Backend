@@ -1,4 +1,4 @@
-import { IStorageService } from '../../../domain/services/storage/storage.service';
+import { IStorageService } from '../../services/storage/storage.service';
 import { GenerateUploadUrlDto, UploadUrlResponseDto } from '../../dtos/kyc/kyc.dto';
 import { Result } from '../../../domain/shared/result';
 import { v4 as uuidv4 } from 'uuid';

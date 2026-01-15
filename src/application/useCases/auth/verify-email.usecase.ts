@@ -2,18 +2,18 @@ import { IOTPRepository } from "../../../domain/otp/otp.repository";
 import { Result } from "../../../domain/shared/result";
 import { VerifyEmailDto } from "../../dtos/auth/auth.dto";
 import { OtpPurpose, OtpStatus } from "../../../domain/otp/otp.entity";
-import { IJwtService } from "../../../domain/services/auth/auth.service";
 import { Email } from "../../../domain/user/email.vo";
 
 import { UserResponseDto } from "../../dtos/auth/auth.dto";
 import { ILogger } from "@application/ports/logger.port";
 import { IUserRepository } from "@domain/user/user.repository";
+import { ITokenService, TokenPayload } from "@application/services/token/auth.token.service";
 
 export class VerifyEmailUseCase {
     constructor(
         private userRepository: IUserRepository,
         private otpRepository: IOTPRepository,
-        private jwtService: IJwtService,
+        private tokenService: ITokenService,
         private logger: ILogger
     ) { }
 
@@ -51,17 +51,14 @@ export class VerifyEmailUseCase {
         user.verify();
         await this.userRepository.save(user);
 
-        const accessToken = this.jwtService.sign({
+        const payload: TokenPayload = {
             userId: user.id.toString(),
             email: user.props.email.value,
-            role: user.props.roles[0]
-        });
+            roles: user.props.roles
+        }
 
-        const refreshToken = this.jwtService.sign({
-            userId: user.id.toString(),
-            email: user.props.email.value,
-            role: user.props.roles[0]
-        });
+        const tokens = this.tokenService.generateTokens(payload);
+
 
         return Result.ok({
             id: user.id.toString(),
@@ -69,8 +66,7 @@ export class VerifyEmailUseCase {
             email: user.props.email.value,
             roles: user.props.roles,
             is_verified: user.props.is_verified,
-            accessToken,
-            refreshToken
+            ...tokens
         });
     }
 }

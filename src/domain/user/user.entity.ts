@@ -65,4 +65,10 @@ export class User extends Entity<UserProps> {
     public changePassword(newPassword: Password): void {
         this.props.password = newPassword;
     }
+
+    public addRole(role: UserRole): void {
+        this.props.roles.push(role);
+    }
+
+    
 }

@@ -1,6 +1,6 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
-import { IPasswordHasher, IJwtService } from "../../../domain/services/auth/auth.service";
-import { IEmailService } from "../../../domain/services/email/email.service";
+import { IPasswordHasher } from "../../services/auth/auth.service";
+import { IEmailService } from "../../services/email/email.service";
 import { RegisterUserDto, UserResponseDto } from "../../dtos/auth/auth.dto";
 import { Result } from "../../../domain/shared/result";
 import { Email } from "../../../domain/user/email.vo";

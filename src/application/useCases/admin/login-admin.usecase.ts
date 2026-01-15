@@ -1,15 +1,16 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
-import { IPasswordHasher, IJwtService } from "../../../domain/services/auth/auth.service";
+import { IPasswordHasher } from "../../services/auth/auth.service";
 import { LoginUserDto, UserResponseDto } from "../../dtos/auth/auth.dto";
 import { Result } from "../../../domain/shared/result";
 import { Email } from "../../../domain/user/email.vo";
 import { UserRole } from "../../../domain/user/user.entity";
+import { ITokenService, TokenPayload } from "@application/services/token/auth.token.service";
 
 export class LoginAdminUseCase {
     constructor(
         private userRepository: IUserRepository,
         private passwordHasher: IPasswordHasher,
-        private adminJwtService: IJwtService
+        private tokenService: ITokenService
     ) { }
 
     public async execute(dto: LoginUserDto): Promise<Result<UserResponseDto>> {
@@ -18,13 +19,11 @@ export class LoginAdminUseCase {
 
         const email = emailResult.getValue();
 
-        // 1. Find User
         const user = await this.userRepository.findByEmail(email);
         if (!user) {
             return Result.fail("Invalid email or password");
         }
 
-        // 2. Check for Admin Role
         if (!user.roles.includes(UserRole.ADMIN)) {
             return Result.fail("Access Denied: Admin privileges required.");
         }
@@ -33,24 +32,25 @@ export class LoginAdminUseCase {
             return Result.fail("Invalid email or password");
         }
 
-        // 3. Compare Password
         const isValidPassword = await this.passwordHasher.compare(dto.password, user.password.value);
         if (!isValidPassword) {
             return Result.fail("Invalid email or password");
         }
 
-        // 4. Generate Admin Tokens using Admin JWT Service
-        const accessToken = this.adminJwtService.sign({ userId: user.id.toString(), roles: user.roles });
-        const refreshToken = this.adminJwtService.signRefresh({ userId: user.id.toString(), roles: user.roles });
+        const payload: TokenPayload = {
+            userId: user.id.toString(),
+            email: user.email.value,
+            roles: user.roles
+        }
 
-        // 5. Return DTO
+        const tokens = this.tokenService.generateTokens(payload)
+
         return Result.ok<UserResponseDto>({
             id: user.id.toString(),
             name: user.name,
             email: user.email.value,
             roles: user.roles,
-            accessToken: accessToken,
-            refreshToken: refreshToken
+            ...tokens
         });
     }
 }

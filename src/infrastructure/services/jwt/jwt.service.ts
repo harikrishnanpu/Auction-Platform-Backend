@@ -1,13 +1,8 @@
+import { ITokenService, TokenPayload } from '@application/services/token/auth.token.service';
 import jwt from 'jsonwebtoken';
-import { UserRole } from '../../domain/user/user.entity';
 
-export interface TokenPayload {
-    userId: string;
-    email: string;
-    roles: UserRole[];
-}
 
-export class TokenService {
+export class TokenService implements ITokenService {
     private readonly accessTokenSecret: string;
     private readonly refreshTokenSecret: string;
     private readonly accessTokenExpiry: string;
@@ -23,7 +18,7 @@ export class TokenService {
         this.refreshTokenExpiry = process.env.JWT_REFRESH_EXPIRY || '7d';
     }
 
-    public generateTokens(payload: TokenPayload): { accessToken: string; refreshToken: string } {
+     public generateTokens(payload: TokenPayload): { accessToken: string; refreshToken: string } {
         const accessToken = jwt.sign(payload, this.accessTokenSecret, {
             expiresIn: this.accessTokenExpiry as any,
         });

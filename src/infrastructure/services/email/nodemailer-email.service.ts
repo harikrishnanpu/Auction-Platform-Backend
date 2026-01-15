@@ -1,4 +1,4 @@
-import { IEmailService } from '../../../domain/services/email/email.service';
+import { IEmailService } from '../../../application/services/email/email.service';
 import { Queue } from 'bullmq';
 
 interface EmailJobData {

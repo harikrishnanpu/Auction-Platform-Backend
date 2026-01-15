@@ -1,5 +1,5 @@
+import { tokenService } from '../../infrastructure/services/jwt/jwt.service';
 import { Request, Response, NextFunction } from 'express';
-import { jwtService } from '../../Di/services.di';
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
     let token;
@@ -19,7 +19,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
         return res.status(401).json({ message: 'No token provided' });
     }
 
-    const decoded = jwtService.verify(token);
+    const decoded = tokenService.verifyAccessToken(token);
 
     if (!decoded) {
         return res.status(401).json({ message: 'Invalid token' });

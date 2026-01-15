@@ -1,6 +1,6 @@
 import { User, UserRole } from "../../../domain/user/user.entity";
 import { IUserRepository } from "../../../domain/user/user.repository";
-import { TokenService, TokenPayload } from "../../services/token.service";
+import { ITokenService, TokenPayload } from "../../services/token/auth.token.service";
 import { Email } from "../../../domain/user/email.vo";
 import { Result } from "../../../domain/shared/result";
 
@@ -14,7 +14,7 @@ interface GoogleUserDto {
 export class LoginWithGoogleUseCase {
     constructor(
         private userRepository: IUserRepository,
-        private tokenService: TokenService
+        private tokenService: ITokenService
     ) { }
 
     async execute(dto: GoogleUserDto): Promise<Result<{ accessToken: string; refreshToken: string; user: User }>> {
@@ -31,7 +31,15 @@ export class LoginWithGoogleUseCase {
                 const existingUser = await this.userRepository.findByEmail(email);
 
                 if (existingUser) {
-                    return Result.fail("User with this email already exists. Please login with password.");
+                const payload: TokenPayload = {
+                userId: existingUser.id.toString(),
+                email: existingUser.props.email.value,
+                roles: existingUser.props.roles
+            };
+
+            const tokens = this.tokenService.generateTokens(payload);
+
+            return Result.ok({ ...tokens, user: existingUser });
                 }
 
                 const userProps = {
@@ -46,7 +54,7 @@ export class LoginWithGoogleUseCase {
                     is_verified: true,
                     created_at: new Date(),
                     googleId: dto.googleId,
-                    password: undefined // Optional in modified entity
+                    password: undefined
                 };
 
                 const userResult = User.create(userProps as any);

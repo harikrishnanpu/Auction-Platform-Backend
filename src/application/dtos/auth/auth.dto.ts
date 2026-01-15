@@ -39,6 +39,7 @@ export interface UserResponseDto {
     roles: string[];
     is_active?: boolean;
     is_verified?: boolean;
+    is_blocked?: boolean;
     phone?: string;
     address?: string;
     avatar_url?: string;

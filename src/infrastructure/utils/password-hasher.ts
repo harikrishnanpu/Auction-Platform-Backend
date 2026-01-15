@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { IPasswordHasher } from '../../domain/services/auth/auth.service';
+import { IPasswordHasher } from '../../application/services/auth/auth.service';
 
 export class BcryptPasswordHasher implements IPasswordHasher {
     private readonly saltRounds = 10;

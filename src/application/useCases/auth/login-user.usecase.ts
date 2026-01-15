@@ -1,15 +1,16 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
-import { IPasswordHasher, IJwtService } from "../../../domain/services/auth/auth.service";
+import { IPasswordHasher } from "../../services/auth/auth.service";
 import { LoginUserDto, UserResponseDto } from "../../dtos/auth/auth.dto";
 import { Result } from "../../../domain/shared/result";
 import { Email } from "../../../domain/user/email.vo";
 import { ILogger } from "../../ports/logger.port";
+import { ITokenService, TokenPayload } from "@application/services/token/auth.token.service";
 
 export class LoginUserUseCase {
     constructor(
         private userRepository: IUserRepository,
         private passwordHasher: IPasswordHasher,
-        private jwtService: IJwtService,
+        private tokenService: ITokenService,
         private logger: ILogger
     ) { }
 
@@ -45,17 +46,20 @@ export class LoginUserUseCase {
             }
         }
 
+        const payload: TokenPayload = {
+            userId: user.id.toString(),
+            email: user.props.email.value,
+            roles: user.props.roles
+        }
 
-        const accessToken = this.jwtService.sign({ userId: user.id.toString(), roles: user.props.roles });
-        const refreshToken = this.jwtService.signRefresh({ userId: user.id.toString(), roles: user.props.roles });
+        const tokens = this.tokenService.generateTokens(payload);
 
         return Result.ok<UserResponseDto>({
             id: user.id.toString(),
             name: user.props.name,
             email: user.props.email.value,
             roles: user.props.roles,
-            accessToken: accessToken,
-            refreshToken: refreshToken
+            ...tokens
         });
     }
 }

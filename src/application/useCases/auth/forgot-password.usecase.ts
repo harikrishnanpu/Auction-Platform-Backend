@@ -1,13 +1,13 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
 import { IOTPRepository } from "../../../domain/otp/otp.repository";
-import { IEmailService } from "../../../domain/services/email/email.service";
+import { IEmailService } from "../../services/email/email.service";
 import { Result } from "../../../domain/shared/result";
 import { ForgotPasswordDto } from "../../dtos/auth/auth.dto";
 import { OTP, OtpChannel, OtpPurpose, OtpStatus } from "../../../domain/otp/otp.entity";
 import { Email } from "../../../domain/user/email.vo";
 import { ILogger } from "@application/ports/logger.port";
-import { ItokenGenerator } from "@domain/services/token/token.service";
 import dotenv from 'dotenv';
+import { IResetTokenService } from "@application/services/token/reset.token.service";
 dotenv.config();
 
 
@@ -19,7 +19,7 @@ export class ForgotPasswordUseCase {
         private otpRepository: IOTPRepository,
         private emailService: IEmailService,
         private logger: ILogger,
-        private tokenGenerator: ItokenGenerator,
+        private resetTokenService: IResetTokenService,
     ) { }
 
     public async execute(dto: ForgotPasswordDto): Promise<Result<void>> {
@@ -39,7 +39,7 @@ export class ForgotPasswordUseCase {
             return Result.fail("User account not verified");
         }
 
-        const resetToken = this.tokenGenerator.generateToken(32);
+        const resetToken = this.resetTokenService.generateToken(32);
 
         this.logger.info("Reset Password Token Generated");
 
