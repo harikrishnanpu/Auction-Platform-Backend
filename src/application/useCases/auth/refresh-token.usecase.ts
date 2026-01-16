@@ -10,7 +10,7 @@ export class RefreshTokenUseCase {
         private userRepository: IUserRepository,
         private tokenService: ITokenService,
         private logger: ILogger
-        
+
     ) { }
 
     public async execute(refreshToken: string): Promise<Result<UserResponseDto>> {
@@ -25,7 +25,7 @@ export class RefreshTokenUseCase {
 
         const userId = UserId.create(decoded.userId);
 
-        if(userId.isFailure) {
+        if (userId.isFailure) {
             return Result.fail('Invalid User ID');
         }
 
@@ -35,8 +35,8 @@ export class RefreshTokenUseCase {
             return Result.fail("User not found");
         }
 
-        const payload: TokenPayload = 
-            {
+        const payload: TokenPayload =
+        {
             userId: user.id.toString(),
             email: user.email.value,
             roles: user.roles

@@ -22,7 +22,10 @@ export const requireRole = (allowedRoles: UserRole[]) => {
 
             next();
         } catch (error) {
-            console.error("RBAC Middleware Error:", error);
+
+
+            console.log("RBAC Middleware Error:", error);
+            
             return res.status(500).json({ message: "Internal Server Error" });
         }
     }

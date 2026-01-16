@@ -7,25 +7,20 @@ export class GenerateUploadUrlUseCase {
     constructor(private storageService: IStorageService) { }
 
     async execute(dto: GenerateUploadUrlDto): Promise<Result<UploadUrlResponseDto>> {
-        // Validate file type
+
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
         if (!allowedTypes.includes(dto.contentType)) {
             return Result.fail('Invalid file type. Only JPEG, PNG, and PDF are allowed.');
         }
 
-        // Validate file size (5MB limit)
-        // Note: Actual file size validation should be done on frontend before requesting URL
-
-        // Generate unique file key
         const fileExtension = dto.fileName.split('.').pop() || 'bin';
         const fileKey = `kyc/${dto.userId}/${dto.documentType}/${uuidv4()}.${fileExtension}`;
 
         try {
-            // Generate pre-signed URL (valid for 1 hour)
             const uploadUrl = await this.storageService.getPresignedUploadUrl(
                 fileKey,
                 dto.contentType,
-                3600 // 1 hour
+                3600
             );
 
             return Result.ok<UploadUrlResponseDto>({

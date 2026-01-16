@@ -4,15 +4,11 @@ import { Request, Response, NextFunction } from 'express';
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
     let token;
 
-    const authHeader = req.headers.authorization;
-
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.split(' ')[1];
-    } else if (req.cookies && req.cookies.accessToken) {
+    if (req.cookies && req.cookies.accessToken) {
         token = req.cookies.accessToken;
     }
 
-    console.log("Token", token);
+    console.log("Token:", token);
 
 
     if (!token) {

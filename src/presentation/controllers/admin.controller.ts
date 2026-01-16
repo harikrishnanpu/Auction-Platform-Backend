@@ -8,7 +8,7 @@ import { GetSellersUseCase } from '../../application/useCases/admin/get-sellers.
 import { GetSellerByIdUseCase } from '../../application/useCases/admin/get-seller-by-id.usecase';
 import { VerifySellerKycUseCase } from '../../application/useCases/admin/verify-seller-kyc.usecase';
 import { AssignSellerRoleUseCase } from '../../application/useCases/admin/assign-seller-role.usecase';
-import { GetAdminStatsUseCase } from '../../application/useCases/admin/get-admin-stats.usecase';
+import { GetAdminStatsUseCase } from '@application/useCases/admin/get-admin-stats.usecase';
 
 export class AdminController {
     constructor(
@@ -24,7 +24,7 @@ export class AdminController {
         private getAdminStatsUseCase: GetAdminStatsUseCase
     ) { }
 
-    public async getStats(req: Request, res: Response): Promise<void> {
+    public getStats = async (req: Request, res: Response): Promise<void> => {
         const result = await this.getAdminStatsUseCase.execute();
 
         if (result.isSuccess) {
@@ -34,7 +34,8 @@ export class AdminController {
         }
     }
 
-    public async getUsers(req: Request, res: Response): Promise<void> {
+    public getUsers = async (req: Request, res: Response): Promise<void> => {
+        
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         const search = req.query.search as string;
@@ -50,7 +51,7 @@ export class AdminController {
         }
     }
 
-    public async getUserById(req: Request, res: Response): Promise<void> {
+    public getUserById = async (req: Request, res: Response): Promise<void> => {
         const id = req.params.id;
 
         const result = await this.getUserByIdUseCase.execute(id);
@@ -62,7 +63,7 @@ export class AdminController {
         }
     }
 
-    public async updateUser(req: Request, res: Response): Promise<void> {
+    public updateUser = async (req: Request, res: Response): Promise<void> => {
         const id = req.params.id;
         const dto = req.body;
 
@@ -75,7 +76,7 @@ export class AdminController {
         }
     }
 
-    public async blockUser(req: Request, res: Response): Promise<void> {
+    public blockUser = async (req: Request, res: Response): Promise<void> => {
         const id = req.params.id;
         const block = req.body.block === true;
 
@@ -88,7 +89,7 @@ export class AdminController {
         }
     }
 
-    public async deleteUser(req: Request, res: Response): Promise<void> {
+    public deleteUser = async (req: Request, res: Response): Promise<void> => {
         const id = req.params.id;
 
         const result = await this.deleteUserUseCase.execute(id);
@@ -100,7 +101,7 @@ export class AdminController {
         }
     }
 
-    public async getSellers(req: Request, res: Response): Promise<void> {
+    public getSellers = async (req: Request, res: Response): Promise<void> => {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
 
@@ -113,7 +114,7 @@ export class AdminController {
         }
     }
 
-    public async getSellerById(req: Request, res: Response): Promise<void> {
+    public getSellerById = async (req: Request, res: Response): Promise<void> => {
         const id = req.params.id;
 
         const result = await this.getSellerByIdUseCase.execute(id);
@@ -125,7 +126,7 @@ export class AdminController {
         }
     }
 
-    public async verifySellerKyc(req: Request, res: Response): Promise<void> {
+    public verifySellerKyc = async (req: Request, res: Response): Promise<void> => {
         const id = req.params.id;
         const verify = req.body.verify === true;
 
@@ -138,7 +139,7 @@ export class AdminController {
         }
     }
 
-    public async assignSellerRole(req: Request, res: Response): Promise<void> {
+    public assignSellerRole = async (req: Request, res: Response): Promise<void> => {
         const id = req.params.id;
 
         const result = await this.assignSellerRoleUseCase.execute(id);
