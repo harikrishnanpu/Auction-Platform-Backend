@@ -30,15 +30,18 @@ export class GetSellerByIdUseCase {
         const user = await this.userRepository.findById(userIdOrError.getValue());
         if (!user) return Result.fail("User not found");
 
-        // Check if user has SELLER role
-        if (!user.roles.includes(UserRole.SELLER)) {
-            return Result.fail("User is not a seller");
-        }
-
-        // Get KYC profile
+        // Check if user has SELLER role OR pending seller KYC
+        const hasSellerRole = user.roles.includes(UserRole.SELLER);
         const kycProfile = await prisma.kYCProfile.findFirst({
-            where: { user_id: id }
+            where: {
+                user_id: id,
+                kyc_type: 'SELLER'
+            } as any
         });
+
+        if (!hasSellerRole && (!kycProfile || kycProfile.verification_status !== 'PENDING')) {
+            return Result.fail("User is not a seller and has no pending seller KYC");
+        }
 
         return Result.ok<SellerDetailDto>({
             id: user.id.toString(),

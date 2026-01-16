@@ -55,6 +55,10 @@ export class CompleteKycUploadUseCase {
                 updateData.address = dto.address;
             }
 
+            if (dto.kycType) {
+                updateData.kyc_type = dto.kycType;
+            }
+
             if (existingKyc) {
                 // Update existing KYC profile
                 await prisma.kYCProfile.update({

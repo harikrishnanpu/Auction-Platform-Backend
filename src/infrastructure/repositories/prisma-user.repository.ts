@@ -75,16 +75,33 @@ export class PrismaUserRepository implements IUserRepository {
         return userOrError.getValue();
     }
 
-    async findAll(page: number, limit: number): Promise<{ users: User[], total: number }> {
+    async findAll(page: number, limit: number, search?: string, sortBy?: string, sortOrder: 'asc' | 'desc' = 'desc'): Promise<{ users: User[], total: number }> {
         const skip = (page - 1) * limit;
+
+        const where: any = {};
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        const orderBy: any = {};
+        if (sortBy) {
+            orderBy[sortBy] = sortOrder;
+        } else {
+            orderBy.created_at = 'desc';
+        }
+
         const [rawUsers, total] = await Promise.all([
             prisma.user.findMany({
+                where,
                 skip,
                 take: limit,
                 include: { UserRole: true },
-                orderBy: { created_at: 'desc' }
+                orderBy
             }),
-            prisma.user.count()
+            prisma.user.count({ where })
         ]);
 
         const users: User[] = [];

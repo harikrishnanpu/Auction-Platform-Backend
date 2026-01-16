@@ -39,6 +39,7 @@ export class SubmitKycUseCase {
             where: { kyc_id: kycProfile.kyc_id },
             data: {
                 verification_status: 'PENDING',
+                kyc_type: 'SELLER', // Explicitly setting it here if needed, or keeping it as is
                 updated_at: new Date()
             }
         });

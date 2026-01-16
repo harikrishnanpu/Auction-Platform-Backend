@@ -37,8 +37,11 @@ export class AdminController {
     public async getUsers(req: Request, res: Response): Promise<void> {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
+        const search = req.query.search as string;
+        const sortBy = req.query.sortBy as string;
+        const sortOrder = req.query.sortOrder as 'asc' | 'desc';
 
-        const result = await this.getUsersUseCase.execute(page, limit);
+        const result = await this.getUsersUseCase.execute(page, limit, search, sortBy, sortOrder);
 
         if (result.isSuccess) {
             res.status(200).json(result.getValue());

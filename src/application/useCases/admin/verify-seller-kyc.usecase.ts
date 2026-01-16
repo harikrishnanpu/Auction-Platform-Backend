@@ -16,7 +16,10 @@ export class VerifySellerKycUseCase {
 
         // Update KYC status
         const kycProfile = await prisma.kYCProfile.findFirst({
-            where: { user_id: userId }
+            where: {
+                user_id: userId,
+                kyc_type: 'SELLER'
+            } as any
         });
 
         if (!kycProfile) {
@@ -26,7 +29,8 @@ export class VerifySellerKycUseCase {
         await prisma.kYCProfile.update({
             where: { kyc_id: kycProfile.kyc_id },
             data: {
-                verification_status: verify ? 'VERIFIED' : 'REJECTED'
+                verification_status: verify ? 'VERIFIED' : 'REJECTED',
+                updated_at: new Date()
             }
         });
 
