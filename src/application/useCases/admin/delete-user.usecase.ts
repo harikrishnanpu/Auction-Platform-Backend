@@ -1,7 +1,6 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
 import { Result } from "../../../domain/shared/result";
 import { UserId } from "../../../domain/user/user-id.vo";
-import prisma from "../../../utils/prismaClient";
 
 export class DeleteUserUseCase {
     constructor(private userRepository: IUserRepository) { }
@@ -14,9 +13,7 @@ export class DeleteUserUseCase {
         if (!user) return Result.fail("User not found");
 
         // Delete user (cascade will handle related records)
-        await prisma.user.delete({
-            where: { user_id: userIdOrError.getValue().value }
-        });
+        await this.userRepository.delete(userIdOrError.getValue());
 
         return Result.ok<void>(undefined);
     }

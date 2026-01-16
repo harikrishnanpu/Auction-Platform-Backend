@@ -15,6 +15,11 @@ enum Role {
   ADMIN
 }
 
+enum KYCType {
+  SELLER
+  MODERATOR
+}
+
 
 enum OtpPurpose {
   REGISTER
@@ -93,10 +98,10 @@ model OTPVerification {
   User User @relation(fields: [user_id], references: [user_id])
 }
 
-// KYC & VERIFICATION
 model KYCProfile {
   kyc_id              String   @id @default(uuid())
   user_id             String
+  kyc_type            KYCType  @default(SELLER)
   document_type       String
   document_number     String
   address             String?

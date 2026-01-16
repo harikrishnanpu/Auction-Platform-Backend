@@ -1,10 +1,13 @@
 import { IUserRepository } from '../../../domain/user/user.repository';
 import { Result } from '../../../domain/shared/result';
 import { UserId } from '../../../domain/user/user-id.vo';
-import prisma from '../../../utils/prismaClient';
+import { IKYCRepository, KYCStatus, KYCType } from '../../../domain/kyc/kyc.repository';
 
 export class SubmitKycUseCase {
-    constructor(private userRepository: IUserRepository) { }
+    constructor(
+        private userRepository: IUserRepository,
+        private kycRepository: IKYCRepository
+    ) { }
 
     async execute(userId: string): Promise<Result<void>> {
         const userIdOrError = UserId.create(userId);
@@ -17,9 +20,7 @@ export class SubmitKycUseCase {
             return Result.fail('User not found');
         }
 
-        const kycProfile = await prisma.kYCProfile.findFirst({
-            where: { user_id: userId }
-        });
+        const kycProfile = await this.kycRepository.findByUserId(userId);
 
         if (!kycProfile) {
             return Result.fail('KYC profile not found. Please upload documents first.');
@@ -31,16 +32,15 @@ export class SubmitKycUseCase {
         }
 
         // If already verified, don't change
-        if (kycProfile.verification_status === 'VERIFIED') {
+        if (kycProfile.verification_status === KYCStatus.VERIFIED) {
             return Result.fail('KYC is already verified.');
         }
 
-        await prisma.kYCProfile.update({
-            where: { kyc_id: kycProfile.kyc_id },
-            data: {
-                verification_status: 'PENDING',
-                updated_at: new Date()
-            }
+        await this.kycRepository.save({
+            kyc_id: kycProfile.kyc_id,
+            user_id: userId,
+            verification_status: KYCStatus.PENDING,
+            kyc_type: KYCType.SELLER
         });
 
         return Result.ok<void>(undefined);

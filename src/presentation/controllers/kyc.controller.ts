@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { GenerateUploadUrlUseCase } from '../../application/useCases/kyc/generate-upload-url.usecase';
 import { CompleteKycUploadUseCase } from '../../application/useCases/kyc/complete-kyc-upload.usecase';
-import { GetKycStatusUseCase } from '../../application/useCases/kyc/get-kyc-status.usecase';
 import { SubmitKycUseCase } from '../../application/useCases/kyc/submit-kyc.usecase';
 import { GenerateUploadUrlDto, CompleteKycUploadDto } from '../../application/dtos/kyc/kyc.dto';
+import { GetKycStatusUseCase } from '../../application/useCases/kyc/get-kyc-status.usecase';
 
 export class KycController {
     constructor(
@@ -13,7 +13,7 @@ export class KycController {
         private submitKycUseCase: SubmitKycUseCase
     ) { }
 
-    public async generateUploadUrl(req: Request, res: Response): Promise<void> {
+    public generateUploadUrl = async (req: Request, res: Response): Promise<void> => {
         try {
             const userId = (req as any).user?.userId;
             if (!userId) {
@@ -28,7 +28,7 @@ export class KycController {
                 contentType: req.body.contentType,
             };
 
-            // Validate required fields
+
             if (!dto.documentType || !dto.fileName || !dto.contentType) {
                 res.status(400).json({ message: 'Missing required fields: documentType, fileName, contentType' });
                 return;
@@ -42,12 +42,12 @@ export class KycController {
                 res.status(400).json({ message: result.error });
             }
         } catch (error) {
-            console.error('Error generating upload URL:', error);
+            console.log('Error generating upload URL:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
     }
 
-    public async completeUpload(req: Request, res: Response): Promise<void> {
+    public completeUpload = async (req: Request, res: Response): Promise<void> => {
         try {
             const userId = (req as any).user?.userId;
             if (!userId) {
@@ -64,7 +64,6 @@ export class KycController {
                 address: req.body.address,
             };
 
-            // Validate required fields
             if (!dto.documentType || !dto.fileKey) {
                 res.status(400).json({ message: 'Missing required fields: documentType, fileKey' });
                 return;
@@ -78,12 +77,12 @@ export class KycController {
                 res.status(400).json({ message: result.error });
             }
         } catch (error) {
-            console.error('Error completing upload:', error);
+            console.log('Error completing upload:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
     }
 
-    public async getStatus(req: Request, res: Response): Promise<void> {
+    public getStatus = async (req: Request, res: Response): Promise<void> => {
         try {
             const userId = (req as any).user?.userId;
             if (!userId) {
@@ -99,12 +98,12 @@ export class KycController {
                 res.status(404).json({ message: result.error });
             }
         } catch (error) {
-            console.error('Error fetching KYC status:', error);
+            console.log('Error fetching KYC status:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
     }
 
-    public async submitKyc(req: Request, res: Response): Promise<void> {
+    public submitKyc = async (req: Request, res: Response): Promise<void> => {
         try {
             const userId = (req as any).user?.userId;
             if (!userId) {

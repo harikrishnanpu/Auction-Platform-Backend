@@ -2,7 +2,7 @@ import { IUserRepository } from "../../../domain/user/user.repository";
 import { Result } from "../../../domain/shared/result";
 import { UserId } from "../../../domain/user/user-id.vo";
 import { UserRole } from "../../../domain/user/user.entity";
-import prisma from "../../../utils/prismaClient";
+import { IKYCRepository, KYCType } from "../../../domain/kyc/kyc.repository";
 
 export interface SellerDetailDto {
     id: string;
@@ -21,7 +21,10 @@ export interface SellerDetailDto {
 }
 
 export class GetSellerByIdUseCase {
-    constructor(private userRepository: IUserRepository) { }
+    constructor(
+        private userRepository: IUserRepository,
+        private kycRepository: IKYCRepository
+    ) { }
 
     public async execute(id: string): Promise<Result<SellerDetailDto>> {
         const userIdOrError = UserId.create(id);
@@ -30,15 +33,12 @@ export class GetSellerByIdUseCase {
         const user = await this.userRepository.findById(userIdOrError.getValue());
         if (!user) return Result.fail("User not found");
 
-        // Check if user has SELLER role
-        if (!user.roles.includes(UserRole.SELLER)) {
-            return Result.fail("User is not a seller");
-        }
+        const hasSellerRole = user.roles.includes(UserRole.SELLER);
+        const kycProfile = await this.kycRepository.findByUserId(id, KYCType.SELLER);
 
-        // Get KYC profile
-        const kycProfile = await prisma.kYCProfile.findFirst({
-            where: { user_id: id }
-        });
+        if (!hasSellerRole && (!kycProfile || kycProfile.verification_status !== 'PENDING')) {
+            return Result.fail("User is not a seller and has no pending seller KYC");
+        }
 
         return Result.ok<SellerDetailDto>({
             id: user.id.toString(),

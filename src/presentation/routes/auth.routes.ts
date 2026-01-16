@@ -10,7 +10,7 @@ export class AuthRoutes {
   }
 
   register(): Router {
-    this._router.post('/register', this._authController.register)
+    this._router.post('/register', this._authController.register);
     this._router.post('/login', this._authController.login);
     this._router.post('/verify-email', this._authController.verifyEmail);
     this._router.post('/resend-otp', this._authController.resendOtp);

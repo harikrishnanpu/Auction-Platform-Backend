@@ -6,8 +6,8 @@ import { UserResponseDto } from "../../dtos/auth/auth.dto";
 export class GetUsersUseCase {
     constructor(private userRepository: IUserRepository) { }
 
-    public async execute(page: number, limit: number): Promise<Result<UserListResponseDto>> {
-        const { users, total } = await this.userRepository.findAll(page, limit);
+    public async execute(page: number, limit: number, search?: string, sortBy?: string, sortOrder?: 'asc' | 'desc'): Promise<Result<UserListResponseDto>> {
+        const { users, total } = await this.userRepository.findAll(page, limit, search, sortBy, sortOrder);
 
         const userDtos: UserResponseDto[] = users.map(user => ({
             id: user.id.toString(),

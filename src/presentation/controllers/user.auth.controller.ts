@@ -42,6 +42,12 @@ export class UserAuthController {
         });
     }
 
+
+    private removeCookies(res: Response) {
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+    }
+
     refreshToken = async (req: Request, res: Response): Promise<any> => {
         try {
             const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
@@ -203,6 +209,7 @@ export class UserAuthController {
             console.log("User ID:", userId);
 
             if (!userId) {
+                this.removeCookies(res);
                 return res.status(401).json({ message: "Unauthorized" });
             }
 
@@ -211,10 +218,12 @@ export class UserAuthController {
             if (result.isSuccess) {
                 return res.status(200).json({ success: true, user: result.getValue() });
             } else {
+                this.removeCookies(res);
                 return res.status(404).json({ message: result.error });
             }
         } catch (err) {
             console.log(err);
+            this.removeCookies(res);
             return res.status(500).json({ message: 'Internal Server Error' });
         }
     }
@@ -287,11 +296,11 @@ export class UserAuthController {
 
             console.log(rawState);
             console.log(returnTo);
-            
-            
-        
+
+
+
             const clientRedirectUrl = `${process.env.CLIENT_URL}/${returnTo}`;
-            
+
             if (err) {
                 return res.redirect(`${clientRedirectUrl}?error=GoogleAuthFailed`);
             }

@@ -9,7 +9,7 @@ import { ForgotPasswordUseCase } from "../application/useCases/auth/forgot-passw
 import { ResetPasswordUseCase } from "../application/useCases/auth/reset-password.usecase";
 import { UserAuthController } from "../presentation/controllers/user.auth.controller";
 import { AuthRoutes } from "../presentation/routes/auth.routes";
-import { userRepository, otpRepository } from "./repository.di";
+import { userRepository, otpRepository, kycRepository } from "./repository.di";
 import { tokenService, emailService, loggerService, tokenGeneratorService, otpService, passwordHasher, storageService } from "./services.di";
 
 import { GetUsersUseCase } from "../application/useCases/admin/get-users.usecase";
@@ -96,7 +96,6 @@ const loginWithGoogleUseCase = new LoginWithGoogleUseCase(
     tokenService
 );
 
-// Admin Use Cases
 const getUsersUseCase = new GetUsersUseCase(userRepository);
 const getUserByIdUseCase = new GetUserByIdUseCase(userRepository);
 const loginAdminUseCase = new LoginAdminUseCase(userRepository, passwordHasher, tokenService);
@@ -104,18 +103,16 @@ const updateUserUseCase = new UpdateUserUseCase(userRepository);
 const blockUserUseCase = new BlockUserUseCase(userRepository);
 const deleteUserUseCase = new DeleteUserUseCase(userRepository);
 const getSellersUseCase = new GetSellersUseCase(userRepository);
-const getSellerByIdUseCase = new GetSellerByIdUseCase(userRepository);
-const verifySellerKycUseCase = new VerifySellerKycUseCase(userRepository);
+const getSellerByIdUseCase = new GetSellerByIdUseCase(userRepository, kycRepository);
+const verifySellerKycUseCase = new VerifySellerKycUseCase(userRepository, kycRepository);
 const assignSellerRoleUseCase = new AssignSellerRoleUseCase(userRepository);
-const getAdminStatsUseCase = new GetAdminStatsUseCase();
+const getAdminStatsUseCase = new GetAdminStatsUseCase(userRepository, kycRepository);
 
-// KYC Use Cases
 const generateUploadUrlUseCase = new GenerateUploadUrlUseCase(storageService);
-const completeKycUploadUseCase = new CompleteKycUploadUseCase(userRepository);
-const getKycStatusUseCase = new GetKycStatusUseCase(userRepository);
-const submitKycUseCase = new SubmitKycUseCase(userRepository);
+const completeKycUploadUseCase = new CompleteKycUploadUseCase(userRepository, kycRepository);
+const getKycStatusUseCase = new GetKycStatusUseCase(userRepository, kycRepository);
+const submitKycUseCase = new SubmitKycUseCase(userRepository, kycRepository);
 
-// Controllers
 const authController = new UserAuthController(
     registerUserUseCase,
     loginUserUseCase,
@@ -152,7 +149,10 @@ const kycController = new KycController(
     submitKycUseCase
 );
 
-// Routes
+
+
+
+
 export const authRoutes = new AuthRoutes(authController);
 export const adminRoutes = new AdminRoutes(adminAuthController, adminController);
 export const kycRoutes = new KycRoutes(kycController);
