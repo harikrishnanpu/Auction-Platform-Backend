@@ -34,6 +34,16 @@ import { SubmitKycUseCase } from "../application/useCases/kyc/submit-kyc.usecase
 import { KycController } from "../presentation/controllers/kyc.controller";
 import { KycRoutes } from "../presentation/routes/kyc.routes";
 
+import { GetActiveAuctionsUseCase } from "../application/useCases/auction/get-active-auctions.usecase"; // Ensure path is correct
+import { AuctionController } from "../presentation/controllers/auction.controller";
+import { AuctionRoutes } from "../presentation/routes/auction.routes";
+import { CreateAuctionUseCase } from "../application/useCases/seller/create-auction.usecase";
+import { GenerateAuctionUploadUrlUseCase } from "../application/useCases/seller/generate-auction-upload-url.usecase";
+import { GetSellerAuctionsUseCase } from "../application/useCases/seller/get-seller-auctions.usecase"; // Ensure path
+import { SellerAuctionController } from "../presentation/controllers/seller/auction.controller";
+import { SellerRoutes } from "../presentation/routes/seller.routes";
+import { auctionRepository } from "./repository.di";
+
 
 
 
@@ -103,7 +113,7 @@ const updateUserUseCase = new UpdateUserUseCase(userRepository);
 const blockUserUseCase = new BlockUserUseCase(userRepository);
 const deleteUserUseCase = new DeleteUserUseCase(userRepository);
 const getSellersUseCase = new GetSellersUseCase(userRepository);
-const getSellerByIdUseCase = new GetSellerByIdUseCase(userRepository, kycRepository);
+const getSellerByIdUseCase = new GetSellerByIdUseCase(userRepository, kycRepository, storageService);
 const verifySellerKycUseCase = new VerifySellerKycUseCase(userRepository, kycRepository);
 const assignSellerRoleUseCase = new AssignSellerRoleUseCase(userRepository);
 const getAdminStatsUseCase = new GetAdminStatsUseCase(userRepository, kycRepository);
@@ -149,10 +159,26 @@ const kycController = new KycController(
     submitKycUseCase
 );
 
+const createAuctionUseCase = new CreateAuctionUseCase(auctionRepository);
+const generateAuctionUploadUrlUseCase = new GenerateAuctionUploadUrlUseCase(storageService);
+const getSellerAuctionsUseCase = new GetSellerAuctionsUseCase(auctionRepository, storageService);
+
+const sellerAuctionController = new SellerAuctionController(
+    createAuctionUseCase,
+    generateAuctionUploadUrlUseCase,
+    getSellerAuctionsUseCase
+);
 
 
 
+
+
+
+const getActiveAuctionsUseCase = new GetActiveAuctionsUseCase(auctionRepository, storageService);
+const auctionController = new AuctionController(getActiveAuctionsUseCase);
 
 export const authRoutes = new AuthRoutes(authController);
 export const adminRoutes = new AdminRoutes(adminAuthController, adminController);
 export const kycRoutes = new KycRoutes(kycController);
+export const sellerRoutes = new SellerRoutes(sellerAuctionController);
+export const auctionRoutes = new AuctionRoutes(auctionController);

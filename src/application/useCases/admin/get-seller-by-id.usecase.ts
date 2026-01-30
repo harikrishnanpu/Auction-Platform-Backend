@@ -20,10 +20,13 @@ export interface SellerDetailDto {
     kyc_profile: any;
 }
 
+import { IStorageService } from "../../services/storage/storage.service";
+
 export class GetSellerByIdUseCase {
     constructor(
         private userRepository: IUserRepository,
-        private kycRepository: IKYCRepository
+        private kycRepository: IKYCRepository,
+        private storageService: IStorageService
     ) { }
 
     public async execute(id: string): Promise<Result<SellerDetailDto>> {
@@ -38,6 +41,18 @@ export class GetSellerByIdUseCase {
 
         if (!hasSellerRole && (!kycProfile || kycProfile.verification_status !== 'PENDING')) {
             return Result.fail("User is not a seller and has no pending seller KYC");
+        }
+
+        if (kycProfile) {
+            if (kycProfile.id_front_url) {
+                kycProfile.id_front_url = await this.storageService.getPresignedDownloadUrl(kycProfile.id_front_url);
+            }
+            if (kycProfile.id_back_url) {
+                kycProfile.id_back_url = await this.storageService.getPresignedDownloadUrl(kycProfile.id_back_url);
+            }
+            if (kycProfile.address_proof_url) {
+                kycProfile.address_proof_url = await this.storageService.getPresignedDownloadUrl(kycProfile.address_proof_url);
+            }
         }
 
         return Result.ok<SellerDetailDto>({

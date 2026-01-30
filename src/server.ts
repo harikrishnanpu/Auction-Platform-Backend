@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { authRoutes, adminRoutes, kycRoutes } from './Di/routes.di';
+import { authRoutes, adminRoutes, kycRoutes, sellerRoutes, auctionRoutes } from './Di/routes.di';
 import { EmailWorker } from './infrastructure/workers/email.worker';
 import { logger } from './infrastructure/logger/pino.logger';
 import { requestLoggerMiddleware } from './presentation/middlewares/request-logger.middleware';
@@ -30,6 +30,8 @@ configureGoogleStrategy();
 app.use('/api/v1/user/auth', authRoutes.register());
 app.use('/api/v1/admin', adminRoutes.register());
 app.use('/api/v1/kyc', kycRoutes.register());
+app.use('/api/v1/seller', sellerRoutes.register());
+app.use('/api/v1/auctions', auctionRoutes.register());
 
 new EmailWorker();
 

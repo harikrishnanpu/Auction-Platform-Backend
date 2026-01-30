@@ -31,29 +31,31 @@ export class UserAuthController {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 15 * 60 * 1000
+            path: '/',
+            maxAge: 15 * 60 * 1000 // 15 minutes
         });
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            path: '/',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
     }
 
 
     private removeCookies(res: Response) {
-        res.clearCookie('accessToken');
-        res.clearCookie('refreshToken');
+        res.clearCookie('accessToken', { path: '/' });
+        res.clearCookie('refreshToken', { path: '/' });
     }
 
     refreshToken = async (req: Request, res: Response): Promise<any> => {
         try {
-            const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+            const refreshToken = req.cookies.refreshToken;
 
             if (!refreshToken) {
-                return res.status(401).json({ message: "Refresh token is required" });
+                return res.status(401).json({ success: false, message: "Refresh token is required" });
             }
 
             const result = await this.refreshTokenUseCase.execute(refreshToken);
@@ -63,13 +65,14 @@ export class UserAuthController {
                 if (accessToken && newRefreshToken) {
                     this.setCookies(res, accessToken, newRefreshToken);
                 }
-                return res.status(200).json(result.getValue());
+                return res.status(200).json({ success: true, accessToken, refreshToken: newRefreshToken });
             } else {
-                return res.status(401).json({ message: result.error });
+                this.removeCookies(res);
+                return res.status(401).json({ success: false, message: result.error });
             }
         } catch (err) {
-            console.log(err);
-            return res.status(500).json({ message: 'Internal Server Error' });
+            console.log("RefreshToken Error:", err);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
         }
     }
 
@@ -206,11 +209,8 @@ export class UserAuthController {
         try {
             const userId = (req as any).user?.userId;
 
-            console.log("User ID:", userId);
-
             if (!userId) {
-                this.removeCookies(res);
-                return res.status(401).json({ message: "Unauthorized" });
+                return res.status(401).json({ success: false, message: "Authentication Required" });
             }
 
             const result = await this.getProfileUseCase.execute(userId);
@@ -219,12 +219,11 @@ export class UserAuthController {
                 return res.status(200).json({ success: true, user: result.getValue() });
             } else {
                 this.removeCookies(res);
-                return res.status(404).json({ message: result.error });
+                return res.status(404).json({ success: false, message: "User profile not found" });
             }
         } catch (err) {
-            console.log(err);
-            this.removeCookies(res);
-            return res.status(500).json({ message: 'Internal Server Error' });
+            console.error("GetProfile Error:", err);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
         }
     }
 
@@ -272,8 +271,8 @@ export class UserAuthController {
     }
 
     logout = async (req: Request, res: Response): Promise<any> => {
-        res.clearCookie('accessToken');
-        res.clearCookie('refreshToken');
+        res.clearCookie('accessToken', { path: '/' });
+        res.clearCookie('refreshToken', { path: '/' });
         return res.status(200).json({ success: true, message: "Logged out successfully" });
     }
 

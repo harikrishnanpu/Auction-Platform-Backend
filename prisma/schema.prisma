@@ -60,6 +60,7 @@ model User {
   UserSession        UserSession[]
   KYCProfile         KYCProfile[]
   OTPVerification    OTPVerification[]
+  Auctions           Auction[]
 }
 
 model UserRole {
@@ -112,4 +113,53 @@ model KYCProfile {
   updated_at          DateTime @updatedAt
 
   User User @relation(fields: [user_id], references: [user_id])
+}
+
+model Auction {
+  auction_id     String   @id @default(uuid())
+  seller_id      String
+  title          String
+  description    String
+  category       String
+  condition      String
+  start_price    Float
+  min_increment  Float
+  
+  start_time     DateTime
+  end_time       DateTime
+  
+  status         AuctionStatus @default(DRAFT)
+  
+  media          AuctionMedia[]
+  
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  User           User     @relation(fields: [seller_id], references: [user_id])
+}
+
+model AuctionMedia {
+  id          String   @id @default(uuid())
+  auction_id  String
+  seller_id   String
+  type        MediaType
+  url         String   // Full URL or Key, let's store Key ideally but URL is easier for frontend if public. Storing Key is cleaner for S3. Let's store Key.
+  is_primary  Boolean  @default(false)
+  
+  Auction     Auction  @relation(fields: [auction_id], references: [auction_id])
+  
+  created_at  DateTime @default(now())
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum AuctionStatus {
+  DRAFT
+  ACTIVE
+  ENDED
+  SOLD
+  CANCELLED
 }

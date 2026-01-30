@@ -3,6 +3,9 @@ import { PrismaOTPRepository } from "../infrastructure/repositories/otp/prisma-o
 import { PrismaKYCRepository } from "../infrastructure/repositories/prisma-kyc.repository";
 import prisma from "../utils/prismaClient";
 
+import { PrismaAuctionRepository } from "../infrastructure/repositories/auction/prisma-auction.repository";
+
 export const userRepository = new PrismaUserRepository();
 export const otpRepository = new PrismaOTPRepository(prisma);
 export const kycRepository = new PrismaKYCRepository();
+export const auctionRepository = new PrismaAuctionRepository(prisma);
