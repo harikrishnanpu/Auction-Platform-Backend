@@ -22,6 +22,8 @@ export class SellerRoutes {
         this._router.post('/auction', this._sellerAuctionController.create);
         this._router.post('/auction/upload-url', this._sellerAuctionController.getUploadUrl);
         this._router.get('/auctions', this._sellerAuctionController.getMyAuctions);
+        this._router.get('/auctions/:id', this._sellerAuctionController.getById);
+        this._router.post('/auction/:id/publish', this._sellerAuctionController.publish);
 
         return this._router;
     }
