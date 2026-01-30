@@ -118,9 +118,34 @@ model KYCProfile {
   User User @relation(fields: [user_id], references: [user_id])
 }
 
+model AuctionCategory {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  slug       String   @unique
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  auctions   Auction[]
+
+  @@map("auction_categories")
+}
+
+model AuctionCondition {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  created_at  DateTime @default(now())
+
+  auctions    Auction[]
+
+  @@map("auction_conditions")
+}
+
 model Auction {
   id                String   @id @default(uuid())
   seller_id         String
+  category_id       String?
+  condition_id      String?
   title             String
   description       String
   start_at          DateTime
@@ -129,6 +154,7 @@ model Auction {
   min_bid_increment Float
   current_price     Float
   status            AuctionStatus @default(DRAFT)
+  is_paused         Boolean  @default(false)
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 
@@ -137,8 +163,12 @@ model Auction {
   participants      AuctionParticipant[]
   chat_messages     AuctionChatMessage[]
 
-  User              User     @relation(fields: [seller_id], references: [user_id])
+  User              User              @relation(fields: [seller_id], references: [user_id])
+  category          AuctionCategory?  @relation(fields: [category_id], references: [id])
+  condition         AuctionCondition? @relation(fields: [condition_id], references: [id])
 
+  @@index([category_id])
+  @@index([condition_id])
   @@map("auctions")
 }
 
@@ -177,6 +207,9 @@ model AuctionParticipant {
   user_id     String
   joined_at   DateTime @default(now())
   revoked_at  DateTime?
+  is_online   Boolean  @default(false)
+  last_seen   DateTime @default(now())
+  socket_id   String?
 
   Auction     Auction  @relation(fields: [auction_id], references: [id])
   User        User     @relation(fields: [user_id], references: [user_id])

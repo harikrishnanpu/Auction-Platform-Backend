@@ -1,5 +1,5 @@
 import { Auction, AuctionAsset } from "../../../domain/auction/auction.entity";
-import { IAuctionRepository } from "../../../domain/auction/repositories/auction.repository";
+import { IAuctionRepository, UpdateAuctionDto } from "../../../domain/auction/repositories/auction.repository";
 import { TransactionContext } from "../../../domain/shared/transaction";
 import { Prisma, PrismaClient } from "@prisma/client";
 
@@ -11,6 +11,8 @@ export class PrismaAuctionRepository implements IAuctionRepository {
             data: {
                 id: auction.id,
                 seller_id: auction.sellerId,
+                category_id: auction.categoryId,
+                condition_id: auction.conditionId,
                 title: auction.title,
                 description: auction.description,
                 start_at: auction.startAt,
@@ -19,6 +21,7 @@ export class PrismaAuctionRepository implements IAuctionRepository {
                 min_bid_increment: auction.minBidIncrement,
                 current_price: auction.currentPrice,
                 status: auction.status,
+                is_paused: auction.isPaused,
                 created_at: auction.createdAt,
                 updated_at: auction.updatedAt
             },
@@ -67,6 +70,26 @@ export class PrismaAuctionRepository implements IAuctionRepository {
         return this.mapToEntity(updated);
     }
 
+    async update(auctionId: string, dto: UpdateAuctionDto): Promise<Auction> {
+        const data: any = { updated_at: new Date() };
+        if (dto.title != null) data.title = dto.title;
+        if (dto.description != null) data.description = dto.description;
+        if (dto.startAt != null) data.start_at = dto.startAt;
+        if (dto.endAt != null) data.end_at = dto.endAt;
+        if (dto.startPrice != null) data.start_price = dto.startPrice;
+        if (dto.minBidIncrement != null) data.min_bid_increment = dto.minBidIncrement;
+        if (dto.categoryId !== undefined) data.category_id = dto.categoryId;
+        if (dto.conditionId !== undefined) data.condition_id = dto.conditionId;
+        if (dto.isPaused !== undefined) data.is_paused = dto.isPaused;
+        if (dto.status !== undefined) data.status = dto.status;
+        const updated = await this.prisma.auction.update({
+            where: { id: auctionId },
+            data,
+            include: { assets: true }
+        });
+        return this.mapToEntity(updated);
+    }
+
     async addAssets(auctionId: string, assets: AuctionAsset[]): Promise<void> {
         if (assets.length === 0) return;
         await this.prisma.auctionAsset.createMany({
@@ -100,6 +123,14 @@ export class PrismaAuctionRepository implements IAuctionRepository {
         return this.mapToEntity(found);
     }
 
+    async findAll(): Promise<Auction[]> {
+        const auctions = await this.prisma.auction.findMany({
+            include: { assets: true },
+            orderBy: { created_at: "desc" }
+        });
+        return auctions.map(a => this.mapToEntity(a));
+    }
+
     private mapToEntity(data: any): Auction {
         const assets = (data.assets || []).map((asset: any) => new AuctionAsset(
             asset.id,
@@ -113,6 +144,8 @@ export class PrismaAuctionRepository implements IAuctionRepository {
         return new Auction(
             data.id,
             data.seller_id,
+            data.category_id,
+            data.condition_id,
             data.title,
             data.description,
             data.start_at,
@@ -122,6 +155,7 @@ export class PrismaAuctionRepository implements IAuctionRepository {
             data.current_price,
             assets,
             data.status,
+            data.is_paused,
             data.created_at,
             data.updated_at
         );

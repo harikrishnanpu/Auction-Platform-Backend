@@ -39,16 +39,23 @@ import { GetAuctionByIdUseCase } from "../application/useCases/auction/get-aucti
 import { AddAuctionAssetsUseCase } from "../application/useCases/auction/add-auction-assets.usecase";
 import { EnterAuctionUseCase } from "../application/useCases/auction/enter-auction.usecase";
 import { RevokeUserUseCase } from "../application/useCases/auction/revoke-user.usecase";
+import { GetUpcomingAuctionsUseCase } from "../application/useCases/auction/get-upcoming-auctions.usecase";
+import { GetAuctionCategoriesUseCase } from "../application/useCases/auction/get-auction-categories.usecase";
+import { GetAuctionConditionsUseCase } from "../application/useCases/auction/get-auction-conditions.usecase";
 import { AuctionController } from "../presentation/controllers/auction.controller";
 import { AuctionRoutes } from "../presentation/routes/auction.routes";
 import { CreateAuctionUseCase } from "../application/useCases/seller/create-auction.usecase";
 import { GenerateAuctionUploadUrlUseCase } from "../application/useCases/seller/generate-auction-upload-url.usecase";
 import { GetSellerAuctionsUseCase } from "../application/useCases/seller/get-seller-auctions.usecase"; // Ensure path
 import { PublishAuctionUseCase } from "../application/useCases/seller/publish-auction.usecase";
+import { UpdateAuctionUseCase } from "../application/useCases/seller/update-auction.usecase";
 import { GetSellerAuctionByIdUseCase } from "../application/useCases/seller/get-seller-auction-by-id.usecase";
+import { PauseAuctionUseCase } from "../application/useCases/seller/pause-auction.usecase";
+import { ResumeAuctionUseCase } from "../application/useCases/seller/resume-auction.usecase";
+import { EndAuctionUseCase } from "../application/useCases/seller/end-auction.usecase";
 import { SellerAuctionController } from "../presentation/controllers/seller/auction.controller";
 import { SellerRoutes } from "../presentation/routes/seller.routes";
-import { auctionRepository, participantRepository } from "./repository.di";
+import { auctionRepository, participantRepository, categoryRepository, conditionRepository } from "./repository.di";
 
 
 
@@ -167,6 +174,10 @@ const kycController = new KycController(
 
 const createAuctionUseCase = new CreateAuctionUseCase(auctionRepository);
 const publishAuctionUseCase = new PublishAuctionUseCase(auctionRepository);
+const updateAuctionUseCase = new UpdateAuctionUseCase(auctionRepository);
+const pauseAuctionUseCase = new PauseAuctionUseCase(auctionRepository);
+const resumeAuctionUseCase = new ResumeAuctionUseCase(auctionRepository);
+const endAuctionUseCase = new EndAuctionUseCase(auctionRepository);
 const generateAuctionUploadUrlUseCase = new GenerateAuctionUploadUrlUseCase(storageService);
 const getSellerAuctionsUseCase = new GetSellerAuctionsUseCase(auctionRepository, storageService);
 const getSellerAuctionByIdUseCase = new GetSellerAuctionByIdUseCase(auctionRepository, storageService);
@@ -176,7 +187,11 @@ const sellerAuctionController = new SellerAuctionController(
     generateAuctionUploadUrlUseCase,
     getSellerAuctionsUseCase,
     publishAuctionUseCase,
-    getSellerAuctionByIdUseCase
+    getSellerAuctionByIdUseCase,
+    updateAuctionUseCase,
+    pauseAuctionUseCase,
+    resumeAuctionUseCase,
+    endAuctionUseCase
 );
 
 
@@ -188,15 +203,21 @@ const addAuctionAssetsUseCase = new AddAuctionAssetsUseCase(auctionRepository);
 const enterAuctionUseCase = new EnterAuctionUseCase(auctionRepository, participantRepository, userRepository);
 const revokeUserUseCase = new RevokeUserUseCase(auctionRepository, participantRepository);
 const getActiveAuctionsUseCase = new GetActiveAuctionsUseCase(auctionRepository, storageService);
+const getUpcomingAuctionsUseCase = new GetUpcomingAuctionsUseCase(auctionRepository);
 const getAuctionByIdUseCase = new GetAuctionByIdUseCase(auctionRepository, storageService);
+const getAuctionCategoriesUseCase = new GetAuctionCategoriesUseCase(categoryRepository);
+const getAuctionConditionsUseCase = new GetAuctionConditionsUseCase(conditionRepository);
 const auctionController = new AuctionController(
     createAuctionUseCase,
     addAuctionAssetsUseCase,
     publishAuctionUseCase,
     getActiveAuctionsUseCase,
+    getUpcomingAuctionsUseCase,
     getAuctionByIdUseCase,
     enterAuctionUseCase,
-    revokeUserUseCase
+    revokeUserUseCase,
+    getAuctionCategoriesUseCase,
+    getAuctionConditionsUseCase
 );
 
 export const authRoutes = new AuthRoutes(authController);

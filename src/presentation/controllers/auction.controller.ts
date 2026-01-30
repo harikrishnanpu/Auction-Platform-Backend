@@ -6,6 +6,9 @@ import { AddAuctionAssetsUseCase } from "../../application/useCases/auction/add-
 import { PublishAuctionUseCase } from "../../application/useCases/seller/publish-auction.usecase";
 import { EnterAuctionUseCase } from "../../application/useCases/auction/enter-auction.usecase";
 import { RevokeUserUseCase } from "../../application/useCases/auction/revoke-user.usecase";
+import { GetUpcomingAuctionsUseCase } from "../../application/useCases/auction/get-upcoming-auctions.usecase";
+import { GetAuctionCategoriesUseCase } from "../../application/useCases/auction/get-auction-categories.usecase";
+import { GetAuctionConditionsUseCase } from "../../application/useCases/auction/get-auction-conditions.usecase";
 
 export class AuctionController {
     constructor(
@@ -13,9 +16,12 @@ export class AuctionController {
         private addAuctionAssetsUseCase: AddAuctionAssetsUseCase,
         private publishAuctionUseCase: PublishAuctionUseCase,
         private getActiveAuctionsUseCase: GetActiveAuctionsUseCase,
+        private getUpcomingAuctionsUseCase: GetUpcomingAuctionsUseCase,
         private getAuctionByIdUseCase: GetAuctionByIdUseCase,
         private enterAuctionUseCase: EnterAuctionUseCase,
-        private revokeUserUseCase: RevokeUserUseCase
+        private revokeUserUseCase: RevokeUserUseCase,
+        private getAuctionCategoriesUseCase: GetAuctionCategoriesUseCase,
+        private getAuctionConditionsUseCase: GetAuctionConditionsUseCase
     ) { }
 
     public create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -104,6 +110,34 @@ export class AuctionController {
             const { userId } = req.body;
             const revoked = await this.revokeUserUseCase.execute(id, user.userId, userId);
             res.status(200).json({ success: true, data: revoked });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public getUpcoming = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const auctions = await this.getUpcomingAuctionsUseCase.execute();
+            res.status(200).json({ success: true, data: auctions });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public getCategories = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const activeOnly = req.query.active === 'true';
+            const categories = await this.getAuctionCategoriesUseCase.execute(activeOnly);
+            res.status(200).json({ success: true, data: categories });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public getConditions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const conditions = await this.getAuctionConditionsUseCase.execute();
+            res.status(200).json({ success: true, data: conditions });
         } catch (error) {
             next(error);
         }

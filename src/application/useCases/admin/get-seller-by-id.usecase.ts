@@ -29,6 +29,15 @@ export class GetSellerByIdUseCase {
         private storageService: IStorageService
     ) { }
 
+    private extractS3Key(value: string): string {
+        if (!value) return value;
+        if (!value.startsWith("http")) return value;
+        const marker = ".amazonaws.com/";
+        const markerIndex = value.indexOf(marker);
+        if (markerIndex === -1) return value;
+        return value.slice(markerIndex + marker.length);
+    }
+
     public async execute(id: string): Promise<Result<SellerDetailDto>> {
         const userIdOrError = UserId.create(id);
         if (userIdOrError.isFailure) return Result.fail("Invalid User ID");
@@ -45,13 +54,16 @@ export class GetSellerByIdUseCase {
 
         if (kycProfile) {
             if (kycProfile.id_front_url) {
-                kycProfile.id_front_url = await this.storageService.getPresignedDownloadUrl(kycProfile.id_front_url);
+                const key = this.extractS3Key(kycProfile.id_front_url);
+                kycProfile.id_front_url = await this.storageService.getPresignedDownloadUrl(key);
             }
             if (kycProfile.id_back_url) {
-                kycProfile.id_back_url = await this.storageService.getPresignedDownloadUrl(kycProfile.id_back_url);
+                const key = this.extractS3Key(kycProfile.id_back_url);
+                kycProfile.id_back_url = await this.storageService.getPresignedDownloadUrl(key);
             }
             if (kycProfile.address_proof_url) {
-                kycProfile.address_proof_url = await this.storageService.getPresignedDownloadUrl(kycProfile.address_proof_url);
+                const key = this.extractS3Key(kycProfile.address_proof_url);
+                kycProfile.address_proof_url = await this.storageService.getPresignedDownloadUrl(key);
             }
         }
 

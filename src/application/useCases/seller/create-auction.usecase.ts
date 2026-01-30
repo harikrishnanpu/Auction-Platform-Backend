@@ -10,6 +10,8 @@ export interface CreateAuctionDTO {
     endAt: string | Date;
     startPrice: number;
     minBidIncrement: number;
+    categoryId?: string;
+    conditionId?: string;
 }
 
 export class CreateAuctionUseCase {
@@ -28,6 +30,8 @@ export class CreateAuctionUseCase {
         const auction = new Auction(
             auctionId,
             dto.sellerId,
+            dto.categoryId || null,
+            dto.conditionId || null,
             dto.title,
             dto.description,
             start,
@@ -36,7 +40,8 @@ export class CreateAuctionUseCase {
             dto.minBidIncrement,
             dto.startPrice,
             [],
-            'DRAFT'
+            'DRAFT',
+            false
         );
         return await this.auctionRepository.create(auction);
     }

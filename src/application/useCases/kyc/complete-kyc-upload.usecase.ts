@@ -21,10 +21,6 @@ export class CompleteKycUploadUseCase {
             return Result.fail('User not found');
         }
 
-        const bucketName = process.env.AWS_S3_BUCKET_NAME || '';
-        const region = process.env.AWS_REGION || 'us-east-1';
-        const fileUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${dto.fileKey}`;
-
         try {
             const existingKyc = await this.kycRepository.findByUserId(dto.userId);
 
@@ -34,11 +30,11 @@ export class CompleteKycUploadUseCase {
             };
 
             if (dto.documentType === 'id_front') {
-                updateData.id_front_url = fileUrl;
+                updateData.id_front_url = dto.fileKey;
             } else if (dto.documentType === 'id_back') {
-                updateData.id_back_url = fileUrl;
+                updateData.id_back_url = dto.fileKey;
             } else if (dto.documentType === 'address_proof') {
-                updateData.address_proof_url = fileUrl;
+                updateData.address_proof_url = dto.fileKey;
             }
 
             if (dto.documentTypeName) {

@@ -13,6 +13,8 @@ export class Auction {
     constructor(
         public readonly id: string,
         public readonly sellerId: string,
+        public readonly categoryId: string | null,
+        public readonly conditionId: string | null,
         public readonly title: string,
         public readonly description: string,
         public readonly startAt: Date,
@@ -22,6 +24,7 @@ export class Auction {
         public readonly currentPrice: number,
         public readonly assets: AuctionAsset[],
         public readonly status: 'DRAFT' | 'ACTIVE' | 'ENDED' | 'CANCELLED' = 'DRAFT',
+        public readonly isPaused: boolean = false,
         public readonly createdAt: Date = new Date(),
         public readonly updatedAt: Date = new Date()
     ) { }

@@ -26,12 +26,14 @@ export class EnterAuctionUseCase {
             throw new AuctionError("NOT_ALLOWED", "Invalid user");
         }
         const user = await this.userRepository.findById(userIdVo.getValue());
-        if (!user || user.is_blocked || !user.is_active || !user.is_verified || !user.phone) {
+        // Removed phone requirement - users can enter without phone
+        if (!user || user.is_blocked || !user.is_active || !user.is_verified) {
             throw new AuctionError("NOT_ALLOWED", "User not eligible to enter");
         }
 
+        // Allow seller to enter their own auction room (as host, not bidder)
         if (auction.sellerId === userId) {
-            throw new AuctionError("NOT_ALLOWED", "Seller cannot enter as bidder");
+            return this.participantRepository.upsertParticipant(auctionId, userId);
         }
 
         const participant = await this.participantRepository.findByAuctionAndUser(auctionId, userId);

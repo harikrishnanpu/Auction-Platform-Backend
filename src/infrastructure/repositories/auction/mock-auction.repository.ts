@@ -1,5 +1,5 @@
 import { Auction, AuctionAsset } from "../../../domain/auction/auction.entity";
-import { IAuctionRepository } from "../../../domain/auction/repositories/auction.repository";
+import { IAuctionRepository, UpdateAuctionDto } from "../../../domain/auction/repositories/auction.repository";
 import { TransactionContext } from "../../../application/ports/transaction.port";
 
 export class MockAuctionRepository implements IAuctionRepository {
@@ -21,7 +21,15 @@ export class MockAuctionRepository implements IAuctionRepository {
         return [];
     }
 
+    async findAll(): Promise<Auction[]> {
+        return [];
+    }
+
     async updateStatus(auctionId: string, status: Auction['status']): Promise<Auction> {
+        throw new Error("Not implemented");
+    }
+
+    async update(auctionId: string, dto: UpdateAuctionDto): Promise<Auction> {
         throw new Error("Not implemented");
     }
 
