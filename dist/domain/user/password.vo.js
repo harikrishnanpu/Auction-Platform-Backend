@@ -11,17 +11,15 @@ class Password extends value_object_1.ValueObject {
         super(props);
     }
     static isHashed(password) {
-        return password.startsWith("$2b$") || password.startsWith("$2a$"); // Basic bcrypt check
+        return password.startsWith("$2b$") || password.startsWith("$2a$");
     }
-    // Factory to create from an already hashed string (e.g. from DB)
     static create(hashedPassword) {
         if (!hashedPassword || hashedPassword.length === 0) {
             return result_1.Result.fail("Password cannot be empty");
         }
         return result_1.Result.ok(new Password({ value: hashedPassword, hashed: true }));
     }
-    // Validation rule for raw password
-    static validateRaw(rawPassword) {
+    static validate(rawPassword) {
         if (rawPassword.length < 6) {
             return result_1.Result.fail("Password must be at least 6 characters long");
         }

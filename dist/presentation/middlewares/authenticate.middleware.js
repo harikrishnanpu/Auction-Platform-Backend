@@ -1,24 +1,61 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authenticate = void 0;
-const services_di_1 = require("../../Di/services.di");
+const jwt_service_1 = require("../../infrastructure/services/jwt/jwt.service");
 const authenticate = (req, res, next) => {
-    let token;
-    // 1. Check Authorization Header
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.split(' ')[1];
+    const accessToken = req.cookies?.accessToken;
+    const refreshToken = req.cookies?.refreshToken;
+    if (!accessToken) {
+        if (!refreshToken) {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
+        // Try to refresh if accessToken is missing but refreshToken is present
+        const decodedRefresh = jwt_service_1.tokenService.verifyRefreshToken(refreshToken);
+        if (!decodedRefresh) {
+            return res.status(401).json({ message: 'Session expired. Please login again.' });
+        }
+        const { userId, email, roles } = decodedRefresh;
+        const newTokens = jwt_service_1.tokenService.generateTokens({ userId, email, roles });
+        res.cookie('accessToken', newTokens.accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 15 * 60 * 1000
+        });
+        res.cookie('refreshToken', newTokens.refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+        req.user = decodedRefresh;
+        return next();
     }
-    // 2. Check Cookies
-    else if (req.cookies && req.cookies.accessToken) {
-        token = req.cookies.accessToken;
-    }
-    if (!token) {
-        return res.status(401).json({ message: 'No token provided' });
-    }
-    const decoded = services_di_1.jwtService.verify(token);
+    const decoded = jwt_service_1.tokenService.verifyAccessToken(accessToken);
     if (!decoded) {
-        return res.status(401).json({ message: 'Invalid token' });
+        if (!refreshToken) {
+            return res.status(401).json({ message: 'Invalid session' });
+        }
+        const decodedRefresh = jwt_service_1.tokenService.verifyRefreshToken(refreshToken);
+        if (!decodedRefresh) {
+            return res.status(401).json({ message: 'Session expired. Please login again.' });
+        }
+        const { userId, email, roles } = decodedRefresh;
+        const newTokens = jwt_service_1.tokenService.generateTokens({ userId, email, roles });
+        res.cookie('accessToken', newTokens.accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 15 * 60 * 1000
+        });
+        res.cookie('refreshToken', newTokens.refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+        req.user = decodedRefresh;
+        return next();
     }
     req.user = decoded;
     next();

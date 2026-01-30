@@ -12,6 +12,9 @@ export interface UpdateAuctionDto {
     conditionId?: string | null;
     isPaused?: boolean;
     status?: 'DRAFT' | 'ACTIVE' | 'ENDED' | 'CANCELLED';
+    winnerId?: string | null;
+    winnerPaymentDeadline?: Date | null;
+    completionStatus?: string;
 }
 
 export interface IAuctionRepository {
@@ -25,4 +28,5 @@ export interface IAuctionRepository {
     addAssets(auctionId: string, assets: AuctionAsset[]): Promise<void>;
     updateCurrentPrice(auctionId: string, currentPrice: number, tx?: TransactionContext): Promise<void>;
     findByIdForUpdate(auctionId: string, tx: TransactionContext): Promise<Auction | null>;
+    extendAuction(auctionId: string, newEndTime: Date, extensionCount: number, tx?: TransactionContext): Promise<void>;
 }

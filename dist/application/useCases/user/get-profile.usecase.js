@@ -16,6 +16,15 @@ class GetProfileUseCase {
         if (!user) {
             return result_1.Result.fail("User not found");
         }
+        if (user.is_blocked) {
+            return result_1.Result.fail("Account is blocked");
+        }
+        if (!user.is_active) {
+            return result_1.Result.fail("Account is inactive");
+        }
+        if (!user.is_verified) {
+            return result_1.Result.fail("User not verified");
+        }
         return result_1.Result.ok({
             id: user.id.toString(),
             name: user.name,

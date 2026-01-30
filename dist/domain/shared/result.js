@@ -3,9 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Result = void 0;
 class Result {
     constructor(isSuccess, error, value) {
-        if (isSuccess && error) {
-            throw new Error("InvalidOperation: A result cannot be successful and contain an error");
-        }
         if (!isSuccess && !error) {
             throw new Error("InvalidOperation: A failing result needs to contain an error message");
         }

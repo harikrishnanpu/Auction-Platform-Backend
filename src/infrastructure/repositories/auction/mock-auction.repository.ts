@@ -44,4 +44,8 @@ export class MockAuctionRepository implements IAuctionRepository {
     async findByIdForUpdate(auctionId: string, tx: TransactionContext): Promise<Auction | null> {
         return null;
     }
+
+    async extendAuction(auctionId: string, newEndTime: Date, extensionCount: number, tx?: TransactionContext): Promise<void> {
+        return;
+    }
 }

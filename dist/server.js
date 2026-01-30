@@ -8,21 +8,29 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const cors_1 = __importDefault(require("cors"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const routes_di_1 = require("./Di/routes.di");
+const email_worker_1 = require("./infrastructure/workers/email.worker");
+const pino_logger_1 = require("./infrastructure/logger/pino.logger");
+const request_logger_middleware_1 = require("./presentation/middlewares/request-logger.middleware");
+const passport_1 = __importDefault(require("passport"));
+const google_strategy_1 = require("./presentation/strategies/google.strategy");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const corsOptions = {
-    origin: 'http://localhost:3000',
+    origin: [process.env.CLIENT_URL || 'http://localhost:3000', 'https://0626e2f0a09a.ngrok-free.app'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 };
 app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
-// Routes
+app.use((0, request_logger_middleware_1.requestLoggerMiddleware)(pino_logger_1.logger));
+app.use(passport_1.default.initialize());
+(0, google_strategy_1.configureGoogleStrategy)();
 app.use('/api/v1/user/auth', routes_di_1.authRoutes.register());
-app.use('/api/v1/admin/auth', routes_di_1.adminRoutes.register());
-// Initialize Workers
-const email_worker_1 = require("./infrastructure/workers/email.worker");
+app.use('/api/v1/admin', routes_di_1.adminRoutes.register());
+app.use('/api/v1/kyc', routes_di_1.kycRoutes.register());
+app.use('/api/v1/seller', routes_di_1.sellerRoutes.register());
+app.use('/api/v1/auctions', routes_di_1.auctionRoutes.register());
 new email_worker_1.EmailWorker();
 exports.default = app;

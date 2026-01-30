@@ -1,5 +1,6 @@
 import { IAuctionRepository } from "../../../domain/auction/repositories/auction.repository";
 import { IAuctionParticipantRepository } from "../../../domain/auction/repositories/participant.repository";
+import { IAuctionActivityRepository } from "../../../domain/auction/repositories/activity.repository";
 import { IUserRepository } from "../../../domain/user/user.repository";
 import { UserId } from "../../../domain/user/user-id.vo";
 import { ensureAuctionActive, ensureAuctionWindow } from "../../../domain/auction/auction.policy";
@@ -9,7 +10,8 @@ export class EnterAuctionUseCase {
     constructor(
         private auctionRepository: IAuctionRepository,
         private participantRepository: IAuctionParticipantRepository,
-        private userRepository: IUserRepository
+        private userRepository: IUserRepository,
+        private activityRepository: IAuctionActivityRepository
     ) { }
 
     async execute(auctionId: string, userId: string) {
@@ -17,7 +19,6 @@ export class EnterAuctionUseCase {
         if (!auction) {
             throw new AuctionError("AUCTION_NOT_FOUND", "Auction not found");
         }
-
         ensureAuctionActive(auction);
         ensureAuctionWindow(auction, new Date());
 
@@ -31,16 +32,18 @@ export class EnterAuctionUseCase {
             throw new AuctionError("NOT_ALLOWED", "User not eligible to enter");
         }
 
-        // Allow seller to enter their own auction room (as host, not bidder)
+        // Prevent seller from joining their own auction as a user
         if (auction.sellerId === userId) {
-            return this.participantRepository.upsertParticipant(auctionId, userId);
+            throw new AuctionError("NOT_ALLOWED", "Sellers cannot join their own auction as participants. Please use the seller dashboard.");
         }
 
         const participant = await this.participantRepository.findByAuctionAndUser(auctionId, userId);
         if (participant?.revokedAt) {
-            throw new AuctionError("USER_REVOKED", "User revoked from auction");
+            throw new AuctionError("USER_REVOKED", "You have been revoked from this auction and cannot rejoin");
         }
 
-        return this.participantRepository.upsertParticipant(auctionId, userId);
+        const result = await this.participantRepository.upsertParticipant(auctionId, userId);
+        // Don't log user join - participants panel already shows who joined
+        return result;
     }
 }

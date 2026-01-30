@@ -56,14 +56,13 @@ class OTP extends entity_1.Entity {
         return this.props.attempts >= this.props.max_attempts;
     }
     verify(otpHash) {
-        // Ideally hash comparison happens in service, but if we pass hashed value here
-        // Here we just check if it matches storage
-        // Actually, logic usually is: service hashes input OTP -> compares with stored otp_hash
-        // So this method might be redundant if we just compare strings, but let's keep check
         return this.props.otp_hash === otpHash;
     }
-    markVerified() {
+    markAsVerified() {
         this.props.status = OtpStatus.VERIFIED;
+    }
+    markAsExpired() {
+        this.props.status = OtpStatus.EXPIRED;
     }
 }
 exports.OTP = OTP;

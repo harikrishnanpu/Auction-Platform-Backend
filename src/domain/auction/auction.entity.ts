@@ -25,6 +25,7 @@ export class Auction {
         public readonly assets: AuctionAsset[],
         public readonly status: 'DRAFT' | 'ACTIVE' | 'ENDED' | 'CANCELLED' = 'DRAFT',
         public readonly isPaused: boolean = false,
+        public readonly extensionCount: number = 0,
         public readonly createdAt: Date = new Date(),
         public readonly updatedAt: Date = new Date()
     ) { }

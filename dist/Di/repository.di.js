@@ -1,9 +1,29 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.otpRepository = exports.userRepository = void 0;
-const prisma_user_repository_1 = require("../infrastructure/database/prisma/prisma-user.repository");
+exports.transactionManager = exports.conditionRepository = exports.categoryRepository = exports.activityRepository = exports.participantRepository = exports.chatMessageRepository = exports.bidRepository = exports.auctionRepository = exports.kycRepository = exports.otpRepository = exports.userRepository = void 0;
+const prisma_user_repository_1 = require("../infrastructure/repositories/prisma-user.repository");
 const prisma_otp_repository_1 = require("../infrastructure/repositories/otp/prisma-otp.repository");
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient(); // We need prisma instance for OTP repo as I defined it to take prisma in constructor.
-exports.userRepository = new prisma_user_repository_1.PrismaUserRepository(); // Keeping as is if it doesn't take args.
-exports.otpRepository = new prisma_otp_repository_1.PrismaOTPRepository(prisma);
+const prisma_kyc_repository_1 = require("../infrastructure/repositories/prisma-kyc.repository");
+const prismaClient_1 = __importDefault(require("../utils/prismaClient"));
+const prisma_auction_repository_1 = require("../infrastructure/repositories/auction/prisma-auction.repository");
+const prisma_bid_repository_1 = require("../infrastructure/repositories/auction/prisma-bid.repository");
+const prisma_chat_message_repository_1 = require("../infrastructure/repositories/auction/prisma-chat-message.repository");
+const prisma_auction_participant_repository_1 = require("../infrastructure/repositories/auction/prisma-auction-participant.repository");
+const prisma_auction_category_repository_1 = require("../infrastructure/repositories/auction/prisma-auction-category.repository");
+const prisma_auction_condition_repository_1 = require("../infrastructure/repositories/auction/prisma-auction-condition.repository");
+const prisma_activity_repository_1 = require("../infrastructure/repositories/auction/prisma-activity.repository");
+const prisma_transaction_manager_1 = require("../infrastructure/database/prisma/prisma-transaction.manager");
+exports.userRepository = new prisma_user_repository_1.PrismaUserRepository();
+exports.otpRepository = new prisma_otp_repository_1.PrismaOTPRepository(prismaClient_1.default);
+exports.kycRepository = new prisma_kyc_repository_1.PrismaKYCRepository();
+exports.auctionRepository = new prisma_auction_repository_1.PrismaAuctionRepository(prismaClient_1.default);
+exports.bidRepository = new prisma_bid_repository_1.PrismaBidRepository(prismaClient_1.default);
+exports.chatMessageRepository = new prisma_chat_message_repository_1.PrismaChatMessageRepository(prismaClient_1.default);
+exports.participantRepository = new prisma_auction_participant_repository_1.PrismaAuctionParticipantRepository(prismaClient_1.default);
+exports.activityRepository = new prisma_activity_repository_1.PrismaAuctionActivityRepository(prismaClient_1.default);
+exports.categoryRepository = new prisma_auction_category_repository_1.PrismaAuctionCategoryRepository(prismaClient_1.default);
+exports.conditionRepository = new prisma_auction_condition_repository_1.PrismaAuctionConditionRepository(prismaClient_1.default);
+exports.transactionManager = new prisma_transaction_manager_1.PrismaTransactionManager(prismaClient_1.default);

@@ -4,47 +4,49 @@ exports.LoginUserUseCase = void 0;
 const result_1 = require("../../../domain/shared/result");
 const email_vo_1 = require("../../../domain/user/email.vo");
 class LoginUserUseCase {
-    constructor(userRepository, passwordHasher, jwtService) {
+    constructor(userRepository, passwordHasher, tokenService, logger) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
-        this.jwtService = jwtService;
+        this.tokenService = tokenService;
+        this.logger = logger;
     }
     async execute(dto) {
         const emailResult = email_vo_1.Email.create(dto.email);
         if (emailResult.isFailure)
             return result_1.Result.fail(emailResult.error);
         const email = emailResult.getValue();
-        // 1. Find User
+        this.logger.info(`login for email: ${email.value}`);
         const user = await this.userRepository.findByEmail(email);
         if (!user) {
             return result_1.Result.fail("Invalid email or password");
         }
-        // 2. Check Active/Blocked/Verified
-        if (!user.is_active) {
+        if (!user.props.is_active) {
             return result_1.Result.fail("Account is inactive");
         }
-        if (user.is_blocked) {
+        if (user.props.is_blocked) {
             return result_1.Result.fail("Account is blocked");
         }
-        if (!user.is_verified) {
+        if (!user.props.is_verified) {
             return result_1.Result.fail("Please verify your email address");
         }
-        // 3. Compare Password
-        const isValidPassword = await this.passwordHasher.compare(dto.password, user.password.value);
-        if (!isValidPassword) {
-            return result_1.Result.fail("Invalid email or password");
+        if (user.props.password) {
+            const isValidPassword = await this.passwordHasher.compare(dto.password, user.props.password.value);
+            if (!isValidPassword) {
+                return result_1.Result.fail("Invalid email or password");
+            }
         }
-        // 4. Generate Tokens
-        const accessToken = this.jwtService.sign({ userId: user.id.toString(), roles: user.roles });
-        const refreshToken = this.jwtService.signRefresh({ userId: user.id.toString(), roles: user.roles });
-        // 5. Return DTO
+        const payload = {
+            userId: user.id.toString(),
+            email: user.props.email.value,
+            roles: user.props.roles
+        };
+        const tokens = this.tokenService.generateTokens(payload);
         return result_1.Result.ok({
             id: user.id.toString(),
-            name: user.name,
-            email: user.email.value,
-            roles: user.roles,
-            accessToken: accessToken,
-            refreshToken: refreshToken
+            name: user.props.name,
+            email: user.props.email.value,
+            roles: user.props.roles,
+            ...tokens
         });
     }
 }

@@ -123,6 +123,17 @@ export class PrismaAuctionRepository implements IAuctionRepository {
         return this.mapToEntity(found);
     }
 
+    async extendAuction(auctionId: string, newEndTime: Date, extensionCount: number, tx?: TransactionContext): Promise<void> {
+        const prismaContext = tx ? (tx as Prisma.TransactionClient) : this.prisma;
+        await prismaContext.auction.update({
+            where: { id: auctionId },
+            data: {
+                end_at: newEndTime,
+                extension_count: extensionCount
+            }
+        });
+    }
+
     async findAll(): Promise<Auction[]> {
         const auctions = await this.prisma.auction.findMany({
             include: { assets: true },
@@ -156,6 +167,7 @@ export class PrismaAuctionRepository implements IAuctionRepository {
             assets,
             data.status,
             data.is_paused,
+            data.extension_count || 0,
             data.created_at,
             data.updated_at
         );

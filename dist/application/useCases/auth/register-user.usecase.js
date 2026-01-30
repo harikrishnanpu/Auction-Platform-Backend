@@ -7,24 +7,28 @@ const password_vo_1 = require("../../../domain/user/password.vo");
 const user_entity_1 = require("../../../domain/user/user.entity");
 const otp_entity_1 = require("../../../domain/otp/otp.entity");
 class RegisterUserUseCase {
-    constructor(userRepository, passwordHasher, jwtService, emailService, otpRepository) {
+    constructor(userRepository, passwordHasher, emailService, otpService, otpRepository, logger) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
-        this.jwtService = jwtService;
         this.emailService = emailService;
+        this.otpService = otpService;
         this.otpRepository = otpRepository;
+        this.logger = logger;
     }
     async execute(dto) {
         const emailResult = email_vo_1.Email.create(dto.email);
-        const passwordValidation = password_vo_1.Password.validateRaw(dto.password);
-        if (emailResult.isFailure)
-            return result_1.Result.fail(emailResult.error);
-        if (passwordValidation.isFailure)
-            return result_1.Result.fail(passwordValidation.error);
+        if (dto.password) {
+            const passwordValidation = password_vo_1.Password.validate(dto.password);
+            if (emailResult.isFailure)
+                return result_1.Result.fail(emailResult.error);
+            if (passwordValidation.isFailure)
+                return result_1.Result.fail(passwordValidation.error);
+        }
         const email = emailResult.getValue();
         const exists = await this.userRepository.emailExists(email);
-        if (exists) {
-            return result_1.Result.fail("User already exists with this email");
+        const phoneExists = await this.userRepository.phoneExists(dto.phone);
+        if (exists || phoneExists) {
+            return result_1.Result.fail("User already exists with this email or phone");
         }
         const hashedPassword = await this.passwordHasher.hash(dto.password);
         const passwordOrError = password_vo_1.Password.create(hashedPassword);
@@ -39,34 +43,33 @@ class RegisterUserUseCase {
             password: passwordOrError.getValue(),
             roles: [user_entity_1.UserRole.USER],
             is_verified: false,
-            is_active: true
+            is_blocked: false,
+            is_active: true,
         });
         if (userOrError.isFailure)
             return result_1.Result.fail(userOrError.error);
         const user = userOrError.getValue();
         await this.userRepository.save(user);
-        // Generate OTP
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        const otpCode = this.otpService.generateOtp();
+        this.logger.info("OTP Code" + otpCode);
         const otpResult = otp_entity_1.OTP.create({
             user_id: user.id.toString(),
-            identifier: user.email.value,
-            otp_hash: otpCode, // Should be hashed
+            identifier: user.props.email.value,
+            otp_hash: otpCode,
             purpose: otp_entity_1.OtpPurpose.REGISTER,
             channel: otp_entity_1.OtpChannel.EMAIL,
-            expires_at: otpExpiresAt,
+            expires_at: new Date(Date.now() + 10 * 60 * 1000),
             status: otp_entity_1.OtpStatus.PENDING
         });
         if (otpResult.isFailure)
             return result_1.Result.fail(otpResult.error);
         await this.otpRepository.save(otpResult.getValue());
-        // Send Email
-        await this.emailService.sendOtpEmail(user.email.value, otpCode);
+        await this.emailService.sendOtpEmail(user.props.email.value, otpCode);
         return result_1.Result.ok({
             id: user.id.toString(),
-            name: user.name,
-            email: user.email.value,
-            roles: user.roles
+            name: user.props.name,
+            email: user.props.email.value,
+            roles: user.props.roles,
         });
     }
 }

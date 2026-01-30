@@ -35,7 +35,7 @@ class PrismaOTPRepository {
             return null;
         return this.toDomain(otpModel);
     }
-    async findByIdentifierAndPurpose(identifier, purpose) {
+    async findByIdAndPurpose(identifier, purpose) {
         const otpModel = await this.prisma.oTPVerification.findFirst({
             where: { identifier: identifier, purpose: purpose },
             orderBy: { created_at: 'desc' }
@@ -43,6 +43,9 @@ class PrismaOTPRepository {
         if (!otpModel)
             return null;
         return this.toDomain(otpModel);
+    }
+    async findLatestByIdAndPurpose(identifier, purpose) {
+        return this.findByIdAndPurpose(identifier, purpose);
     }
     toDomain(model) {
         return otp_entity_1.OTP.create({

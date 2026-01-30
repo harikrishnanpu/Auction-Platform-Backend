@@ -1,0 +1,69 @@
+// Add these models to your schema.prisma file
+
+model AuctionPayment {
+  id                  String   @id @default(uuid())
+  auction_id          String
+  user_id             String
+  amount              Float
+  razorpay_order_id   String?  @unique
+  razorpay_payment_id String?  @unique
+  razorpay_signature  String?
+  status              String   @default("PENDING") // PENDING, SUCCESS, FAILED, REFUNDED
+  payment_method      String?
+  failure_reason      String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  auction Auction @relation(fields: [auction_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([auction_id])
+  @@index([user_id])
+  @@index([status])
+  @@index([razorpay_order_id])
+  @@map("auction_payments")
+}
+
+model AuctionOffer {
+  id          String    @id @default(uuid())
+  auction_id  String
+  user_id     String
+  bid_amount  Float
+  offer_rank  Int       // 2 for 2nd highest, 3 for 3rd, etc.
+  status      String    @default("PENDING") // PENDING, ACCEPTED, DECLINED, EXPIRED
+  offered_at  DateTime  @default(now())
+  responded_at DateTime?
+  expires_at  DateTime
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  auction Auction @relation(fields: [auction_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([auction_id])
+  @@index([user_id])
+  @@index([status])
+  @@index([offer_rank])
+  @@map("auction_offers")
+}
+
+model CriticalUser {
+  id          String   @id @default(uuid())
+  user_id     String
+  auction_id  String?
+  reason      String
+  description String?
+  severity    String   @default("HIGH") // LOW, MEDIUM, HIGH, CRITICAL
+  resolved    Boolean  @default(false)
+  resolved_at DateTime?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([auction_id])
+  @@index([resolved])
+  @@index([severity])
+  @@map("critical_users")
+}

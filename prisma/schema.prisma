@@ -20,7 +20,6 @@ enum KYCType {
   MODERATOR
 }
 
-
 enum OtpPurpose {
   REGISTER
   LOGIN
@@ -41,29 +40,33 @@ enum OtpStatus {
   BLOCKED
 }
 
-
 model User {
-  user_id       String   @id @default(uuid())
-  name          String
-  email         String   @unique
-  google_id     String?  @unique
-  phone         String?  @unique
-  address       String
-  avatar_url    String?
-  password_hash String?
-  is_active     Boolean  @default(true)
-  is_blocked    Boolean  @default(false)
-  is_verified   Boolean  @default(false)
-  updated_at   DateTime @default(now())
-  created_at    DateTime @default(now())
-  UserRole           UserRole[]
-  UserSession        UserSession[]
-  KYCProfile         KYCProfile[]
-  OTPVerification    OTPVerification[]
-  Auctions             Auction[]
-  Bids                 Bid[]
-  AuctionParticipants  AuctionParticipant[]
-  AuctionChatMessages  AuctionChatMessage[]
+  user_id             String               @id @default(uuid())
+  name                String
+  email               String               @unique
+  google_id           String?              @unique
+  phone               String?              @unique
+  address             String
+  avatar_url          String?
+  password_hash       String?
+  is_active           Boolean              @default(true)
+  is_blocked          Boolean              @default(false)
+  is_verified         Boolean              @default(false)
+  is_critical         Boolean              @default(false)
+  updated_at          DateTime             @default(now())
+  created_at          DateTime             @default(now())
+  UserRole            UserRole[]
+  UserSession         UserSession[]
+  KYCProfile          KYCProfile[]
+  OTPVerification     OTPVerification[]
+  Auctions            Auction[]            @relation("SellerAuctions")
+  WonAuctions         Auction[]            @relation("WonAuctions")
+  Bids                Bid[]
+  AuctionParticipants AuctionParticipant[]
+  AuctionChatMessages AuctionChatMessage[]
+  AuctionPayments     AuctionPayment[]
+  AuctionOffers       AuctionOffer[]
+  CriticalUserRecords CriticalUser[]
 }
 
 model UserRole {
@@ -125,7 +128,7 @@ model AuctionCategory {
   is_active  Boolean  @default(true)
   created_at DateTime @default(now())
 
-  auctions   Auction[]
+  auctions Auction[]
 
   @@map("auction_categories")
 }
@@ -136,83 +139,97 @@ model AuctionCondition {
   description String?
   created_at  DateTime @default(now())
 
-  auctions    Auction[]
+  auctions Auction[]
 
   @@map("auction_conditions")
 }
 
 model Auction {
-  id                String   @id @default(uuid())
-  seller_id         String
-  category_id       String?
-  condition_id      String?
-  title             String
-  description       String
-  start_at          DateTime
-  end_at            DateTime
-  start_price       Float
-  min_bid_increment Float
-  current_price     Float
-  status            AuctionStatus @default(DRAFT)
-  is_paused         Boolean  @default(false)
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  id                      String        @id @default(uuid())
+  seller_id               String
+  category_id             String?
+  condition_id            String?
+  title                   String
+  description             String
+  start_at                DateTime
+  end_at                  DateTime
+  start_price             Float
+  min_bid_increment       Float
+  current_price           Float
+  status                  AuctionStatus @default(DRAFT)
+  is_paused               Boolean       @default(false)
+  extension_count         Int           @default(0)
+  winner_id               String?
+  winner_payment_deadline DateTime?
+  completion_status       String        @default("PENDING")
+  created_at              DateTime      @default(now())
+  updated_at              DateTime      @updatedAt
 
-  assets            AuctionAsset[]
-  bids              Bid[]
-  participants      AuctionParticipant[]
-  chat_messages     AuctionChatMessage[]
+  assets        AuctionAsset[]
+  bids          Bid[]
+  participants  AuctionParticipant[]
+  chat_messages AuctionChatMessage[]
+  activities    AuctionActivity[]
+  payments      AuctionPayment[]
+  offers        AuctionOffer[]
 
-  User              User              @relation(fields: [seller_id], references: [user_id])
-  category          AuctionCategory?  @relation(fields: [category_id], references: [id])
-  condition         AuctionCondition? @relation(fields: [condition_id], references: [id])
+  seller    User              @relation("SellerAuctions", fields: [seller_id], references: [user_id])
+  winner    User?             @relation("WonAuctions", fields: [winner_id], references: [user_id])
+  category  AuctionCategory?  @relation(fields: [category_id], references: [id])
+  condition AuctionCondition? @relation(fields: [condition_id], references: [id])
 
+  @@index([seller_id])
+  @@index([winner_id])
   @@index([category_id])
   @@index([condition_id])
+  @@index([status])
+  @@index([completion_status])
   @@map("auctions")
 }
 
 model AuctionAsset {
-  id          String   @id @default(uuid())
-  auction_id  String
-  asset_type  AssetType
-  url         String
-  position    Int
-  created_at  DateTime @default(now())
+  id         String    @id @default(uuid())
+  auction_id String
+  asset_type AssetType
+  url        String
+  position   Int
+  created_at DateTime  @default(now())
 
-  Auction     Auction  @relation(fields: [auction_id], references: [id])
+  Auction Auction @relation(fields: [auction_id], references: [id])
 
   @@index([auction_id])
   @@map("auction_assets")
 }
 
 model Bid {
-  id          String   @id @default(uuid())
-  auction_id  String
-  user_id     String
-  amount      Float
-  created_at  DateTime @default(now())
+  id         String   @id @default(uuid())
+  auction_id String
+  user_id    String
+  amount     Float
+  is_valid   Boolean  @default(true)
+  created_at DateTime @default(now())
 
-  Auction     Auction  @relation(fields: [auction_id], references: [id])
-  User        User     @relation(fields: [user_id], references: [user_id])
+  Auction Auction @relation(fields: [auction_id], references: [id])
+  User    User    @relation(fields: [user_id], references: [user_id])
 
   @@index([auction_id])
   @@index([user_id])
+  @@index([is_valid])
   @@map("bids")
 }
 
 model AuctionParticipant {
-  id          String   @id @default(uuid())
-  auction_id  String
-  user_id     String
-  joined_at   DateTime @default(now())
-  revoked_at  DateTime?
-  is_online   Boolean  @default(false)
-  last_seen   DateTime @default(now())
-  socket_id   String?
+  id         String    @id @default(uuid())
+  auction_id String
+  user_id    String
+  joined_at  DateTime  @default(now())
+  revoked_at DateTime?
+  is_online  Boolean   @default(false)
+  last_seen  DateTime  @default(now())
+  socket_id  String?
 
-  Auction     Auction  @relation(fields: [auction_id], references: [id])
-  User        User     @relation(fields: [user_id], references: [user_id])
+  Auction Auction @relation(fields: [auction_id], references: [id])
+  User    User    @relation(fields: [user_id], references: [user_id])
 
   @@unique([auction_id, user_id])
   @@index([auction_id])
@@ -221,17 +238,33 @@ model AuctionParticipant {
 }
 
 model AuctionChatMessage {
-  id          String   @id @default(uuid())
-  auction_id  String
-  user_id     String
-  message     String
-  created_at  DateTime @default(now())
+  id         String   @id @default(uuid())
+  auction_id String
+  user_id    String
+  message    String
+  created_at DateTime @default(now())
 
-  Auction     Auction  @relation(fields: [auction_id], references: [id])
-  User        User     @relation(fields: [user_id], references: [user_id])
+  Auction Auction @relation(fields: [auction_id], references: [id])
+  User    User    @relation(fields: [user_id], references: [user_id])
 
   @@index([auction_id])
   @@map("auction_chat_messages")
+}
+
+model AuctionActivity {
+  id            String   @id @default(uuid())
+  auction_id    String
+  user_id       String?
+  activity_type String
+  description   String
+  metadata      Json?
+  created_at    DateTime @default(now())
+
+  Auction Auction @relation(fields: [auction_id], references: [id])
+
+  @@index([auction_id])
+  @@index([created_at])
+  @@map("auction_activities")
 }
 
 enum AssetType {
@@ -244,4 +277,76 @@ enum AuctionStatus {
   ACTIVE
   ENDED
   CANCELLED
+}
+
+// Payment System
+model AuctionPayment {
+  id                  String   @id @default(uuid())
+  auction_id          String
+  user_id             String
+  amount              Float
+  razorpay_order_id   String?  @unique
+  razorpay_payment_id String?  @unique
+  razorpay_signature  String?
+  status              String   @default("PENDING")
+  payment_method      String?
+  failure_reason      String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  auction Auction @relation(fields: [auction_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([auction_id])
+  @@index([user_id])
+  @@index([status])
+  @@index([razorpay_order_id])
+  @@map("auction_payments")
+}
+
+// Offer System for 2nd-5th bidders
+model AuctionOffer {
+  id           String    @id @default(uuid())
+  auction_id   String
+  user_id      String
+  bid_amount   Float
+  offer_rank   Int
+  status       String    @default("PENDING")
+  offered_at   DateTime  @default(now())
+  responded_at DateTime?
+  expires_at   DateTime
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  auction Auction @relation(fields: [auction_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([auction_id])
+  @@index([user_id])
+  @@index([status])
+  @@index([offer_rank])
+  @@index([expires_at])
+  @@map("auction_offers")
+}
+
+// Critical User Tracking
+model CriticalUser {
+  id          String    @id @default(uuid())
+  user_id     String
+  auction_id  String?
+  reason      String
+  description String?
+  severity    String    @default("HIGH")
+  resolved    Boolean   @default(false)
+  resolved_at DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([auction_id])
+  @@index([resolved])
+  @@index([severity])
+  @@map("critical_users")
 }

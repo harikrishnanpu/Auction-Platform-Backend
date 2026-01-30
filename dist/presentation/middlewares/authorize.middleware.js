@@ -7,9 +7,7 @@ const authorize = (allowedRoles) => {
         if (!user) {
             return res.status(401).json({ message: 'Not authenticated' });
         }
-        const userRoles = user.roles || []; // Array of strings/enums
-        // userRoles might be a single string if legacy token, but we updated Login/Verify to use array.
-        // If userRoles is empty, deny.
+        const userRoles = user.roles || [];
         const hasRole = userRoles.some((role) => allowedRoles.includes(role));
         if (!hasRole) {
             return res.status(403).json({ message: 'Forbidden: Insufficient permissions' });

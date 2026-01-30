@@ -8,48 +8,52 @@ const user_id_vo_1 = require("../../../domain/user/user-id.vo");
 const password_vo_1 = require("../../../domain/user/password.vo");
 class UserMapper {
     static toDomain(raw) {
-        const emailOrError = email_vo_1.Email.create(raw.email);
-        const passwordOrError = password_vo_1.Password.create(raw.password_hash);
-        const userIdOrError = user_id_vo_1.UserId.create(raw.user_id);
-        if (emailOrError.isFailure)
-            return result_1.Result.fail(emailOrError.error);
-        if (passwordOrError.isFailure)
-            return result_1.Result.fail(passwordOrError.error);
-        if (userIdOrError.isFailure)
-            return result_1.Result.fail(userIdOrError.error);
-        const roles = raw.roles
-            ? raw.roles.map(r => r.role)
+        const email = email_vo_1.Email.create(raw.email);
+        const usrId = user_id_vo_1.UserId.create(raw.user_id);
+        if (email.isFailure)
+            return result_1.Result.fail(email.error);
+        if (usrId.isFailure)
+            return result_1.Result.fail(usrId.error);
+        let password;
+        if (raw.password_hash) {
+            const passwordOrError = password_vo_1.Password.create(raw.password_hash);
+            if (passwordOrError.isFailure)
+                return result_1.Result.fail(passwordOrError.error);
+            password = passwordOrError.getValue();
+        }
+        const roles = raw.UserRole
+            ? raw.UserRole.map(r => r.role)
             : [user_entity_1.UserRole.USER];
-        const userOrError = user_entity_1.User.create({
+        const usr = user_entity_1.User.create({
             name: raw.name,
-            email: emailOrError.getValue(),
-            phone: raw.phone,
+            email: email.getValue(),
+            phone: raw.phone || undefined,
             address: raw.address,
             avatar_url: raw.avatar_url || undefined,
-            password: passwordOrError.getValue(),
+            password: password,
+            googleId: raw.google_id || undefined,
             roles: roles,
             is_active: raw.is_active,
             is_blocked: raw.is_blocked,
             is_verified: raw.is_verified,
             created_at: raw.created_at
-        }, userIdOrError.getValue());
-        userOrError.getValue().clearEvents();
-        return userOrError;
+        }, usrId.getValue().value);
+        return usr;
     }
     static toPersistence(user) {
         return {
             user_id: user.id.toString(),
             name: user.name,
             email: user.email.value,
-            phone: user.phone,
+            phone: user.phone || null,
             address: user.address,
             avatar_url: user.avatar_url || null,
-            password_hash: user.password.value,
-            // role is removed from scalar User table
+            password_hash: user.password?.value || null,
+            google_id: user.googleId || null,
             is_active: user.is_active,
             is_blocked: user.is_blocked,
             is_verified: user.is_verified,
-            assigned_at: new Date(), // This might be legacy, maybe user.assigned_at if entity has it? Entity has NO assigned_at getter.
+            updated_at: new Date(),
             created_at: user.created_at,
         };
     }

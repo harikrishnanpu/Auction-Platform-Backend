@@ -6,14 +6,16 @@ class GetUsersUseCase {
     constructor(userRepository) {
         this.userRepository = userRepository;
     }
-    async execute(page, limit) {
-        const { users, total } = await this.userRepository.findAll(page, limit);
+    async execute(page, limit, search, sortBy, sortOrder) {
+        const { users, total } = await this.userRepository.findAll(page, limit, search, sortBy, sortOrder);
         const userDtos = users.map(user => ({
             id: user.id.toString(),
             name: user.name,
             email: user.email.value,
             roles: user.roles,
-            // Omit tokens for listing
+            is_blocked: user.is_blocked,
+            is_verified: user.is_verified,
+            is_active: user.is_active,
         }));
         return result_1.Result.ok({
             users: userDtos,

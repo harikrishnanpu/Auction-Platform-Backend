@@ -3,7 +3,14 @@ export type AuctionErrorCode =
     | "AUCTION_ENDED"
     | "NOT_ALLOWED"
     | "USER_REVOKED"
-    | "AUCTION_NOT_FOUND";
+    | "AUCTION_NOT_FOUND"
+    | "RATE_LIMITED"
+    | "BID_IN_PROGRESS"
+    | "DEADLINE_EXPIRED"
+    | "PAYMENT_FAILED"
+    | "OFFER_EXPIRED"
+    | "INVALID_STATUS"
+    | "NOT_FOUND";
 
 export class AuctionError extends Error {
     constructor(
