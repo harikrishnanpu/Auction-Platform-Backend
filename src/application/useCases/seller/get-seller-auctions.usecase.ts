@@ -11,17 +11,17 @@ export class GetSellerAuctionsUseCase {
     async execute(sellerId: string): Promise<Auction[]> {
         const auctions = await this.auctionRepository.findBySellerId(sellerId);
 
-        // Enrich media URLs with presigned links
+        // Enrich asset URLs with presigned links
         return await Promise.all(auctions.map(async (auction) => {
-            const mediaWithSignedUrls = await Promise.all(auction.media.map(async (m) => {
-                if (m.url.startsWith('http')) return m;
-                const signedUrl = await this.storageService.getPresignedDownloadUrl(m.url);
-                return { ...m, url: signedUrl };
+            const assetsWithSignedUrls = await Promise.all(auction.assets.map(async (asset) => {
+                if (asset.url.startsWith("http")) return asset;
+                const signedUrl = await this.storageService.getPresignedDownloadUrl(asset.url);
+                return { ...asset, url: signedUrl };
             }));
 
             return {
                 ...auction,
-                media: mediaWithSignedUrls
+                assets: assetsWithSignedUrls
             } as any as Auction;
         }));
     }

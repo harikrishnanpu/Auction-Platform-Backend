@@ -4,8 +4,16 @@ import { PrismaKYCRepository } from "../infrastructure/repositories/prisma-kyc.r
 import prisma from "../utils/prismaClient";
 
 import { PrismaAuctionRepository } from "../infrastructure/repositories/auction/prisma-auction.repository";
+import { PrismaBidRepository } from "../infrastructure/repositories/auction/prisma-bid.repository";
+import { PrismaChatMessageRepository } from "../infrastructure/repositories/auction/prisma-chat-message.repository";
+import { PrismaAuctionParticipantRepository } from "../infrastructure/repositories/auction/prisma-auction-participant.repository";
+import { PrismaTransactionManager } from "../infrastructure/database/prisma/prisma-transaction.manager";
 
 export const userRepository = new PrismaUserRepository();
 export const otpRepository = new PrismaOTPRepository(prisma);
 export const kycRepository = new PrismaKYCRepository();
 export const auctionRepository = new PrismaAuctionRepository(prisma);
+export const bidRepository = new PrismaBidRepository(prisma);
+export const chatMessageRepository = new PrismaChatMessageRepository(prisma);
+export const participantRepository = new PrismaAuctionParticipantRepository(prisma);
+export const transactionManager = new PrismaTransactionManager(prisma);

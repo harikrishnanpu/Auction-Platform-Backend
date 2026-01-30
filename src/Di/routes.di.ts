@@ -34,15 +34,21 @@ import { SubmitKycUseCase } from "../application/useCases/kyc/submit-kyc.usecase
 import { KycController } from "../presentation/controllers/kyc.controller";
 import { KycRoutes } from "../presentation/routes/kyc.routes";
 
-import { GetActiveAuctionsUseCase } from "../application/useCases/auction/get-active-auctions.usecase"; // Ensure path is correct
+import { GetActiveAuctionsUseCase } from "../application/useCases/auction/get-active-auctions.usecase";
+import { GetAuctionByIdUseCase } from "../application/useCases/auction/get-auction-by-id.usecase";
+import { AddAuctionAssetsUseCase } from "../application/useCases/auction/add-auction-assets.usecase";
+import { EnterAuctionUseCase } from "../application/useCases/auction/enter-auction.usecase";
+import { RevokeUserUseCase } from "../application/useCases/auction/revoke-user.usecase";
 import { AuctionController } from "../presentation/controllers/auction.controller";
 import { AuctionRoutes } from "../presentation/routes/auction.routes";
 import { CreateAuctionUseCase } from "../application/useCases/seller/create-auction.usecase";
 import { GenerateAuctionUploadUrlUseCase } from "../application/useCases/seller/generate-auction-upload-url.usecase";
 import { GetSellerAuctionsUseCase } from "../application/useCases/seller/get-seller-auctions.usecase"; // Ensure path
+import { PublishAuctionUseCase } from "../application/useCases/seller/publish-auction.usecase";
+import { GetSellerAuctionByIdUseCase } from "../application/useCases/seller/get-seller-auction-by-id.usecase";
 import { SellerAuctionController } from "../presentation/controllers/seller/auction.controller";
 import { SellerRoutes } from "../presentation/routes/seller.routes";
-import { auctionRepository } from "./repository.di";
+import { auctionRepository, participantRepository } from "./repository.di";
 
 
 
@@ -160,13 +166,17 @@ const kycController = new KycController(
 );
 
 const createAuctionUseCase = new CreateAuctionUseCase(auctionRepository);
+const publishAuctionUseCase = new PublishAuctionUseCase(auctionRepository);
 const generateAuctionUploadUrlUseCase = new GenerateAuctionUploadUrlUseCase(storageService);
 const getSellerAuctionsUseCase = new GetSellerAuctionsUseCase(auctionRepository, storageService);
+const getSellerAuctionByIdUseCase = new GetSellerAuctionByIdUseCase(auctionRepository, storageService);
 
 const sellerAuctionController = new SellerAuctionController(
     createAuctionUseCase,
     generateAuctionUploadUrlUseCase,
-    getSellerAuctionsUseCase
+    getSellerAuctionsUseCase,
+    publishAuctionUseCase,
+    getSellerAuctionByIdUseCase
 );
 
 
@@ -174,8 +184,20 @@ const sellerAuctionController = new SellerAuctionController(
 
 
 
+const addAuctionAssetsUseCase = new AddAuctionAssetsUseCase(auctionRepository);
+const enterAuctionUseCase = new EnterAuctionUseCase(auctionRepository, participantRepository, userRepository);
+const revokeUserUseCase = new RevokeUserUseCase(auctionRepository, participantRepository);
 const getActiveAuctionsUseCase = new GetActiveAuctionsUseCase(auctionRepository, storageService);
-const auctionController = new AuctionController(getActiveAuctionsUseCase);
+const getAuctionByIdUseCase = new GetAuctionByIdUseCase(auctionRepository, storageService);
+const auctionController = new AuctionController(
+    createAuctionUseCase,
+    addAuctionAssetsUseCase,
+    publishAuctionUseCase,
+    getActiveAuctionsUseCase,
+    getAuctionByIdUseCase,
+    enterAuctionUseCase,
+    revokeUserUseCase
+);
 
 export const authRoutes = new AuthRoutes(authController);
 export const adminRoutes = new AdminRoutes(adminAuthController, adminController);
