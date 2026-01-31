@@ -1,0 +1,28 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuctionMessages = void 0;
+exports.AuctionMessages = {
+    AUCTION_NOT_FOUND: "Auction not found",
+    BID_TOO_LOW: "Bid amount is too low",
+    AUCTION_ENDED: "Auction has ended",
+    NOT_ALLOWED: "Not allowed",
+    USER_REVOKED: "User has been revoked",
+    RATE_LIMITED: "Please wait before placing another bid",
+    BID_IN_PROGRESS: "Another bid is being processed. Please try again in a moment.",
+    DEADLINE_EXPIRED: "Deadline expired",
+    PAYMENT_FAILED: "Payment failed",
+    OFFER_EXPIRED: "Offer expired",
+    INVALID_STATUS: "Invalid status",
+    NOT_FOUND: "Not found",
+    SELLER_MSG_LOG_FAIL: "Failed to log seller message activity",
+    REVOKE_MSG_LOG_FAIL: "Failed to log revoke activity",
+    PAUSE_MSG_LOG_FAIL: "Failed to log pause activity",
+    RESUME_MSG_LOG_FAIL: "Failed to log resume activity",
+    END_MSG_LOG_FAIL: "Failed to log end activity",
+    SELLER_NOT_ALLOWED: "Sellers cannot join their own auction. Please use the seller dashboard.",
+    NOT_PARTICIPANT: "Not a participant. Please enter the auction first.",
+    REVOKED_FROM_AUCTION: "You have been revoked from this auction and cannot access it",
+    UNAUTHORIZED: "Unauthorized",
+    SELLER_CANNOT_BID: "Seller cannot bid",
+    USER_NOT_ENTERED: "User not entered in auction",
+};

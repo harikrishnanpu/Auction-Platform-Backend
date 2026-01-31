@@ -1,5 +1,5 @@
-import { IKYCRepository, KYCProfile, KYCType } from "../../domain/kyc/kyc.repository";
-import prisma from "../../utils/prismaClient";
+import { IKYCRepository, KYCProfile, KYCType } from "../../../domain/kyc/kyc.repository";
+import prisma from "../../../utils/prismaClient";
 
 export class PrismaKYCRepository implements IKYCRepository {
     async findByUserId(userId: string, type?: KYCType): Promise<KYCProfile | null> {

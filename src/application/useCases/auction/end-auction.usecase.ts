@@ -2,7 +2,8 @@ import { IAuctionRepository } from '../../../domain/auction/repositories/auction
 import { IBidRepository } from '../../../domain/auction/repositories/bid.repository';
 import { IAuctionActivityRepository } from '../../../domain/auction/repositories/activity.repository';
 import { IPaymentRepository } from '../../../domain/payment/payment.repository';
-import { AuctionError } from '../../../domain/auction/auction.errors';
+import { AuctionError, AuctionErrorCode } from '../../../domain/auction/auction.errors';
+import { AuctionMessages } from '../../../application/constants/auction.messages';
 
 export class EndAuctionUseCase {
     constructor(
@@ -10,7 +11,7 @@ export class EndAuctionUseCase {
         private bidRepository: IBidRepository,
         private activityRepository: IAuctionActivityRepository,
         private paymentRepository: IPaymentRepository
-    ) {}
+    ) { }
 
     async execute(auctionId: string, endedBy: 'SELLER' | 'SYSTEM'): Promise<{
         success: boolean;
@@ -23,7 +24,7 @@ export class EndAuctionUseCase {
         // 1. Get auction
         const auction = await this.auctionRepository.findById(auctionId);
         if (!auction) {
-            throw new AuctionError('NOT_FOUND', 'Auction not found');
+            throw new AuctionError(AuctionErrorCode.NOT_FOUND, AuctionMessages.NOT_FOUND);
         }
 
         // 2. Check if auction is already ended
@@ -39,8 +40,9 @@ export class EndAuctionUseCase {
 
         // 3. Check if auction is active
         if (auction.status !== 'ACTIVE') {
-            throw new AuctionError('INVALID_STATUS', 'Only active auctions can be ended');
+            throw new AuctionError(AuctionErrorCode.INVALID_STATUS, 'Only active auctions can be ended');
         }
+
 
         // 4. Get all valid bids  
         const validBids = await this.bidRepository.findLatestValidByAuction(auctionId, 1000);

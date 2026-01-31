@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuctionErrorCode = void 0;
+var AuctionErrorCode;
+(function (AuctionErrorCode) {
+    AuctionErrorCode["BID_TOO_LOW"] = "BID_TOO_LOW";
+    AuctionErrorCode["AUCTION_ENDED"] = "AUCTION_ENDED";
+    AuctionErrorCode["NOT_ALLOWED"] = "NOT_ALLOWED";
+    AuctionErrorCode["USER_REVOKED"] = "USER_REVOKED";
+    AuctionErrorCode["AUCTION_NOT_FOUND"] = "AUCTION_NOT_FOUND";
+    AuctionErrorCode["RATE_LIMITED"] = "RATE_LIMITED";
+    AuctionErrorCode["BID_IN_PROGRESS"] = "BID_IN_PROGRESS";
+    AuctionErrorCode["DEADLINE_EXPIRED"] = "DEADLINE_EXPIRED";
+    AuctionErrorCode["PAYMENT_FAILED"] = "PAYMENT_FAILED";
+    AuctionErrorCode["OFFER_EXPIRED"] = "OFFER_EXPIRED";
+    AuctionErrorCode["INVALID_STATUS"] = "INVALID_STATUS";
+    AuctionErrorCode["NOT_FOUND"] = "NOT_FOUND";
+    AuctionErrorCode["SELLER_NOT_ALLOWED"] = "SELLER_NOT_ALLOWED";
+    AuctionErrorCode["NOT_PARTICIPANT"] = "NOT_PARTICIPANT";
+    AuctionErrorCode["UNAUTHORIZED"] = "UNAUTHORIZED";
+})(AuctionErrorCode || (exports.AuctionErrorCode = AuctionErrorCode = {}));

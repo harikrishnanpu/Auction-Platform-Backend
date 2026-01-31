@@ -1,6 +1,6 @@
-import { PrismaUserRepository } from "../infrastructure/repositories/prisma-user.repository";
+import { PrismaUserRepository } from "../infrastructure/repositories/user/prisma-user.repository";
 import { PrismaOTPRepository } from "../infrastructure/repositories/otp/prisma-otp.repository";
-import { PrismaKYCRepository } from "../infrastructure/repositories/prisma-kyc.repository";
+import { PrismaKYCRepository } from "../infrastructure/repositories/kyc/prisma-kyc.repository";
 import prisma from "../utils/prismaClient";
 
 import { PrismaAuctionRepository } from "../infrastructure/repositories/auction/prisma-auction.repository";

@@ -10,7 +10,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
             return res.status(401).json({ message: 'Authentication required' });
         }
 
-        // Try to refresh if accessToken is missing but refreshToken is present
         const decodedRefresh = tokenService.verifyRefreshToken(refreshToken);
         if (!decodedRefresh) {
             return res.status(401).json({ message: 'Session expired. Please login again.' });

@@ -1,16 +1,7 @@
-export type AuctionErrorCode =
-    | "BID_TOO_LOW"
-    | "AUCTION_ENDED"
-    | "NOT_ALLOWED"
-    | "USER_REVOKED"
-    | "AUCTION_NOT_FOUND"
-    | "RATE_LIMITED"
-    | "BID_IN_PROGRESS"
-    | "DEADLINE_EXPIRED"
-    | "PAYMENT_FAILED"
-    | "OFFER_EXPIRED"
-    | "INVALID_STATUS"
-    | "NOT_FOUND";
+import { AuctionMessages } from "../../application/constants/auction.messages";
+import { AuctionErrorCode } from "../../application/constants/auction.status-codes";
+
+export { AuctionErrorCode };
 
 export class AuctionError extends Error {
     constructor(
@@ -22,22 +13,23 @@ export class AuctionError extends Error {
     }
 
     static notFound(): AuctionError {
-        return new AuctionError("AUCTION_NOT_FOUND", "Auction not found");
+        return new AuctionError(AuctionErrorCode.AUCTION_NOT_FOUND, AuctionMessages.AUCTION_NOT_FOUND);
     }
 
     static bidTooLow(): AuctionError {
-        return new AuctionError("BID_TOO_LOW", "Bid amount is too low");
+        return new AuctionError(AuctionErrorCode.BID_TOO_LOW, AuctionMessages.BID_TOO_LOW);
     }
 
     static auctionEnded(): AuctionError {
-        return new AuctionError("AUCTION_ENDED", "Auction has ended");
+        return new AuctionError(AuctionErrorCode.AUCTION_ENDED, AuctionMessages.AUCTION_ENDED);
     }
 
-    static notAllowed(message: string = "Not allowed"): AuctionError {
-        return new AuctionError("NOT_ALLOWED", message);
+    static notAllowed(message: string = AuctionMessages.NOT_ALLOWED): AuctionError {
+        return new AuctionError(AuctionErrorCode.NOT_ALLOWED, message);
     }
 
     static userRevoked(): AuctionError {
-        return new AuctionError("USER_REVOKED", "User has been revoked");
+        return new AuctionError(AuctionErrorCode.USER_REVOKED, AuctionMessages.USER_REVOKED);
     }
 }
+

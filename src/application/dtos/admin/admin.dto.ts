@@ -28,3 +28,11 @@ export interface AdminStatsDto {
     activeSellers: number;
     suspendedUsers: number;
 }
+
+export interface AdminAuctionListResponseDto {
+    auctions: any[]; // Using any[] for now as Auction entity is complex to import here without circular deps or just import it
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}

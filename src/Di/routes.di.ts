@@ -124,7 +124,7 @@ const getSellersUseCase = new GetSellersUseCase(userRepository);
 const getSellerByIdUseCase = new GetSellerByIdUseCase(userRepository, kycRepository, storageService);
 const verifySellerKycUseCase = new VerifySellerKycUseCase(userRepository, kycRepository);
 const assignSellerRoleUseCase = new AssignSellerRoleUseCase(userRepository);
-const getAdminStatsUseCase = new GetAdminStatsUseCase(userRepository, kycRepository);
+import { GetAdminAuctionsUseCase } from "../application/useCases/admin/get-admin-auctions.usecase";
 
 const generateUploadUrlUseCase = new GenerateUploadUrlUseCase(storageService);
 const completeKycUploadUseCase = new CompleteKycUploadUseCase(userRepository, kycRepository);
@@ -147,6 +147,12 @@ const adminAuthController = new AdminAuthController(
     loginAdminUseCase
 );
 
+import { GetAdminAuctionByIdUseCase } from "../application/useCases/admin/get-admin-auction-by-id.usecase";
+
+const getAdminStatsUseCase = new GetAdminStatsUseCase(userRepository, kycRepository);
+const getAdminAuctionsUseCase = new GetAdminAuctionsUseCase(auctionRepository, storageService);
+const getAdminAuctionByIdUseCase = new GetAdminAuctionByIdUseCase(auctionRepository, storageService);
+
 const adminController = new AdminController(
     getUsersUseCase,
     getUserByIdUseCase,
@@ -157,7 +163,9 @@ const adminController = new AdminController(
     getSellerByIdUseCase,
     verifySellerKycUseCase,
     assignSellerRoleUseCase,
-    getAdminStatsUseCase
+    getAdminStatsUseCase,
+    getAdminAuctionsUseCase,
+    getAdminAuctionByIdUseCase
 );
 
 const kycController = new KycController(

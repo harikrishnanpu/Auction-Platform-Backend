@@ -2,36 +2,37 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RevokeUserUseCase = void 0;
 const auction_errors_1 = require("../../../domain/auction/auction.errors");
+const auction_messages_1 = require("../../../application/constants/auction.messages");
 class RevokeUserUseCase {
-    constructor(auctionRepository, participantRepository, bidRepository, activityRepository, transactionManager) {
-        this.auctionRepository = auctionRepository;
-        this.participantRepository = participantRepository;
-        this.bidRepository = bidRepository;
-        this.activityRepository = activityRepository;
-        this.transactionManager = transactionManager;
+    constructor(_auctionRepository, _participantRepository, _bidRepository, _activityRepository, _transactionManager) {
+        this._auctionRepository = _auctionRepository;
+        this._participantRepository = _participantRepository;
+        this._bidRepository = _bidRepository;
+        this._activityRepository = _activityRepository;
+        this._transactionManager = _transactionManager;
     }
     async execute(auctionId, sellerId, userId) {
         // Verify auction and seller
-        const auction = await this.auctionRepository.findById(auctionId);
+        const auction = await this._auctionRepository.findById(auctionId);
         if (!auction) {
-            throw new auction_errors_1.AuctionError("AUCTION_NOT_FOUND", "Auction not found");
+            throw new auction_errors_1.AuctionError(auction_errors_1.AuctionErrorCode.AUCTION_NOT_FOUND, auction_messages_1.AuctionMessages.AUCTION_NOT_FOUND);
         }
         if (auction.sellerId !== sellerId) {
-            throw new auction_errors_1.AuctionError("NOT_ALLOWED", "Only owner can revoke users");
+            throw new auction_errors_1.AuctionError(auction_errors_1.AuctionErrorCode.NOT_ALLOWED, auction_messages_1.AuctionMessages.NOT_ALLOWED);
         }
         // Check if user has any bids
-        const bidCount = await this.bidRepository.countUserBids(auctionId, userId);
-        return await this.transactionManager.runInTransaction(async (tx) => {
+        const bidCount = await this._bidRepository.countUserBids(auctionId, userId);
+        return await this._transactionManager.runInTransaction(async (tx) => {
             // Revoke participant
-            const participant = await this.participantRepository.revokeParticipant(auctionId, userId);
+            const participant = await this._participantRepository.revokeParticipant(auctionId, userId);
             // Invalidate all user's bids
             let invalidatedCount = 0;
             let priceChanged = false;
             let newPrice = auction.currentPrice;
             if (bidCount > 0) {
-                invalidatedCount = await this.bidRepository.invalidateUserBids(auctionId, userId, tx);
+                invalidatedCount = await this._bidRepository.invalidateUserBids(auctionId, userId, tx);
                 // Find the highest valid bid after invalidation
-                const highestValidBid = await this.bidRepository.findHighestValidBid(auctionId, tx);
+                const highestValidBid = await this._bidRepository.findHighestValidBid(auctionId, tx);
                 if (highestValidBid) {
                     newPrice = highestValidBid.amount;
                 }
@@ -41,12 +42,12 @@ class RevokeUserUseCase {
                 }
                 // Update auction current price if it changed
                 if (newPrice !== auction.currentPrice) {
-                    await this.auctionRepository.updateCurrentPrice(auctionId, newPrice, tx);
+                    await this._auctionRepository.updateCurrentPrice(auctionId, newPrice, tx);
                     priceChanged = true;
                 }
             }
             // Log activity
-            await this.activityRepository.logActivity(auctionId, "USER_REVOKED", `User revoked from auction. ${invalidatedCount} bid(s) invalidated.`, userId, {
+            await this._activityRepository.logActivity(auctionId, "USER_REVOKED", `User revoked from auction. ${invalidatedCount} bid(s) invalidated.`, userId, {
                 sellerId,
                 invalidatedBids: invalidatedCount,
                 priceChanged,

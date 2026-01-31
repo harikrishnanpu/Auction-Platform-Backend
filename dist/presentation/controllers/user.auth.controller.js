@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserAuthController = void 0;
 const auth_validator_1 = require("../validators/auth.validator");
 const passport_1 = __importDefault(require("passport"));
+const http_status_constants_1 = require("../../application/constants/http-status.constants");
+const response_messages_1 = require("../../application/constants/response.messages");
 class UserAuthController {
     constructor(registerUserUseCase, loginUserUseCase, verifyEmailUseCase, resendOtpUseCase, refreshTokenUseCase, getProfileUseCase, forgotPasswordUseCase, resetPasswordUseCase, loginWithGoogleUseCase) {
         this.registerUserUseCase = registerUserUseCase;
@@ -21,7 +23,7 @@ class UserAuthController {
             try {
                 const refreshToken = req.cookies.refreshToken;
                 if (!refreshToken) {
-                    return res.status(401).json({ success: false, message: "Refresh token is required" });
+                    return res.status(http_status_constants_1.HttpStatus.UNAUTHORIZED).json({ success: false, message: response_messages_1.ResponseMessages.REFRESH_TOKEN_REQUIRED });
                 }
                 const result = await this.refreshTokenUseCase.execute(refreshToken);
                 if (result.isSuccess) {
@@ -29,16 +31,16 @@ class UserAuthController {
                     if (accessToken && newRefreshToken) {
                         this.setCookies(res, accessToken, newRefreshToken);
                     }
-                    return res.status(200).json({ success: true, accessToken, refreshToken: newRefreshToken });
+                    return res.status(http_status_constants_1.HttpStatus.OK).json({ success: true, accessToken, refreshToken: newRefreshToken });
                 }
                 else {
                     this.removeCookies(res);
-                    return res.status(401).json({ success: false, message: result.error });
+                    return res.status(http_status_constants_1.HttpStatus.UNAUTHORIZED).json({ success: false, message: result.error });
                 }
             }
             catch (err) {
                 console.log("RefreshToken Error:", err);
-                return res.status(500).json({ success: false, message: 'Internal Server Error' });
+                return res.status(http_status_constants_1.HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: response_messages_1.ResponseMessages.INTERNAL_SERVER_ERROR });
             }
         };
         this.resendOtp = async (req, res) => {
@@ -46,19 +48,19 @@ class UserAuthController {
                 const { email } = req.body;
                 console.log("Email:", email);
                 if (!email.trim()) {
-                    return res.status(400).json({ success: false, message: "Email is required" });
+                    return res.status(http_status_constants_1.HttpStatus.BAD_REQUEST).json({ success: false, message: response_messages_1.ResponseMessages.EMAIL_REQUIRED });
                 }
                 const result = await this.resendOtpUseCase.execute({ email: email, purpose: "REGISTER" });
                 if (result.isSuccess) {
-                    return res.status(200).json({ success: true, message: "OTP resent successfully" });
+                    return res.status(http_status_constants_1.HttpStatus.OK).json({ success: true, message: response_messages_1.ResponseMessages.OTP_RESENT_SUCCESS });
                 }
                 else {
-                    return res.status(400).json({ success: false, message: result.error });
+                    return res.status(http_status_constants_1.HttpStatus.BAD_REQUEST).json({ success: false, message: result.error });
                 }
             }
             catch (err) {
                 console.log(err);
-                return res.status(500).json({ success: false, message: 'Internal Server Error' });
+                return res.status(http_status_constants_1.HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: response_messages_1.ResponseMessages.INTERNAL_SERVER_ERROR });
             }
         };
         this.register = async (req, res) => {
@@ -66,7 +68,7 @@ class UserAuthController {
             try {
                 const parseResult = auth_validator_1.registerSchema.safeParse(req.body);
                 if (!parseResult.success) {
-                    return res.status(400).json({ success: false, message: "please sent correct credentials", data: { errors: parseResult.error } });
+                    return res.status(http_status_constants_1.HttpStatus.BAD_REQUEST).json({ success: false, message: response_messages_1.ResponseMessages.INVALID_CREDENTIALS, data: { errors: parseResult.error } });
                 }
                 const dto = {
                     name: parseResult.data.firstName + " " + parseResult.data.lastName,
@@ -78,26 +80,26 @@ class UserAuthController {
                 };
                 const result = await this.registerUserUseCase.execute(dto);
                 if (result.isSuccess) {
-                    return res.status(201).json({
+                    return res.status(http_status_constants_1.HttpStatus.CREATED).json({
                         success: true,
-                        message: "User registered successfully. Please verify your email.",
+                        message: response_messages_1.ResponseMessages.USER_REGISTERED_VERIFY_EMAIL,
                         user: result.getValue()
                     });
                 }
                 else {
-                    return res.status(400).json({ success: false, message: result.error });
+                    return res.status(http_status_constants_1.HttpStatus.BAD_REQUEST).json({ success: false, message: result.error });
                 }
             }
             catch (err) {
                 console.log(err);
-                return res.status(500).json({ success: false, message: 'Internal Server Error' });
+                return res.status(http_status_constants_1.HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: response_messages_1.ResponseMessages.INTERNAL_SERVER_ERROR });
             }
         };
         this.login = async (req, res) => {
             try {
                 const parseResult = auth_validator_1.loginSchema.safeParse(req.body);
                 if (!parseResult.success) {
-                    return res.status(400).json({ success: false, message: "please sent correct credentials", data: { errors: parseResult.error } });
+                    return res.status(http_status_constants_1.HttpStatus.BAD_REQUEST).json({ success: false, message: response_messages_1.ResponseMessages.INVALID_CREDENTIALS, data: { errors: parseResult.error } });
                 }
                 const dto = parseResult.data;
                 const result = await this.loginUserUseCase.execute(dto);
@@ -106,26 +108,26 @@ class UserAuthController {
                     if (accessToken && refreshToken) {
                         this.setCookies(res, accessToken, refreshToken);
                     }
-                    return res.status(200).json({
+                    return res.status(http_status_constants_1.HttpStatus.OK).json({
                         success: true,
-                        message: "Login successful",
+                        message: response_messages_1.ResponseMessages.LOGIN_SUCCESS,
                         user: result.getValue()
                     });
                 }
                 else {
-                    return res.status(401).json({ message: result.error });
+                    return res.status(http_status_constants_1.HttpStatus.UNAUTHORIZED).json({ message: result.error });
                 }
             }
             catch (err) {
                 console.log(err);
-                return res.status(500).json({ message: 'Internal Server Error' });
+                return res.status(http_status_constants_1.HttpStatus.INTERNAL_SERVER_ERROR).json({ message: response_messages_1.ResponseMessages.INTERNAL_SERVER_ERROR });
             }
         };
         this.verifyEmail = async (req, res) => {
             try {
                 const parseResult = auth_validator_1.verifyEmailSchema.safeParse(req.body);
                 if (!parseResult.success) {
-                    return res.status(400).json({ success: false, message: 'please sent correct credentials', error: parseResult.error });
+                    return res.status(http_status_constants_1.HttpStatus.BAD_REQUEST).json({ success: false, message: response_messages_1.ResponseMessages.INVALID_CREDENTIALS, error: parseResult.error });
                 }
                 const dto = {
                     email: parseResult.data.email,
@@ -137,85 +139,85 @@ class UserAuthController {
                     if (accessToken && refreshToken) {
                         this.setCookies(res, accessToken, refreshToken);
                     }
-                    return res.status(200).json({
+                    return res.status(http_status_constants_1.HttpStatus.OK).json({
                         success: true,
-                        message: "Email verified successfully",
+                        message: response_messages_1.ResponseMessages.EMAIL_VERIFIED_SUCCESS,
                         user: result.getValue()
                     });
                 }
                 else {
-                    return res.status(400).json({ success: false, message: result.error });
+                    return res.status(http_status_constants_1.HttpStatus.BAD_REQUEST).json({ success: false, message: result.error });
                 }
             }
             catch (err) {
                 console.log(err);
-                return res.status(500).json({ success: false, message: 'Internal Server Error' });
+                return res.status(http_status_constants_1.HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: response_messages_1.ResponseMessages.INTERNAL_SERVER_ERROR });
             }
         };
         this.getProfile = async (req, res) => {
             try {
                 const userId = req.user?.userId;
                 if (!userId) {
-                    return res.status(401).json({ success: false, message: "Authentication Required" });
+                    return res.status(http_status_constants_1.HttpStatus.UNAUTHORIZED).json({ success: false, message: response_messages_1.ResponseMessages.AUTHENTICATION_REQUIRED });
                 }
                 const result = await this.getProfileUseCase.execute(userId);
                 if (result.isSuccess) {
-                    return res.status(200).json({ success: true, user: result.getValue() });
+                    return res.status(http_status_constants_1.HttpStatus.OK).json({ success: true, user: result.getValue() });
                 }
                 else {
                     this.removeCookies(res);
-                    return res.status(404).json({ success: false, message: "User profile not found" });
+                    return res.status(http_status_constants_1.HttpStatus.NOT_FOUND).json({ success: false, message: response_messages_1.ResponseMessages.USER_NOT_FOUND });
                 }
             }
             catch (err) {
                 console.error("GetProfile Error:", err);
-                return res.status(500).json({ success: false, message: 'Internal Server Error' });
+                return res.status(http_status_constants_1.HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: response_messages_1.ResponseMessages.INTERNAL_SERVER_ERROR });
             }
         };
         this.forgotPassword = async (req, res) => {
             try {
                 const { email } = req.body;
                 if (!email) {
-                    return res.status(400).json({ success: false, message: "Email is required" });
+                    return res.status(http_status_constants_1.HttpStatus.BAD_REQUEST).json({ success: false, message: response_messages_1.ResponseMessages.EMAIL_REQUIRED });
                 }
                 const dto = { email };
                 const result = await this.forgotPasswordUseCase.execute(dto);
                 if (result.isSuccess) {
-                    return res.status(200).json({ success: true, message: "If your email is registered, you will receive a password reset link." });
+                    return res.status(http_status_constants_1.HttpStatus.OK).json({ success: true, message: response_messages_1.ResponseMessages.PASSWORD_RESET_LINK_SENT });
                 }
                 else {
-                    return res.status(400).json({ success: false, message: result.error });
+                    return res.status(http_status_constants_1.HttpStatus.BAD_REQUEST).json({ success: false, message: result.error });
                 }
             }
             catch (err) {
                 console.log(err);
-                return res.status(500).json({ success: false, message: 'Internal Server Error' });
+                return res.status(http_status_constants_1.HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: response_messages_1.ResponseMessages.INTERNAL_SERVER_ERROR });
             }
         };
         this.resetPassword = async (req, res) => {
             try {
                 const { email, token, newPassword } = req.body;
                 if (!email || !token || !newPassword) {
-                    return res.status(400).json({ success: false, message: "Email, token and New Password are required" });
+                    return res.status(http_status_constants_1.HttpStatus.BAD_REQUEST).json({ success: false, message: response_messages_1.ResponseMessages.RESET_PASSWORD_FIELDS_REQUIRED });
                 }
                 const dto = { email, token, newPassword };
                 const result = await this.resetPasswordUseCase.execute(dto);
                 if (result.isSuccess) {
-                    return res.status(200).json({ success: true, message: "Password has been reset successfully. Please login with new password." });
+                    return res.status(http_status_constants_1.HttpStatus.OK).json({ success: true, message: response_messages_1.ResponseMessages.PASSWORD_RESET_SUCCESS });
                 }
                 else {
-                    return res.status(400).json({ success: false, message: result.error });
+                    return res.status(http_status_constants_1.HttpStatus.BAD_REQUEST).json({ success: false, message: result.error });
                 }
             }
             catch (err) {
                 console.log(err);
-                return res.status(500).json({ success: false, message: 'Internal Server Error' });
+                return res.status(http_status_constants_1.HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: response_messages_1.ResponseMessages.INTERNAL_SERVER_ERROR });
             }
         };
         this.logout = async (req, res) => {
             res.clearCookie('accessToken', { path: '/' });
             res.clearCookie('refreshToken', { path: '/' });
-            return res.status(200).json({ success: true, message: "Logged out successfully" });
+            return res.status(http_status_constants_1.HttpStatus.OK).json({ success: true, message: response_messages_1.ResponseMessages.LOGGED_OUT_SUCCESS });
         };
         this.googleAuth = (req, res, next) => {
             const callBackUrl = req.query.callBack || '/login';

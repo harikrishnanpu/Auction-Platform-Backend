@@ -14,6 +14,8 @@ class AdminRoutes {
     register() {
         this._router.post('/auth/login', this._adminAuthController.login);
         this._router.get('/stats', authenticate_middleware_1.authenticate, (0, authorize_middleware_1.authorize)([user_entity_1.UserRole.ADMIN]), this._adminController.getStats);
+        this._router.get('/auctions', authenticate_middleware_1.authenticate, (0, authorize_middleware_1.authorize)([user_entity_1.UserRole.ADMIN]), this._adminController.getAuctions);
+        this._router.get('/auctions/:id', authenticate_middleware_1.authenticate, (0, authorize_middleware_1.authorize)([user_entity_1.UserRole.ADMIN]), this._adminController.getAuctionById);
         this._router.get('/users', authenticate_middleware_1.authenticate, (0, authorize_middleware_1.authorize)([user_entity_1.UserRole.ADMIN]), this._adminController.getUsers);
         this._router.get('/users/:id', authenticate_middleware_1.authenticate, (0, authorize_middleware_1.authorize)([user_entity_1.UserRole.ADMIN]), this._adminController.getUserById);
         this._router.put('/users/:id', authenticate_middleware_1.authenticate, (0, authorize_middleware_1.authorize)([user_entity_1.UserRole.ADMIN]), this._adminController.updateUser);

@@ -4,6 +4,8 @@ import { CompleteKycUploadUseCase } from '../../application/useCases/kyc/complet
 import { SubmitKycUseCase } from '../../application/useCases/kyc/submit-kyc.usecase';
 import { GenerateUploadUrlDto, CompleteKycUploadDto } from '../../application/dtos/kyc/kyc.dto';
 import { GetKycStatusUseCase } from '../../application/useCases/kyc/get-kyc-status.usecase';
+import { HttpStatus } from '../../application/constants/http-status.constants';
+import { ResponseMessages } from '../../application/constants/response.messages';
 
 export class KycController {
     constructor(
@@ -17,7 +19,7 @@ export class KycController {
         try {
             const userId = (req as any).user?.userId;
             if (!userId) {
-                res.status(401).json({ message: 'Unauthorized' });
+                res.status(HttpStatus.UNAUTHORIZED).json({ message: ResponseMessages.UNAUTHORIZED });
                 return;
             }
 
@@ -30,20 +32,20 @@ export class KycController {
 
 
             if (!dto.documentType || !dto.fileName || !dto.contentType) {
-                res.status(400).json({ message: 'Missing required fields: documentType, fileName, contentType' });
+                res.status(HttpStatus.BAD_REQUEST).json({ message: ResponseMessages.KYC_MISSING_FIELDS });
                 return;
             }
 
             const result = await this.generateUploadUrlUseCase.execute(dto);
 
             if (result.isSuccess) {
-                res.status(200).json(result.getValue());
+                res.status(HttpStatus.OK).json(result.getValue());
             } else {
-                res.status(400).json({ message: result.error });
+                res.status(HttpStatus.BAD_REQUEST).json({ message: result.error });
             }
         } catch (error) {
             console.log('Error generating upload URL:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: ResponseMessages.INTERNAL_SERVER_ERROR });
         }
     }
 
@@ -51,7 +53,7 @@ export class KycController {
         try {
             const userId = (req as any).user?.userId;
             if (!userId) {
-                res.status(401).json({ message: 'Unauthorized' });
+                res.status(HttpStatus.UNAUTHORIZED).json({ message: ResponseMessages.UNAUTHORIZED });
                 return;
             }
 
@@ -65,20 +67,20 @@ export class KycController {
             };
 
             if (!dto.documentType || !dto.fileKey) {
-                res.status(400).json({ message: 'Missing required fields: documentType, fileKey' });
+                res.status(HttpStatus.BAD_REQUEST).json({ message: ResponseMessages.KYC_MISSING_UPLOAD_FIELDS });
                 return;
             }
 
             const result = await this.completeKycUploadUseCase.execute(dto);
 
             if (result.isSuccess) {
-                res.status(200).json({ message: 'Document upload completed successfully' });
+                res.status(HttpStatus.OK).json({ message: ResponseMessages.KYC_UPLOAD_SUCCESS });
             } else {
-                res.status(400).json({ message: result.error });
+                res.status(HttpStatus.BAD_REQUEST).json({ message: result.error });
             }
         } catch (error) {
             console.log('Error completing upload:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: ResponseMessages.INTERNAL_SERVER_ERROR });
         }
     }
 
@@ -86,20 +88,20 @@ export class KycController {
         try {
             const userId = (req as any).user?.userId;
             if (!userId) {
-                res.status(401).json({ message: 'Unauthorized' });
+                res.status(HttpStatus.UNAUTHORIZED).json({ message: ResponseMessages.UNAUTHORIZED });
                 return;
             }
 
             const result = await this.getKycStatusUseCase.execute(userId);
 
             if (result.isSuccess) {
-                res.status(200).json(result.getValue());
+                res.status(HttpStatus.OK).json(result.getValue());
             } else {
-                res.status(404).json({ message: result.error });
+                res.status(HttpStatus.NOT_FOUND).json({ message: result.error });
             }
         } catch (error) {
             console.log('Error fetching KYC status:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: ResponseMessages.INTERNAL_SERVER_ERROR });
         }
     }
 
@@ -107,20 +109,21 @@ export class KycController {
         try {
             const userId = (req as any).user?.userId;
             if (!userId) {
-                res.status(401).json({ message: 'Unauthorized' });
+                res.status(HttpStatus.UNAUTHORIZED).json({ message: ResponseMessages.UNAUTHORIZED });
                 return;
             }
 
             const result = await this.submitKycUseCase.execute(userId);
 
             if (result.isSuccess) {
-                res.status(200).json({ message: 'KYC submitted successfully' });
+                res.status(HttpStatus.OK).json({ message: ResponseMessages.KYC_SUBMITTED_SUCCESS });
             } else {
-                res.status(400).json({ message: result.error });
+                res.status(HttpStatus.BAD_REQUEST).json({ message: result.error });
             }
         } catch (error) {
             console.error('Error submitting KYC:', error);
-            res.status(500).json({ message: 'Internal server error' });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: ResponseMessages.INTERNAL_SERVER_ERROR });
         }
     }
 }
+

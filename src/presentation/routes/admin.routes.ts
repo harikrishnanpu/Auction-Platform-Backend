@@ -19,6 +19,9 @@ export class AdminRoutes {
         this._router.post('/auth/login', this._adminAuthController.login);
         this._router.get('/stats', authenticate, authorize([UserRole.ADMIN]), this._adminController.getStats);
 
+        this._router.get('/auctions', authenticate, authorize([UserRole.ADMIN]), this._adminController.getAuctions);
+        this._router.get('/auctions/:id', authenticate, authorize([UserRole.ADMIN]), this._adminController.getAuctionById);
+
         this._router.get('/users', authenticate, authorize([UserRole.ADMIN]), this._adminController.getUsers);
         this._router.get('/users/:id', authenticate, authorize([UserRole.ADMIN]), this._adminController.getUserById);
         this._router.put('/users/:id', authenticate, authorize([UserRole.ADMIN]), this._adminController.updateUser);

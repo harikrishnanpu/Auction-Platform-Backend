@@ -142,6 +142,77 @@ export class PrismaAuctionRepository implements IAuctionRepository {
         return auctions.map(a => this.mapToEntity(a));
     }
 
+    async findAllPaginatedAndFiltered(
+        page: number,
+        limit: number,
+        filters?: {
+            status?: string;
+            search?: string;
+            sellerId?: string;
+            categoryId?: string;
+        },
+        sort?: {
+            field: string;
+            order: 'asc' | 'desc';
+        }
+    ): Promise<{ auctions: Auction[], total: number }> {
+        const skip = (page - 1) * limit;
+        const take = limit;
+
+        const where: Prisma.AuctionWhereInput = {};
+
+        if (filters?.status) {
+            // @ts-ignore
+            where.status = filters.status;
+        }
+
+        if (filters?.sellerId) {
+            where.seller_id = filters.sellerId;
+        }
+
+        if (filters?.categoryId) {
+            where.category_id = filters.categoryId;
+        }
+
+        if (filters?.search) {
+            where.OR = [
+                { title: { contains: filters.search, mode: 'insensitive' } },
+                { description: { contains: filters.search, mode: 'insensitive' } }
+            ];
+        }
+
+        const orderBy: Prisma.AuctionOrderByWithRelationInput = {};
+        if (sort?.field) {
+            let field = sort.field;
+            // Map frontend field names to DB column names if necessary
+            if (field === 'createdAt') field = 'created_at';
+            else if (field === 'currentPrice') field = 'current_price';
+            else if (field === 'title') field = 'title';
+            else if (field === 'status') field = 'status';
+
+            // @ts-ignore
+            orderBy[field] = sort.order;
+        } else {
+            orderBy.created_at = 'desc';
+        }
+
+        const [auctions, total] = await Promise.all([
+            this.prisma.auction.findMany({
+                where,
+                skip,
+                take,
+                orderBy,
+                include: { assets: true }
+            }),
+            this.prisma.auction.count({ where })
+        ]);
+
+        return {
+            auctions: auctions.map(a => this.mapToEntity(a)),
+            total
+        };
+    }
+
     private mapToEntity(data: any): Auction {
         const assets = (data.assets || []).map((asset: any) => new AuctionAsset(
             asset.id,

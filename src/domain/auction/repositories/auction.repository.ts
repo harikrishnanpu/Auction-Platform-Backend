@@ -29,4 +29,18 @@ export interface IAuctionRepository {
     updateCurrentPrice(auctionId: string, currentPrice: number, tx?: TransactionContext): Promise<void>;
     findByIdForUpdate(auctionId: string, tx: TransactionContext): Promise<Auction | null>;
     extendAuction(auctionId: string, newEndTime: Date, extensionCount: number, tx?: TransactionContext): Promise<void>;
+    findAllPaginatedAndFiltered(
+        page: number,
+        limit: number,
+        filters?: {
+            status?: string;
+            search?: string;
+            sellerId?: string;
+            categoryId?: string;
+        },
+        sort?: {
+            field: string;
+            order: 'asc' | 'desc';
+        }
+    ): Promise<{ auctions: Auction[], total: number }>;
 }

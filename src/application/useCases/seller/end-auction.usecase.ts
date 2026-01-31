@@ -1,11 +1,12 @@
 import { IAuctionRepository } from '../../../domain/auction/repositories/auction.repository';
-import { AuctionError } from '../../../domain/auction/auction.errors';
+import { AuctionError, AuctionErrorCode } from '../../../domain/auction/auction.errors';
+import { AuctionMessages } from '../../../application/constants/auction.messages';
 
 export class EndAuctionUseCase {
-  constructor(private readonly auctionRepository: IAuctionRepository) {}
+  constructor(private readonly _auctionRepository: IAuctionRepository) { }
 
   async execute(auctionId: string, sellerId: string): Promise<void> {
-    const auction = await this.auctionRepository.findById(auctionId);
+    const auction = await this._auctionRepository.findById(auctionId);
 
     if (!auction) {
       throw AuctionError.notFound();
@@ -13,15 +14,16 @@ export class EndAuctionUseCase {
 
     // Verify seller ownership
     if (auction.sellerId !== sellerId) {
-      throw new Error('Unauthorized: Only the seller can end this auction');
+      throw new AuctionError(AuctionErrorCode.NOT_ALLOWED, AuctionMessages.NOT_ALLOWED);
     }
 
     // Can only end active auctions
     if (auction.status !== 'ACTIVE') {
-      throw new Error('Can only end active auctions');
+      throw new AuctionError(AuctionErrorCode.INVALID_STATUS, 'Can only end active auctions');
     }
 
     // Update auction status to ENDED
-    await this.auctionRepository.update(auctionId, { status: 'ENDED' });
+    await this._auctionRepository.update(auctionId, { status: 'ENDED' });
   }
 }
+

@@ -9,6 +9,7 @@ import { RevokeUserUseCase } from "../../application/useCases/auction/revoke-use
 import { GetUpcomingAuctionsUseCase } from "../../application/useCases/auction/get-upcoming-auctions.usecase";
 import { GetAuctionCategoriesUseCase } from "../../application/useCases/auction/get-auction-categories.usecase";
 import { GetAuctionConditionsUseCase } from "../../application/useCases/auction/get-auction-conditions.usecase";
+import { HttpStatus } from "../../application/constants/http-status.constants";
 
 export class AuctionController {
     constructor(
@@ -36,7 +37,7 @@ export class AuctionController {
                 startPrice: Number(req.body.start_price),
                 minBidIncrement: Number(req.body.min_bid_increment)
             });
-            res.status(201).json({ success: true, data: auction });
+            res.status(HttpStatus.CREATED).json({ success: true, data: auction });
         } catch (error) {
             next(error);
         }
@@ -56,7 +57,7 @@ export class AuctionController {
                     position: Number(asset.position ?? 0)
                 }))
             });
-            res.status(200).json({ success: true, data: result });
+            res.status(HttpStatus.OK).json({ success: true, data: result });
         } catch (error) {
             next(error);
         }
@@ -67,7 +68,7 @@ export class AuctionController {
             const user = (req as any).user;
             const { id } = req.params;
             const auction = await this.publishAuctionUseCase.execute(id, user.userId);
-            res.status(200).json({ success: true, data: auction });
+            res.status(HttpStatus.OK).json({ success: true, data: auction });
         } catch (error) {
             next(error);
         }
@@ -76,7 +77,7 @@ export class AuctionController {
     public list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const auctions = await this.getActiveAuctionsUseCase.execute();
-            res.status(200).json({ success: true, data: auctions });
+            res.status(HttpStatus.OK).json({ success: true, data: auctions });
         } catch (error) {
             next(error);
         }
@@ -86,9 +87,9 @@ export class AuctionController {
         try {
             const { id } = req.params;
             const auction = await this.getAuctionByIdUseCase.execute(id);
-            res.status(200).json({ success: true, data: auction });
+            res.status(HttpStatus.OK).json({ success: true, data: auction });
         } catch (error) {
-            res.status(404).json({ success: false, message: (error as Error).message });
+            res.status(HttpStatus.NOT_FOUND).json({ success: false, message: (error as Error).message });
         }
     }
 
@@ -97,7 +98,7 @@ export class AuctionController {
             const user = (req as any).user;
             const { id } = req.params;
             const participant = await this.enterAuctionUseCase.execute(id, user.userId);
-            res.status(200).json({ success: true, data: participant });
+            res.status(HttpStatus.OK).json({ success: true, data: participant });
         } catch (error) {
             next(error);
         }
@@ -109,7 +110,7 @@ export class AuctionController {
             const { id } = req.params;
             const { userId } = req.body;
             const revoked = await this.revokeUserUseCase.execute(id, user.userId, userId);
-            res.status(200).json({ success: true, data: revoked });
+            res.status(HttpStatus.OK).json({ success: true, data: revoked });
         } catch (error) {
             next(error);
         }
@@ -118,7 +119,7 @@ export class AuctionController {
     public getUpcoming = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const auctions = await this.getUpcomingAuctionsUseCase.execute();
-            res.status(200).json({ success: true, data: auctions });
+            res.status(HttpStatus.OK).json({ success: true, data: auctions });
         } catch (error) {
             next(error);
         }
@@ -128,7 +129,7 @@ export class AuctionController {
         try {
             const activeOnly = req.query.active === 'true';
             const categories = await this.getAuctionCategoriesUseCase.execute(activeOnly);
-            res.status(200).json({ success: true, data: categories });
+            res.status(HttpStatus.OK).json({ success: true, data: categories });
         } catch (error) {
             next(error);
         }
@@ -137,9 +138,10 @@ export class AuctionController {
     public getConditions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const conditions = await this.getAuctionConditionsUseCase.execute();
-            res.status(200).json({ success: true, data: conditions });
+            res.status(HttpStatus.OK).json({ success: true, data: conditions });
         } catch (error) {
             next(error);
         }
     }
 }
+

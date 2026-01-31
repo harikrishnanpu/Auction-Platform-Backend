@@ -1,11 +1,12 @@
 import { IAuctionRepository } from '../../../domain/auction/repositories/auction.repository';
-import { AuctionError } from '../../../domain/auction/auction.errors';
+import { AuctionError, AuctionErrorCode } from '../../../domain/auction/auction.errors';
+import { AuctionMessages } from '../../../application/constants/auction.messages';
 
 export class ResumeAuctionUseCase {
-  constructor(private readonly auctionRepository: IAuctionRepository) {}
+  constructor(private readonly _auctionRepository: IAuctionRepository) { }
 
   async execute(auctionId: string, sellerId: string): Promise<void> {
-    const auction = await this.auctionRepository.findById(auctionId);
+    const auction = await this._auctionRepository.findById(auctionId);
 
     if (!auction) {
       throw AuctionError.notFound();
@@ -13,19 +14,20 @@ export class ResumeAuctionUseCase {
 
     // Verify seller ownership
     if (auction.sellerId !== sellerId) {
-      throw new Error('Unauthorized: Only the seller can resume this auction');
+      throw new AuctionError(AuctionErrorCode.NOT_ALLOWED, AuctionMessages.NOT_ALLOWED);
     }
 
     // Can only resume paused auctions
     if (auction.status !== 'ACTIVE') {
-      throw new Error('Can only resume active auctions');
+      throw new AuctionError(AuctionErrorCode.INVALID_STATUS, 'Can only resume active auctions');
     }
 
     if (!auction.isPaused) {
-      throw new Error('Auction is not paused');
+      throw new AuctionError(AuctionErrorCode.INVALID_STATUS, 'Auction is not paused');
     }
 
     // Update auction to resume (unpause)
-    await this.auctionRepository.update(auctionId, { isPaused: false });
+    await this._auctionRepository.update(auctionId, { isPaused: false });
   }
 }
+

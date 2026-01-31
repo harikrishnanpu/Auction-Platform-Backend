@@ -142,6 +142,59 @@ class PrismaAuctionRepository {
         });
         return auctions.map(a => this.mapToEntity(a));
     }
+    async findAllPaginatedAndFiltered(page, limit, filters, sort) {
+        const skip = (page - 1) * limit;
+        const take = limit;
+        const where = {};
+        if (filters?.status) {
+            // @ts-ignore
+            where.status = filters.status;
+        }
+        if (filters?.sellerId) {
+            where.seller_id = filters.sellerId;
+        }
+        if (filters?.categoryId) {
+            where.category_id = filters.categoryId;
+        }
+        if (filters?.search) {
+            where.OR = [
+                { title: { contains: filters.search, mode: 'insensitive' } },
+                { description: { contains: filters.search, mode: 'insensitive' } }
+            ];
+        }
+        const orderBy = {};
+        if (sort?.field) {
+            let field = sort.field;
+            // Map frontend field names to DB column names if necessary
+            if (field === 'createdAt')
+                field = 'created_at';
+            else if (field === 'currentPrice')
+                field = 'current_price';
+            else if (field === 'title')
+                field = 'title';
+            else if (field === 'status')
+                field = 'status';
+            // @ts-ignore
+            orderBy[field] = sort.order;
+        }
+        else {
+            orderBy.created_at = 'desc';
+        }
+        const [auctions, total] = await Promise.all([
+            this.prisma.auction.findMany({
+                where,
+                skip,
+                take,
+                orderBy,
+                include: { assets: true }
+            }),
+            this.prisma.auction.count({ where })
+        ]);
+        return {
+            auctions: auctions.map(a => this.mapToEntity(a)),
+            total
+        };
+    }
     mapToEntity(data) {
         const assets = (data.assets || []).map((asset) => new auction_entity_1.AuctionAsset(asset.id, asset.auction_id, asset.asset_type, asset.url, asset.position, asset.created_at));
         return new auction_entity_1.Auction(data.id, data.seller_id, data.category_id, data.condition_id, data.title, data.description, data.start_at, data.end_at, data.start_price, data.min_bid_increment, data.current_price, assets, data.status, data.is_paused, data.extension_count || 0, data.created_at, data.updated_at);

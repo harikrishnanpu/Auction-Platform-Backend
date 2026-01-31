@@ -4,6 +4,7 @@ exports.EnterAuctionUseCase = void 0;
 const user_id_vo_1 = require("../../../domain/user/user-id.vo");
 const auction_policy_1 = require("../../../domain/auction/auction.policy");
 const auction_errors_1 = require("../../../domain/auction/auction.errors");
+const auction_messages_1 = require("../../../application/constants/auction.messages");
 class EnterAuctionUseCase {
     constructor(auctionRepository, participantRepository, userRepository, activityRepository) {
         this.auctionRepository = auctionRepository;
@@ -14,26 +15,26 @@ class EnterAuctionUseCase {
     async execute(auctionId, userId) {
         const auction = await this.auctionRepository.findById(auctionId);
         if (!auction) {
-            throw new auction_errors_1.AuctionError("AUCTION_NOT_FOUND", "Auction not found");
+            throw new auction_errors_1.AuctionError(auction_errors_1.AuctionErrorCode.AUCTION_NOT_FOUND, auction_messages_1.AuctionMessages.AUCTION_NOT_FOUND);
         }
         (0, auction_policy_1.ensureAuctionActive)(auction);
         (0, auction_policy_1.ensureAuctionWindow)(auction, new Date());
         const userIdVo = user_id_vo_1.UserId.create(userId);
         if (userIdVo.isFailure) {
-            throw new auction_errors_1.AuctionError("NOT_ALLOWED", "Invalid user");
+            throw new auction_errors_1.AuctionError(auction_errors_1.AuctionErrorCode.NOT_ALLOWED, "Invalid user");
         }
         const user = await this.userRepository.findById(userIdVo.getValue());
         // Removed phone requirement - users can enter without phone
         if (!user || user.is_blocked || !user.is_active || !user.is_verified) {
-            throw new auction_errors_1.AuctionError("NOT_ALLOWED", "User not eligible to enter");
+            throw new auction_errors_1.AuctionError(auction_errors_1.AuctionErrorCode.NOT_ALLOWED, "User not eligible to enter");
         }
         // Prevent seller from joining their own auction as a user
         if (auction.sellerId === userId) {
-            throw new auction_errors_1.AuctionError("NOT_ALLOWED", "Sellers cannot join their own auction as participants. Please use the seller dashboard.");
+            throw new auction_errors_1.AuctionError(auction_errors_1.AuctionErrorCode.NOT_ALLOWED, auction_messages_1.AuctionMessages.SELLER_NOT_ALLOWED);
         }
         const participant = await this.participantRepository.findByAuctionAndUser(auctionId, userId);
         if (participant?.revokedAt) {
-            throw new auction_errors_1.AuctionError("USER_REVOKED", "You have been revoked from this auction and cannot rejoin");
+            throw new auction_errors_1.AuctionError(auction_errors_1.AuctionErrorCode.USER_REVOKED, auction_messages_1.AuctionMessages.REVOKED_FROM_AUCTION);
         }
         const result = await this.participantRepository.upsertParticipant(auctionId, userId);
         // Don't log user join - participants panel already shows who joined

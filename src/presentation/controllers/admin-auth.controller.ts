@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { LoginAdminUseCase } from '../../application/useCases/admin/login-admin.usecase';
 import { loginSchema } from '../validators/auth.validator';
 import { LoginUserDto } from '../../application/dtos/auth/auth.dto';
+import { HttpStatus } from '../../application/constants/http-status.constants';
+import { ResponseMessages } from '../../application/constants/response.messages';
 
 export class AdminAuthController {
     constructor(
@@ -13,14 +15,14 @@ export class AdminAuthController {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 15 * 60 * 1000 
+            maxAge: 15 * 60 * 1000
         });
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000 
+            maxAge: 7 * 24 * 60 * 60 * 1000
         });
     }
 
@@ -28,7 +30,7 @@ export class AdminAuthController {
         try {
             const parseResult = loginSchema.safeParse(req.body);
             if (!parseResult.success) {
-                return res.status(400).json({ errors: (parseResult.error as any).errors });
+                return res.status(HttpStatus.BAD_REQUEST).json({ errors: (parseResult.error as any).errors });
             }
 
             const dto: LoginUserDto = parseResult.data;
@@ -42,8 +44,8 @@ export class AdminAuthController {
                     this.setCookies(res, accessToken, refreshToken);
                 }
 
-                return res.status(200).json({
-                    message: "Admin Login successful",
+                return res.status(HttpStatus.OK).json({
+                    message: ResponseMessages.ADMIN_LOGIN_SUCCESS,
                     admin: {
                         id: user.id,
                         name: user.name,
@@ -54,11 +56,12 @@ export class AdminAuthController {
                     }
                 });
             } else {
-                return res.status(401).json({ message: result.error });
+                return res.status(HttpStatus.UNAUTHORIZED).json({ message: result.error });
             }
         } catch (err) {
             console.log(err);
-            return res.status(500).json({ message: 'Internal Server Error' });
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: ResponseMessages.INTERNAL_SERVER_ERROR });
         }
     }
 }
+

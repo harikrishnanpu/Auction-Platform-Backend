@@ -5,24 +5,24 @@ import { IAuctionActivityRepository } from "../../../domain/auction/repositories
 
 export class GetAuctionRoomStateUseCase {
     constructor(
-        private auctionRepository: IAuctionRepository,
-        private bidRepository: IBidRepository,
-        private chatMessageRepository: IChatMessageRepository,
-        private activityRepository: IAuctionActivityRepository
+        private _auctionRepository: IAuctionRepository,
+        private _bidRepository: IBidRepository,
+        private _chatMessageRepository: IChatMessageRepository,
+        private _activityRepository: IAuctionActivityRepository
     ) { }
 
     async execute(auctionId: string, limit: number = 20, userId?: string) {
         const [auction, latestBids, latestMessages, recentActivities] = await Promise.all([
-            this.auctionRepository.findById(auctionId),
-            this.bidRepository.findLatestValidByAuction(auctionId, limit),
-            this.chatMessageRepository.findLatestByAuction(auctionId, limit),
-            this.activityRepository.getRecentActivities(auctionId, 50)
+            this._auctionRepository.findById(auctionId),
+            this._bidRepository.findLatestValidByAuction(auctionId, limit),
+            this._chatMessageRepository.findLatestByAuction(auctionId, limit),
+            this._activityRepository.getRecentActivities(auctionId, 50)
         ]);
 
         // Get user's last bid time for rate limit persistence
         let lastBidTime: Date | null = null;
         if (userId) {
-            const userBids = await this.bidRepository.findByUserInAuction(auctionId, userId, 1);
+            const userBids = await this._bidRepository.findByUserInAuction(auctionId, userId, 1);
             if (userBids.length > 0) {
                 lastBidTime = userBids[0].createdAt;
             }
@@ -38,3 +38,4 @@ export class GetAuctionRoomStateUseCase {
         };
     }
 }
+
