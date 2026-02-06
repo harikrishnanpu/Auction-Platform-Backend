@@ -9,7 +9,12 @@ export class VerifySellerKycUseCase {
         private kycRepository: IKYCRepository
     ) { }
 
-    public async execute(userId: string, verify: boolean): Promise<Result<void>> {
+    public async execute(
+        userId: string,
+        verify: boolean,
+        reasonType?: string,
+        reasonMessage?: string
+    ): Promise<Result<void>> {
         const user = await this.userRepository.findById(userId);
         if (!user) return Result.fail("User not found");
 
@@ -20,9 +25,32 @@ export class VerifySellerKycUseCase {
             return Result.fail("KYC profile not found");
         }
 
+        if (verify && kycProfile.verification_status === KYCStatus.VERIFIED) {
+            return Result.fail("KYC is already verified");
+        }
+
+        if (!verify && kycProfile.verification_status === KYCStatus.REJECTED) {
+            return Result.fail("KYC is already rejected");
+        }
+
+        const normalizedReasonType = reasonType?.trim();
+        const normalizedReasonMessage = reasonMessage?.trim();
+
+        if (!verify) {
+            if (!normalizedReasonType) {
+                return Result.fail("Rejection reason type is required");
+            }
+            if (!normalizedReasonMessage) {
+                return Result.fail("Rejection reason message is required");
+            }
+        }
+
         await this.kycRepository.updateStatus(
             kycProfile.kyc_id,
-            verify ? KYCStatus.VERIFIED : KYCStatus.REJECTED
+            verify ? KYCStatus.VERIFIED : KYCStatus.REJECTED,
+            verify ? null : normalizedReasonType || null,
+            verify ? null : normalizedReasonMessage || null,
+            verify ? null : new Date()
         );
 
         // If verifying, ensure user has SELLER role

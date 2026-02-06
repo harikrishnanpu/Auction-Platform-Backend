@@ -22,5 +22,12 @@ export interface IUserRepository {
     countSellers(): Promise<number>;
     countBlocked(): Promise<number>;
 
-    findSellers(page: number, limit: number): Promise<{ sellers: any[], total: number }>;
+    findSellers(
+        page: number,
+        limit: number,
+        search?: string,
+        sortBy?: string,
+        sortOrder?: 'asc' | 'desc',
+        kycStatus?: string
+    ): Promise<{ sellers: any[], total: number }>;
 }

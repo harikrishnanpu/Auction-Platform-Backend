@@ -110,6 +110,9 @@ model KYCProfile {
   document_number     String
   address             String?
   verification_status String
+  rejection_reason_type    String?
+  rejection_reason_message String?
+  rejected_at              DateTime?
   id_front_url        String?
   id_back_url         String?
   address_proof_url   String?

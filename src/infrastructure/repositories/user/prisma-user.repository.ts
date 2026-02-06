@@ -193,10 +193,17 @@ export class PrismaUserRepository implements IUserRepository {
         });
     }
 
-    async findSellers(page: number, limit: number): Promise<{ sellers: any[], total: number }> {
+    async findSellers(
+        page: number,
+        limit: number,
+        search?: string,
+        sortBy?: string,
+        sortOrder: 'asc' | 'desc' = 'desc',
+        kycStatus?: string
+    ): Promise<{ sellers: any[], total: number }> {
         const skip = (page - 1) * limit;
 
-        const where = {
+        const where: any = {
             OR: [
                 {
                     UserRole: {
@@ -207,12 +214,55 @@ export class PrismaUserRepository implements IUserRepository {
                     KYCProfile: {
                         some: {
                             kyc_type: 'SELLER' as any,
-                            verification_status: 'PENDING'
+                            verification_status: { in: ['PENDING', 'REJECTED'] }
                         }
                     }
                 }
             ]
         };
+
+        if (search) {
+            where.AND = [
+                {
+                    OR: [
+                        { name: { contains: search, mode: 'insensitive' } },
+                        { email: { contains: search, mode: 'insensitive' } }
+                    ]
+                }
+            ];
+        }
+
+        if (kycStatus) {
+            if (kycStatus === 'NOT_SUBMITTED') {
+                where.AND = [
+                    ...(where.AND || []),
+                    {
+                        KYCProfile: {
+                            none: { kyc_type: 'SELLER' as any }
+                        }
+                    }
+                ];
+            } else {
+                where.AND = [
+                    ...(where.AND || []),
+                    {
+                        KYCProfile: {
+                            some: {
+                                kyc_type: 'SELLER' as any,
+                                verification_status: kycStatus
+                            }
+                        }
+                    }
+                ];
+            }
+        }
+
+        const orderBy: any = {};
+        if (sortBy) {
+            orderBy[sortBy] = sortOrder;
+        } else {
+            orderBy.created_at = 'desc';
+        }
 
         const [rawUsers, total] = await Promise.all([
             prisma.user.findMany({
@@ -227,7 +277,7 @@ export class PrismaUserRepository implements IUserRepository {
                         take: 1
                     }
                 },
-                orderBy: { created_at: 'desc' }
+                orderBy
             }),
             prisma.user.count({ where })
         ]);

@@ -1,7 +1,7 @@
 import { IUserRepository } from '../../../domain/user/user.repository';
 import { CompleteKycUploadDto } from '../../dtos/kyc/kyc.dto';
 import { Result } from '../../../domain/shared/result';
-import { IKYCRepository, KYCStatus } from '../../../domain/kyc/kyc.repository';
+import { IKYCRepository, KYCStatus, KYCType } from '../../../domain/kyc/kyc.repository';
 
 export class CompleteKycUploadUseCase {
     constructor(
@@ -16,7 +16,8 @@ export class CompleteKycUploadUseCase {
         }
 
         try {
-            const existingKyc = await this.kycRepository.findByUserId(dto.userId);
+            const kycType = dto.kycType || KYCType.SELLER;
+            const existingKyc = await this.kycRepository.findByUserId(dto.userId, kycType);
 
             const updateData: any = {
                 user_id: dto.userId,
@@ -43,6 +44,8 @@ export class CompleteKycUploadUseCase {
 
             if (dto.kycType) {
                 updateData.kyc_type = dto.kycType;
+            } else {
+                updateData.kyc_type = kycType;
             }
 
             if (existingKyc) {

@@ -20,8 +20,7 @@ async function createAdmin() {
             phone,
             address,
             password_hash: passwordHash,
-            is_active: true,
-            is_blocked: false,
+             is_blocked: false,
             is_verified: true,
             UserRole: {
                 create: {

@@ -28,6 +28,9 @@ export class PrismaKYCRepository implements IKYCRepository {
                 document_type: kyc.document_type || '',
                 document_number: kyc.document_number || '',
                 verification_status: kyc.verification_status || 'PENDING',
+                rejection_reason_type: kyc.rejection_reason_type || null,
+                rejection_reason_message: kyc.rejection_reason_message || null,
+                rejected_at: kyc.rejected_at || null,
                 id_front_url: kyc.id_front_url,
                 id_back_url: kyc.id_back_url,
                 address_proof_url: kyc.address_proof_url,
@@ -38,11 +41,20 @@ export class PrismaKYCRepository implements IKYCRepository {
         return profile as unknown as KYCProfile;
     }
 
-    async updateStatus(kycId: string, status: string): Promise<void> {
+    async updateStatus(
+        kycId: string,
+        status: string,
+        reasonType?: string | null,
+        reasonMessage?: string | null,
+        rejectedAt?: Date | null
+    ): Promise<void> {
         await prisma.kYCProfile.update({
             where: { kyc_id: kycId },
             data: {
                 verification_status: status,
+                rejection_reason_type: reasonType ?? null,
+                rejection_reason_message: reasonMessage ?? null,
+                rejected_at: rejectedAt ?? null,
                 updated_at: new Date()
             }
         });

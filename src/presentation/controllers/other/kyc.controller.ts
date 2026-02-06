@@ -4,6 +4,7 @@ import { CompleteKycUploadUseCase } from '../../../application/useCases/kyc/comp
 import { SubmitKycUseCase } from '../../../application/useCases/kyc/submit-kyc.usecase';
 import { GenerateUploadUrlDto, CompleteKycUploadDto } from '../../../application/dtos/kyc/kyc.dto';
 import { GetKycStatusUseCase } from '../../../application/useCases/kyc/get-kyc-status.usecase';
+import { KYCType } from '../../../domain/kyc/kyc.repository';
 
 export class KycController {
     constructor(
@@ -13,6 +14,12 @@ export class KycController {
         private submitKycUseCase: SubmitKycUseCase
     ) { }
 
+    private parseKycType(value?: string): KYCType | undefined {
+        if (!value) return undefined;
+        if (value === KYCType.SELLER || value === KYCType.MODERATOR) return value;
+        return undefined;
+    }
+
     public generateUploadUrl = async (req: Request, res: Response): Promise<void> => {
         try {
             const userId = (req as any).user?.userId;
@@ -21,11 +28,18 @@ export class KycController {
                 return;
             }
 
+            const kycType = this.parseKycType(req.body.kycType);
+            if (req.body.kycType && !kycType) {
+                res.status(400).json({ message: 'Invalid kycType' });
+                return;
+            }
+
             const dto: GenerateUploadUrlDto = {
                 userId,
                 documentType: req.body.documentType,
                 fileName: req.body.fileName,
                 contentType: req.body.contentType,
+                kycType
             };
 
 
@@ -55,6 +69,12 @@ export class KycController {
                 return;
             }
 
+            const kycType = this.parseKycType(req.body.kycType);
+            if (req.body.kycType && !kycType) {
+                res.status(400).json({ message: 'Invalid kycType' });
+                return;
+            }
+
             const dto: CompleteKycUploadDto = {
                 userId,
                 documentType: req.body.documentType,
@@ -62,6 +82,7 @@ export class KycController {
                 documentTypeName: req.body.documentTypeName,
                 documentNumber: req.body.documentNumber,
                 address: req.body.address,
+                kycType
             };
 
             if (!dto.documentType || !dto.fileKey) {
@@ -90,7 +111,13 @@ export class KycController {
                 return;
             }
 
-            const result = await this.getKycStatusUseCase.execute(userId);
+            const kycType = this.parseKycType(req.query.kycType as string | undefined) || KYCType.SELLER;
+            if (req.query.kycType && !this.parseKycType(req.query.kycType as string)) {
+                res.status(400).json({ message: 'Invalid kycType' });
+                return;
+            }
+
+            const result = await this.getKycStatusUseCase.execute(userId, kycType);
 
             if (result.isSuccess) {
                 res.status(200).json(result.getValue());
@@ -111,7 +138,13 @@ export class KycController {
                 return;
             }
 
-            const result = await this.submitKycUseCase.execute(userId);
+            const kycType = this.parseKycType(req.body.kycType) || KYCType.SELLER;
+            if (req.body.kycType && !this.parseKycType(req.body.kycType)) {
+                res.status(400).json({ message: 'Invalid kycType' });
+                return;
+            }
+
+            const result = await this.submitKycUseCase.execute(userId, kycType);
 
             if (result.isSuccess) {
                 res.status(200).json({ message: 'KYC submitted successfully' });

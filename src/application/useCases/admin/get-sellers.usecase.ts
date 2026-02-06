@@ -5,8 +5,15 @@ import { Result } from "../../../domain/shared/result";
 export class GetSellersUseCase {
     constructor(private userRepository: IUserRepository) { }
 
-    public async execute(page: number, limit: number): Promise<Result<UserListResponseDto & { sellers: any[] }>> {
-        const { sellers, total } = await this.userRepository.findSellers(page, limit);
+    public async execute(
+        page: number,
+        limit: number,
+        search?: string,
+        sortBy?: string,
+        sortOrder?: 'asc' | 'desc',
+        kycStatus?: string
+    ): Promise<Result<UserListResponseDto & { sellers: any[] }>> {
+        const { sellers, total } = await this.userRepository.findSellers(page, limit, search, sortBy, sortOrder, kycStatus);
 
         return Result.ok({
             sellers,

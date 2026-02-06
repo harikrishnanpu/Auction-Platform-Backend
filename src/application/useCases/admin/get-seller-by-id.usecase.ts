@@ -43,8 +43,8 @@ export class GetSellerByIdUseCase {
         const hasSellerRole = user.roles.includes(UserRole.SELLER);
         const kycProfile = await this.kycRepository.findByUserId(id, KYCType.SELLER);
 
-        if (!hasSellerRole && (!kycProfile || kycProfile.verification_status !== 'PENDING')) {
-            return Result.fail("User is not a seller and has no pending seller KYC");
+        if (!hasSellerRole && !kycProfile) {
+            return Result.fail("User is not a seller and has no seller KYC profile");
         }
 
         if (kycProfile) {

@@ -1,7 +1,7 @@
 import { ILogger } from "@application/ports/logger.port";
 import { Result } from "@domain/shared/result";
 import { IUserRepository } from "@domain/user/user.repository";
-import { User } from "@prisma/client";
+import { User } from "@domain/user/user.entity";
 
 
 export class CompleteProfileUseCase {
@@ -24,14 +24,12 @@ export class CompleteProfileUseCase {
             return Result.fail("User is blocked");
         }
 
+        const completeResult = user.completeProfile(phone, address);
+        if (completeResult.isFailure) {
+            return Result.fail<User>(completeResult.error as string);
+        }
 
-        const updatedUser = await this._userRepository.update(userId, { phone, address });
+        const updatedUser = await this._userRepository.update(userId, user);
         return Result.ok(updatedUser);
-
-
     }
-
-
-
-
 }

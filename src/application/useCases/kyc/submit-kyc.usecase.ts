@@ -8,13 +8,13 @@ export class SubmitKycUseCase {
         private kycRepository: IKYCRepository
     ) { }
 
-    async execute(userId: string): Promise<Result<void>> {
+    async execute(userId: string, kycType: KYCType = KYCType.SELLER): Promise<Result<void>> {
         const user = await this.userRepository.findById(userId);
         if (!user) {
             return Result.fail('User not found');
         }
 
-        const kycProfile = await this.kycRepository.findByUserId(userId);
+        const kycProfile = await this.kycRepository.findByUserId(userId, kycType);
 
         if (!kycProfile) {
             return Result.fail('KYC profile not found. Please upload documents first.');
@@ -34,7 +34,7 @@ export class SubmitKycUseCase {
             kyc_id: kycProfile.kyc_id,
             user_id: userId,
             verification_status: KYCStatus.PENDING,
-            kyc_type: KYCType.SELLER
+            kyc_type: kycType
         });
 
         return Result.ok<void>(undefined);
