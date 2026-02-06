@@ -34,9 +34,15 @@ export class AuctionController {
                 startAt: req.body.start_at,
                 endAt: req.body.end_at,
                 startPrice: Number(req.body.start_price),
-                minBidIncrement: Number(req.body.min_bid_increment)
+                minBidIncrement: Number(req.body.min_bid_increment),
+                categoryId: req.body.category_id ?? undefined,
+                conditionId: req.body.condition_id ?? undefined,
+                antiSnipeThresholdSeconds: req.body.anti_snipe_threshold_seconds != null ? Number(req.body.anti_snipe_threshold_seconds) : undefined,
+                antiSnipeExtensionSeconds: req.body.anti_snipe_extension_seconds != null ? Number(req.body.anti_snipe_extension_seconds) : undefined,
+                maxExtensions: req.body.max_extensions != null ? Number(req.body.max_extensions) : undefined,
+                bidCooldownSeconds: req.body.bid_cooldown_seconds != null ? Number(req.body.bid_cooldown_seconds) : undefined
             });
-            res.status(201).json({ success: true, data: auction });
+            res.status(201).json({ success: true, data: { ...auction, auctionId: auction.id } });
         } catch (error) {
             next(error);
         }

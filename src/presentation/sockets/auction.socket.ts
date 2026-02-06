@@ -1,14 +1,14 @@
 import { Server as HttpServer } from "http";
 import { Server } from "socket.io";
 import { tokenService } from "../../infrastructure/services/jwt/jwt.service";
-import { auctionRepository, bidRepository, chatMessageRepository, participantRepository, transactionManager, activityRepository } from "../../Di/repository.di";
+import { auctionRepository, bidRepository, chatMessageRepository, participantRepository, transactionManager, activityRepository, paymentRepository } from "../../Di/repository.di";
 import { PlaceBidUseCase } from "../../application/useCases/auction/place-bid.usecase";
 import { SendChatMessageUseCase } from "../../application/useCases/auction/send-chat-message.usecase";
 import { GetAuctionRoomStateUseCase } from "../../application/useCases/auction/get-auction-room-state.usecase";
 import { RevokeUserUseCase } from "../../application/useCases/auction/revoke-user.usecase";
 import { PauseAuctionUseCase } from "../../application/useCases/seller/pause-auction.usecase";
 import { ResumeAuctionUseCase } from "../../application/useCases/seller/resume-auction.usecase";
-import { EndAuctionUseCase } from "../../application/useCases/seller/end-auction.usecase";
+import { EndAuctionUseCase as AuctionEndAuctionUseCase } from "../../application/useCases/auction/end-auction.usecase";
 import { AuctionError } from "../../domain/auction/auction.errors";
 
 export const initAuctionSocket = (server: HttpServer) => {
@@ -20,12 +20,16 @@ export const initAuctionSocket = (server: HttpServer) => {
     });
 
     const placeBidUseCase = new PlaceBidUseCase(auctionRepository, bidRepository, participantRepository, activityRepository, transactionManager);
-    const sendChatMessageUseCase = new SendChatMessageUseCase(chatMessageRepository, participantRepository);
+    const sendChatMessageUseCase = new SendChatMessageUseCase(
+        chatMessageRepository,
+        participantRepository,
+        auctionRepository
+    );
     const getRoomStateUseCase = new GetAuctionRoomStateUseCase(auctionRepository, bidRepository, chatMessageRepository, activityRepository);
     const revokeUserUseCase = new RevokeUserUseCase(auctionRepository, participantRepository, bidRepository, activityRepository, transactionManager);
     const pauseAuctionUseCase = new PauseAuctionUseCase(auctionRepository);
-    const resumeAuctionUseCase = new ResumeAuctionUseCase(auctionRepository);
-    const endAuctionUseCase = new EndAuctionUseCase(auctionRepository);
+    const auctionEndAuctionUseCase = new AuctionEndAuctionUseCase(auctionRepository, bidRepository, activityRepository, paymentRepository);
+    const resumeAuctionUseCase = new ResumeAuctionUseCase(auctionRepository, auctionEndAuctionUseCase);
 
     const parseCookieToken = (cookieHeader?: string) => {
         if (!cookieHeader) return "";
@@ -382,7 +386,13 @@ export const initAuctionSocket = (server: HttpServer) => {
             try {
                 const user = (socket as any).user;
                 console.log(`🏁 Seller ${user.userId} ending auction ${auctionId}`);
-                await endAuctionUseCase.execute(auctionId, user.userId);
+                const auction = await auctionRepository.findById(auctionId);
+                if (!auction || auction.sellerId !== user.userId) {
+                    socket.emit("room:error", { message: "Unauthorized: Only the seller can end this auction" });
+                    return;
+                }
+
+                await auctionEndAuctionUseCase.execute(auctionId, 'SELLER');
                 
                 // Log activity and broadcast
                 const activity = await activityRepository.logActivity(

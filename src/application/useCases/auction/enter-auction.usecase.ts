@@ -2,7 +2,7 @@ import { IAuctionRepository } from "../../../domain/auction/repositories/auction
 import { IAuctionParticipantRepository } from "../../../domain/auction/repositories/participant.repository";
 import { IAuctionActivityRepository } from "../../../domain/auction/repositories/activity.repository";
 import { IUserRepository } from "../../../domain/user/user.repository";
-import { ensureAuctionActive, ensureAuctionWindow } from "../../../domain/auction/auction.policy";
+import { ensureAuctionActive } from "../../../domain/auction/auction.policy";
 import { AuctionError } from "../../../domain/auction/auction.errors";
 
 export class EnterAuctionUseCase {
@@ -19,7 +19,10 @@ export class EnterAuctionUseCase {
             throw new AuctionError("AUCTION_NOT_FOUND", "Auction not found");
         }
         ensureAuctionActive(auction);
-        ensureAuctionWindow(auction, new Date());
+        const now = new Date();
+        if (now > auction.endAt) {
+            throw new AuctionError("AUCTION_ENDED", "Auction has ended");
+        }
 
         const user = await this.userRepository.findById(userId);
         if (!user || user.is_blocked || !user.is_verified) {

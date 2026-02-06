@@ -22,6 +22,10 @@ export class PrismaAuctionRepository implements IAuctionRepository {
                 current_price: auction.currentPrice,
                 status: auction.status,
                 is_paused: auction.isPaused,
+                anti_snipe_threshold_seconds: auction.antiSnipeThresholdSeconds,
+                anti_snipe_extension_seconds: auction.antiSnipeExtensionSeconds,
+                max_extensions: auction.maxExtensions,
+                bid_cooldown_seconds: auction.bidCooldownSeconds,
                 created_at: auction.createdAt,
                 updated_at: auction.updatedAt
             },
@@ -53,8 +57,14 @@ export class PrismaAuctionRepository implements IAuctionRepository {
     }
 
     async findActive(): Promise<Auction[]> {
+        const now = new Date();
         const auctions = await this.prisma.auction.findMany({
-            where: { status: "ACTIVE" },
+            where: {
+                status: "ACTIVE",
+                is_paused: false,
+                start_at: { lte: now },
+                end_at: { gt: now }
+            },
             include: { assets: true },
             orderBy: { created_at: "desc" }
         });
@@ -82,6 +92,10 @@ export class PrismaAuctionRepository implements IAuctionRepository {
         if (dto.conditionId !== undefined) data.condition_id = dto.conditionId;
         if (dto.isPaused !== undefined) data.is_paused = dto.isPaused;
         if (dto.status !== undefined) data.status = dto.status;
+        if (dto.antiSnipeThresholdSeconds !== undefined) data.anti_snipe_threshold_seconds = dto.antiSnipeThresholdSeconds;
+        if (dto.antiSnipeExtensionSeconds !== undefined) data.anti_snipe_extension_seconds = dto.antiSnipeExtensionSeconds;
+        if (dto.maxExtensions !== undefined) data.max_extensions = dto.maxExtensions;
+        if (dto.bidCooldownSeconds !== undefined) data.bid_cooldown_seconds = dto.bidCooldownSeconds;
         const updated = await this.prisma.auction.update({
             where: { id: auctionId },
             data,
@@ -168,6 +182,10 @@ export class PrismaAuctionRepository implements IAuctionRepository {
             data.status,
             data.is_paused,
             data.extension_count || 0,
+            data.anti_snipe_threshold_seconds ?? 30,
+            data.anti_snipe_extension_seconds ?? 30,
+            data.max_extensions ?? 5,
+            data.bid_cooldown_seconds ?? 60,
             data.created_at,
             data.updated_at
         );

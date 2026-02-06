@@ -159,6 +159,10 @@ model Auction {
   status                  AuctionStatus @default(DRAFT)
   is_paused               Boolean       @default(false)
   extension_count         Int           @default(0)
+  anti_snipe_threshold_seconds  Int      @default(30)
+  anti_snipe_extension_seconds  Int      @default(30)
+  max_extensions               Int      @default(5)
+  bid_cooldown_seconds         Int      @default(60)
   winner_id               String?
   winner_payment_deadline DateTime?
   completion_status       String        @default("PENDING")

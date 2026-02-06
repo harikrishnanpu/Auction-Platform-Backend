@@ -26,6 +26,10 @@ export class Auction {
         public readonly status: 'DRAFT' | 'ACTIVE' | 'ENDED' | 'CANCELLED' = 'DRAFT',
         public readonly isPaused: boolean = false,
         public readonly extensionCount: number = 0,
+        public readonly antiSnipeThresholdSeconds: number = 30,
+        public readonly antiSnipeExtensionSeconds: number = 30,
+        public readonly maxExtensions: number = 5,
+        public readonly bidCooldownSeconds: number = 60,
         public readonly createdAt: Date = new Date(),
         public readonly updatedAt: Date = new Date()
     ) { }

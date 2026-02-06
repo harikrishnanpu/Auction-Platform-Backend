@@ -38,10 +38,16 @@ export class SellerAuctionController {
                 startAt: req.body.start_at,
                 endAt: req.body.end_at,
                 startPrice: Number(req.body.start_price),
-                minBidIncrement: Number(req.body.min_bid_increment)
+                minBidIncrement: Number(req.body.min_bid_increment),
+                categoryId: req.body.category_id ?? undefined,
+                conditionId: req.body.condition_id ?? undefined,
+                antiSnipeThresholdSeconds: req.body.anti_snipe_threshold_seconds != null ? Number(req.body.anti_snipe_threshold_seconds) : undefined,
+                antiSnipeExtensionSeconds: req.body.anti_snipe_extension_seconds != null ? Number(req.body.anti_snipe_extension_seconds) : undefined,
+                maxExtensions: req.body.max_extensions != null ? Number(req.body.max_extensions) : undefined,
+                bidCooldownSeconds: req.body.bid_cooldown_seconds != null ? Number(req.body.bid_cooldown_seconds) : undefined
             });
 
-            res.status(201).json({ success: true, data: auction });
+            res.status(201).json({ success: true, data: { ...auction, auctionId: auction.id } });
         } catch (error) {
             console.error("Create Auction Error:", error);
             res.status(400).json({ success: false, message: (error as Error).message });
@@ -140,6 +146,10 @@ export class SellerAuctionController {
                 endAt: body.end_at ? new Date(body.end_at) : undefined,
                 startPrice: body.start_price != null ? Number(body.start_price) : undefined,
                 minBidIncrement: body.min_bid_increment != null ? Number(body.min_bid_increment) : undefined,
+                antiSnipeThresholdSeconds: body.anti_snipe_threshold_seconds != null ? Number(body.anti_snipe_threshold_seconds) : undefined,
+                antiSnipeExtensionSeconds: body.anti_snipe_extension_seconds != null ? Number(body.anti_snipe_extension_seconds) : undefined,
+                maxExtensions: body.max_extensions != null ? Number(body.max_extensions) : undefined,
+                bidCooldownSeconds: body.bid_cooldown_seconds != null ? Number(body.bid_cooldown_seconds) : undefined
             });
             res.status(200).json({ success: true, data: auction });
         } catch (error) {

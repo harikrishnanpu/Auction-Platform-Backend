@@ -18,6 +18,29 @@ export class UpdateAuctionUseCase {
             throw new Error("End time must be after start time");
         }
 
+        const antiSnipeThresholdSeconds = dto.antiSnipeThresholdSeconds ?? auction.antiSnipeThresholdSeconds;
+        const antiSnipeExtensionSeconds = dto.antiSnipeExtensionSeconds ?? auction.antiSnipeExtensionSeconds;
+        const maxExtensions = dto.maxExtensions ?? auction.maxExtensions;
+        const bidCooldownSeconds = dto.bidCooldownSeconds ?? auction.bidCooldownSeconds;
+
+        const allowedThresholds = [30, 60];
+        const allowedExtensions = [30, 60];
+        const allowedMaxExtensions = [3, 5, 10];
+        const allowedCooldowns = [30, 60];
+
+        if (!allowedThresholds.includes(antiSnipeThresholdSeconds)) {
+            throw new Error("Invalid anti-snipe threshold");
+        }
+        if (!allowedExtensions.includes(antiSnipeExtensionSeconds)) {
+            throw new Error("Invalid anti-snipe extension");
+        }
+        if (!allowedMaxExtensions.includes(maxExtensions)) {
+            throw new Error("Invalid max extensions");
+        }
+        if (!allowedCooldowns.includes(bidCooldownSeconds)) {
+            throw new Error("Invalid bid cooldown");
+        }
+
         return await this.auctionRepository.update(auctionId, {
             title: dto.title ?? auction.title,
             description: dto.description ?? auction.description,
@@ -25,6 +48,10 @@ export class UpdateAuctionUseCase {
             endAt,
             startPrice: dto.startPrice ?? auction.startPrice,
             minBidIncrement: dto.minBidIncrement ?? auction.minBidIncrement,
+            antiSnipeThresholdSeconds,
+            antiSnipeExtensionSeconds,
+            maxExtensions,
+            bidCooldownSeconds
         });
     }
 }

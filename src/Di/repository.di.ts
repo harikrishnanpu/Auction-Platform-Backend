@@ -11,6 +11,7 @@ import { PrismaAuctionCategoryRepository } from "../infrastructure/repositories/
 import { PrismaAuctionConditionRepository } from "../infrastructure/repositories/auction/prisma-auction-condition.repository";
 import { PrismaAuctionActivityRepository } from "../infrastructure/repositories/auction/prisma-activity.repository";
 import { PrismaTransactionManager } from "../infrastructure/database/prisma/prisma-transaction.manager";
+import { PrismaPaymentRepository } from "../infrastructure/repositories/payment/prisma-payment.repository";
 
 export const userRepository = new PrismaUserRepository();
 export const otpRepository = new PrismaOTPRepository(prisma);
@@ -23,3 +24,4 @@ export const activityRepository = new PrismaAuctionActivityRepository(prisma);
 export const categoryRepository = new PrismaAuctionCategoryRepository(prisma);
 export const conditionRepository = new PrismaAuctionConditionRepository(prisma);
 export const transactionManager = new PrismaTransactionManager(prisma);
+export const paymentRepository = new PrismaPaymentRepository(prisma);

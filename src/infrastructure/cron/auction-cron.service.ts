@@ -53,6 +53,7 @@ export class AuctionCronService {
                 const expiredAuctions = await this.prisma.auction.findMany({
                     where: {
                         status: 'ACTIVE',
+                        is_paused: false,
                         end_at: {
                             lte: now
                         }

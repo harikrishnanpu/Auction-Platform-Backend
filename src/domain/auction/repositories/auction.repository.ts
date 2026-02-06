@@ -15,6 +15,10 @@ export interface UpdateAuctionDto {
     winnerId?: string | null;
     winnerPaymentDeadline?: Date | null;
     completionStatus?: string;
+    antiSnipeThresholdSeconds?: number;
+    antiSnipeExtensionSeconds?: number;
+    maxExtensions?: number;
+    bidCooldownSeconds?: number;
 }
 
 export interface IAuctionRepository {

@@ -11,7 +11,7 @@ import { ForgotPasswordUseCase } from "../application/useCases/auth/forgot-passw
 import { ResetPasswordUseCase } from "../application/useCases/auth/reset-password.usecase";
 import { UserAuthController } from "../presentation/controllers/auth/auth.controller";
 import { AuthRoutes } from "../presentation/routes/auth.routes";
-import { userRepository, otpRepository, kycRepository, auctionRepository, bidRepository, participantRepository, activityRepository, chatMessageRepository, categoryRepository, conditionRepository, transactionManager } from "./repository.di";
+import { userRepository, otpRepository, kycRepository, auctionRepository, bidRepository, participantRepository, activityRepository, chatMessageRepository, categoryRepository, conditionRepository, transactionManager, paymentRepository } from "./repository.di";
 import { tokenService, emailService, loggerService, tokenGeneratorService, otpService, passwordHasher, storageService } from "./services.di";
 
 import { GetUsersUseCase } from "../application/useCases/admin/get-users.usecase";
@@ -54,7 +54,8 @@ import { UpdateAuctionUseCase } from "../application/useCases/seller/update-auct
 import { GetSellerAuctionByIdUseCase } from "../application/useCases/seller/get-seller-auction-by-id.usecase";
 import { PauseAuctionUseCase } from "../application/useCases/seller/pause-auction.usecase";
 import { ResumeAuctionUseCase } from "../application/useCases/seller/resume-auction.usecase";
-import { EndAuctionUseCase } from "../application/useCases/seller/end-auction.usecase";
+import { EndAuctionUseCase as SellerEndAuctionUseCase } from "../application/useCases/seller/end-auction.usecase";
+import { EndAuctionUseCase as AuctionEndAuctionUseCase } from "../application/useCases/auction/end-auction.usecase";
 import { SellerAuctionController } from "../presentation/controllers/seller/auction.controller";
 import { SellerRoutes } from "../presentation/routes/seller.routes";
 const loginUserUseCase = new LoginUserUseCase(
@@ -187,8 +188,9 @@ const createAuctionUseCase = new CreateAuctionUseCase(auctionRepository);
 const publishAuctionUseCase = new PublishAuctionUseCase(auctionRepository);
 const updateAuctionUseCase = new UpdateAuctionUseCase(auctionRepository);
 const pauseAuctionUseCase = new PauseAuctionUseCase(auctionRepository);
-const resumeAuctionUseCase = new ResumeAuctionUseCase(auctionRepository);
-const endAuctionUseCase = new EndAuctionUseCase(auctionRepository);
+const auctionEndAuctionUseCase = new AuctionEndAuctionUseCase(auctionRepository, bidRepository, activityRepository, paymentRepository);
+const resumeAuctionUseCase = new ResumeAuctionUseCase(auctionRepository, auctionEndAuctionUseCase);
+const endAuctionUseCase = new SellerEndAuctionUseCase(auctionRepository);
 const generateAuctionUploadUrlUseCase = new GenerateAuctionUploadUrlUseCase(storageService);
 const getSellerAuctionsUseCase = new GetSellerAuctionsUseCase(auctionRepository, storageService);
 const getSellerAuctionByIdUseCase = new GetSellerAuctionByIdUseCase(auctionRepository, storageService);
@@ -214,7 +216,7 @@ const addAuctionAssetsUseCase = new AddAuctionAssetsUseCase(auctionRepository);
 const enterAuctionUseCase = new EnterAuctionUseCase(auctionRepository, participantRepository, userRepository, activityRepository);
 const revokeUserUseCase = new RevokeUserUseCase(auctionRepository, participantRepository, bidRepository, activityRepository, transactionManager);
 const getActiveAuctionsUseCase = new GetActiveAuctionsUseCase(auctionRepository, storageService);
-const getUpcomingAuctionsUseCase = new GetUpcomingAuctionsUseCase(auctionRepository);
+const getUpcomingAuctionsUseCase = new GetUpcomingAuctionsUseCase(auctionRepository, storageService);
 const getAuctionByIdUseCase = new GetAuctionByIdUseCase(auctionRepository, storageService);
 const getAuctionCategoriesUseCase = new GetAuctionCategoriesUseCase(categoryRepository);
 const getAuctionConditionsUseCase = new GetAuctionConditionsUseCase(conditionRepository);
