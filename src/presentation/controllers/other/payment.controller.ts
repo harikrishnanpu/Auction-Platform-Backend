@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { CreatePaymentOrderUseCase } from '../../application/useCases/payment/create-payment-order.usecase';
-import { VerifyPaymentUseCase } from '../../application/useCases/payment/verify-payment.usecase';
-import { IPaymentRepository } from '../../domain/payment/payment.repository';
-import { IAuctionRepository } from '../../domain/auction/repositories/auction.repository';
+import { CreatePaymentOrderUseCase } from '../../../application/useCases/payment/create-payment-order.usecase';
+import { VerifyPaymentUseCase } from '../../../application/useCases/payment/verify-payment.usecase';
+import { IPaymentRepository } from '../../../domain/payment/payment.repository';
+import { IAuctionRepository } from '../../../domain/auction/repositories/auction.repository';
 
 export class PaymentController {
     constructor(
@@ -10,7 +10,7 @@ export class PaymentController {
         private verifyPaymentUseCase: VerifyPaymentUseCase,
         private paymentRepository: IPaymentRepository,
         private auctionRepository: IAuctionRepository
-    ) {}
+    ) { }
 
     /**
      * POST /api/v1/auctions/:id/payment/create-order

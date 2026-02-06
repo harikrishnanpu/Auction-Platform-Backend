@@ -9,6 +9,8 @@ import { requestLoggerMiddleware } from './presentation/middlewares/request-logg
 import passport from 'passport';
 import { configureGoogleStrategy } from './presentation/strategies/google.strategy';
 
+import { errorMiddleware } from './presentation/middlewares/error.middleware';
+
 dotenv.config();
 
 const app = express();
@@ -27,11 +29,13 @@ app.use(requestLoggerMiddleware(logger))
 app.use(passport.initialize());
 configureGoogleStrategy();
 
-app.use('/api/v1/user/auth', authRoutes.register());
+app.use('/api/v1/auth', authRoutes.register());
 app.use('/api/v1/admin', adminRoutes.register());
 app.use('/api/v1/kyc', kycRoutes.register());
 app.use('/api/v1/seller', sellerRoutes.register());
 app.use('/api/v1/auctions', auctionRoutes.register());
+
+app.use(errorMiddleware);
 
 new EmailWorker();
 

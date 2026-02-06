@@ -23,26 +23,22 @@ export enum OtpStatus {
 
 interface OtpProps {
     user_id: string;
-    identifier: string;
-    otp_hash: string;
+    otp: string;
     purpose: OtpPurpose;
     channel: OtpChannel;
     expires_at: Date;
     attempts: number;
-    max_attempts: number;
     status: OtpStatus;
     created_at: Date;
 }
 
 export class OTP extends Entity<OtpProps> {
     get user_id(): string { return this.props.user_id; }
-    get identifier(): string { return this.props.identifier; }
-    get otp_hash(): string { return this.props.otp_hash; }
+    get otp(): string { return this.props.otp; }
     get purpose(): OtpPurpose { return this.props.purpose; }
     get channel(): OtpChannel { return this.props.channel; }
     get expires_at(): Date { return this.props.expires_at; }
     get attempts(): number { return this.props.attempts; }
-    get max_attempts(): number { return this.props.max_attempts; }
     get status(): OtpStatus { return this.props.status; }
     get created_at(): Date { return this.props.created_at; }
 
@@ -53,13 +49,11 @@ export class OTP extends Entity<OtpProps> {
     public static create(
         props: {
             user_id: string;
-            identifier: string;
-            otp_hash: string;
+            otp: string;
             purpose: OtpPurpose;
             channel: OtpChannel;
             expires_at: Date;
             attempts?: number;
-            max_attempts?: number;
             status?: OtpStatus;
             created_at?: Date;
         },
@@ -68,7 +62,6 @@ export class OTP extends Entity<OtpProps> {
         return Result.ok<OTP>(new OTP({
             ...props,
             attempts: props.attempts ?? 0,
-            max_attempts: props.max_attempts ?? 3,
             status: props.status ?? OtpStatus.PENDING,
             created_at: props.created_at ?? new Date(),
         }, id));
@@ -82,12 +75,8 @@ export class OTP extends Entity<OtpProps> {
         this.props.attempts++;
     }
 
-    public isMaxAttemptsReached(): boolean {
-        return this.props.attempts >= this.props.max_attempts;
-    }
-
-    public verify(otpHash: string): boolean {
-        return this.props.otp_hash === otpHash;
+    public verify(otp: string): boolean {
+        return this.props.otp === otp;
     }
 
     public markAsVerified(): void {

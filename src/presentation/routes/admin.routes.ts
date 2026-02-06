@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { AdminAuthController } from '../controllers/admin-auth.controller';
-import { AdminController } from '../controllers/admin.controller';
+import { AdminAuthController } from '../controllers/other/admin-auth.controller';
+import { AdminController } from '../controllers/other/admin.controller';
 import { authenticate } from '../middlewares/authenticate.middleware';
 import { authorize } from '../middlewares/authorize.middleware';
 import { UserRole } from '../../domain/user/user.entity';

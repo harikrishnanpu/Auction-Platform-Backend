@@ -3,7 +3,6 @@ import { Result } from "../../../domain/shared/result";
 import { UserResponseDto } from "../../dtos/auth/auth.dto";
 import { ILogger } from "@application/ports/logger.port";
 import { ITokenService, TokenPayload } from "@application/services/token/auth.token.service";
-import { UserId } from "../../../domain/user/user-id.vo";
 
 export class RefreshTokenUseCase {
     constructor(
@@ -23,13 +22,9 @@ export class RefreshTokenUseCase {
             return Result.fail("Invalid or expired refresh token");
         }
 
-        const userId = UserId.create(decoded.userId);
+        const userId = decoded.userId;
 
-        if (userId.isFailure) {
-            return Result.fail('Invalid User ID');
-        }
-
-        const user = await this.userRepository.findById(userId.getValue());
+        const user = await this.userRepository.findById(userId);
 
         if (!user) {
             return Result.fail("User not found");

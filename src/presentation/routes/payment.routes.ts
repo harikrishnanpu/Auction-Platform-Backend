@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { PaymentController } from '../controllers/payment.controller';
+import { PaymentController } from '../controllers/other/payment.controller';
 
 export function createPaymentRoutes(paymentController: PaymentController, authMiddleware: any): Router {
     const router = Router();

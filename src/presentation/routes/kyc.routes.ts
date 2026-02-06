@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { KycController } from "../controllers/kyc.controller";
+import { KycController } from "../controllers/other/kyc.controller";
 import { authenticate } from "../middlewares/authenticate.middleware";
 
 export class KycRoutes {
@@ -10,10 +10,10 @@ export class KycRoutes {
   }
 
   register(): Router {
-    this._router.post("/upload-url",authenticate,this.kycController.generateUploadUrl);
-    this._router.post("/complete-upload",authenticate,this.kycController.completeUpload);
-    this._router.get("/status",authenticate,this.kycController.getStatus);
-    this._router.post("/submit",authenticate,this.kycController.submitKyc);
+    this._router.post("/upload-url", authenticate, this.kycController.generateUploadUrl);
+    this._router.post("/complete-upload", authenticate, this.kycController.completeUpload);
+    this._router.get("/status", authenticate, this.kycController.getStatus);
+    this._router.post("/submit", authenticate, this.kycController.submitKyc);
     return this._router;
   }
 }

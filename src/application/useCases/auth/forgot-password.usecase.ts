@@ -35,7 +35,7 @@ export class ForgotPasswordUseCase {
             return Result.fail("User not found");
         }
 
-        if(user.is_blocked || !user.is_active || !user.is_verified) {
+        if (user.is_blocked || !user.is_active || !user.is_verified) {
             return Result.fail("User account not verified");
         }
 
@@ -45,8 +45,7 @@ export class ForgotPasswordUseCase {
 
         const otpResult = OTP.create({
             user_id: user.id.toString(),
-            identifier: user.email.value,
-            otp_hash: resetToken,
+            otp: resetToken,
             purpose: OtpPurpose.RESET_PASSWORD,
             channel: OtpChannel.EMAIL,
             expires_at: new Date(Date.now() + 15 * 60 * 1000),

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { AuctionController } from '../controllers/auction.controller';
+import { AuctionController } from '../controllers/other/auction.controller';
 import { authenticate } from '../middlewares/authenticate.middleware';
 import { authorize } from '../middlewares/authorize.middleware';
 import { UserRole } from '../../domain/user/user.entity';

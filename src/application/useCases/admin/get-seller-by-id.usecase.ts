@@ -1,6 +1,5 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
 import { Result } from "../../../domain/shared/result";
-import { UserId } from "../../../domain/user/user-id.vo";
 import { UserRole } from "../../../domain/user/user.entity";
 import { IKYCRepository, KYCType } from "../../../domain/kyc/kyc.repository";
 
@@ -39,10 +38,7 @@ export class GetSellerByIdUseCase {
     }
 
     public async execute(id: string): Promise<Result<SellerDetailDto>> {
-        const userIdOrError = UserId.create(id);
-        if (userIdOrError.isFailure) return Result.fail("Invalid User ID");
-
-        const user = await this.userRepository.findById(userIdOrError.getValue());
+        const user = await this.userRepository.findById(id);
         if (!user) return Result.fail("User not found");
 
         const hasSellerRole = user.roles.includes(UserRole.SELLER);

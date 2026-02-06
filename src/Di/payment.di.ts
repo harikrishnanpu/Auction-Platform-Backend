@@ -18,8 +18,8 @@ import { HandleOfferExpiryUseCase } from '../application/useCases/offer/handle-o
 import { MarkCriticalUseCase } from '../application/useCases/critical-user/mark-critical.usecase';
 
 // Controllers
-import { PaymentController } from '../presentation/controllers/payment.controller';
-import { OfferController } from '../presentation/controllers/offer.controller';
+import { PaymentController } from '../presentation/controllers/other/payment.controller';
+import { OfferController } from '../presentation/controllers/other/offer.controller';
 
 // Cron
 import { AuctionCronService } from '../infrastructure/cron/auction-cron.service';

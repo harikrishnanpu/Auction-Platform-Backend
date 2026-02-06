@@ -1,9 +1,9 @@
 import { IUserRepository } from "../../domain/user/user.repository";
 import { User } from "../../domain/user/user.entity";
 import { Email } from "../../domain/user/email.vo";
-import { UserId } from "../../domain/user/user-id.vo";
 import prisma from "../../utils/prismaClient";
 import { UserMapper } from "../database/prisma/user.mapper";
+import { Phone } from "../../domain/user/phone.vo";
 
 export class PrismaUserRepository implements IUserRepository {
     async save(user: User): Promise<void> {
@@ -61,9 +61,9 @@ export class PrismaUserRepository implements IUserRepository {
         return user.getValue();
     }
 
-    async findById(id: UserId): Promise<User | null> {
+    async findById(id: string): Promise<User | null> {
         const raw = await prisma.user.findUnique({
-            where: { user_id: id.value },
+            where: { user_id: id },
             include: { UserRole: true }
         });
 
@@ -79,13 +79,13 @@ export class PrismaUserRepository implements IUserRepository {
         const skip = (page - 1) * limit;
 
         const where: any = {
-                UserRole: {
-                    none: {
+            UserRole: {
+                none: {
                     role: 'ADMIN'
-                    }
                 }
+            }
         };
-        
+
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
@@ -129,12 +129,16 @@ export class PrismaUserRepository implements IUserRepository {
         return count > 0;
     }
 
-    async phoneExists(phone: string): Promise<boolean> {
+
+
+    async phoneExists(phone: Phone): Promise<boolean> {
         const count = await prisma.user.count({
-            where: { phone }
+            where: { phone: phone.value }
         });
         return count > 0;
     }
+
+
     async findByGoogleId(googleId: string): Promise<User | null> {
         const raw = await prisma.user.findUnique({
             where: { google_id: googleId },
@@ -148,9 +152,9 @@ export class PrismaUserRepository implements IUserRepository {
         return user.getValue();
     }
 
-    async delete(id: UserId): Promise<void> {
+    async delete(id: string): Promise<void> {
         await prisma.user.delete({
-            where: { user_id: id.value }
+            where: { user_id: id }
         });
     }
 

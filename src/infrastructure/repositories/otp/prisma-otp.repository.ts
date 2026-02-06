@@ -9,13 +9,11 @@ export class PrismaOTPRepository implements IOTPRepository {
         const data = {
             otp_id: otp.id,
             user_id: otp.user_id,
-            identifier: otp.identifier,
-            otp_hash: otp.otp_hash,
+            otp: otp.otp,
             purpose: otp.purpose,
             channel: otp.channel,
             expires_at: otp.expires_at,
             attempts: otp.attempts,
-            max_attempts: otp.max_attempts,
             status: otp.status,
             created_at: otp.created_at
         };
@@ -27,7 +25,9 @@ export class PrismaOTPRepository implements IOTPRepository {
         });
     }
 
-    async findLatestByUser(userId: string, purpose: OtpPurpose): Promise<OTP | null> {
+
+    async findByIdAndPurpose(userId: string, purpose: OtpPurpose): Promise<OTP | null> {
+
         const otpModel = await this.prisma.oTPVerification.findFirst({
             where: { user_id: userId, purpose: purpose },
             orderBy: { created_at: 'desc' }
@@ -37,30 +37,15 @@ export class PrismaOTPRepository implements IOTPRepository {
         return this.toDomain(otpModel);
     }
 
-    async findByIdAndPurpose(identifier: string, purpose: OtpPurpose): Promise<OTP | null> {
-        const otpModel = await this.prisma.oTPVerification.findFirst({
-            where: { identifier: identifier, purpose: purpose },
-            orderBy: { created_at: 'desc' }
-        });
-
-        if (!otpModel) return null;
-        return this.toDomain(otpModel);
-    }
-
-    async findLatestByIdAndPurpose(identifier: string, purpose: OtpPurpose): Promise<OTP | null> {
-        return this.findByIdAndPurpose(identifier, purpose);
-    }
 
     private toDomain(model: any): OTP {
         return OTP.create({
             user_id: model.user_id,
-            identifier: model.identifier,
-            otp_hash: model.otp_hash,
+            otp: model.otp,
             purpose: model.purpose as OtpPurpose,
             channel: model.channel as OtpChannel,
             expires_at: model.expires_at,
             attempts: model.attempts,
-            max_attempts: model.max_attempts,
             status: model.status as OtpStatus,
             created_at: model.created_at
         }, model.otp_id).getValue();

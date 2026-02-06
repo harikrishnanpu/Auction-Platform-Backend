@@ -3,7 +3,6 @@ export interface RegisterUserDto {
     email: string;
     phone: string;
     address: string;
-    avatar_url?: string;
     password: string;
 }
 
@@ -35,14 +34,14 @@ export interface ResetPasswordDto {
 export interface UserResponseDto {
     id: string;
     name: string;
+    phone?: string;
     email: string;
     roles: string[];
+    avatar_url?: string;
     is_active?: boolean;
     is_verified?: boolean;
     is_blocked?: boolean;
-    phone?: string;
     address?: string;
-    avatar_url?: string;
     created_at?: Date;
     updated_at?: Date;
     accessToken?: string;

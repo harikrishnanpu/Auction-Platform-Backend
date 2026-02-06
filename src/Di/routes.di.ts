@@ -7,7 +7,7 @@ import { GetProfileUseCase } from "../application/useCases/user/get-profile.usec
 import { LoginWithGoogleUseCase } from "../application/useCases/auth/login-google.usecase";
 import { ForgotPasswordUseCase } from "../application/useCases/auth/forgot-password.usecase";
 import { ResetPasswordUseCase } from "../application/useCases/auth/reset-password.usecase";
-import { UserAuthController } from "../presentation/controllers/user.auth.controller";
+import { UserAuthController } from "../presentation/controllers/auth/auth.controller";
 import { AuthRoutes } from "../presentation/routes/auth.routes";
 import { userRepository, otpRepository, kycRepository, auctionRepository, bidRepository, participantRepository, activityRepository, chatMessageRepository, categoryRepository, conditionRepository, transactionManager } from "./repository.di";
 import { tokenService, emailService, loggerService, tokenGeneratorService, otpService, passwordHasher, storageService } from "./services.di";
@@ -24,14 +24,14 @@ import { VerifySellerKycUseCase } from "../application/useCases/admin/verify-sel
 import { AssignSellerRoleUseCase } from "../application/useCases/admin/assign-seller-role.usecase";
 import { GetAdminStatsUseCase } from "../application/useCases/admin/get-admin-stats.usecase";
 import { AdminRoutes } from "../presentation/routes/admin.routes";
-import { AdminAuthController } from "../presentation/controllers/admin-auth.controller";
-import { AdminController } from "../presentation/controllers/admin.controller";
+import { AdminAuthController } from "../presentation/controllers/other/admin-auth.controller";
+import { AdminController } from "../presentation/controllers/other/admin.controller";
 
 import { GenerateUploadUrlUseCase } from "../application/useCases/kyc/generate-upload-url.usecase";
 import { CompleteKycUploadUseCase } from "../application/useCases/kyc/complete-kyc-upload.usecase";
 import { GetKycStatusUseCase } from "../application/useCases/kyc/get-kyc-status.usecase";
 import { SubmitKycUseCase } from "../application/useCases/kyc/submit-kyc.usecase";
-import { KycController } from "../presentation/controllers/kyc.controller";
+import { KycController } from "../presentation/controllers/other/kyc.controller";
 import { KycRoutes } from "../presentation/routes/kyc.routes";
 
 import { GetActiveAuctionsUseCase } from "../application/useCases/auction/get-active-auctions.usecase";
@@ -42,7 +42,7 @@ import { RevokeUserUseCase } from "../application/useCases/auction/revoke-user.u
 import { GetUpcomingAuctionsUseCase } from "../application/useCases/auction/get-upcoming-auctions.usecase";
 import { GetAuctionCategoriesUseCase } from "../application/useCases/auction/get-auction-categories.usecase";
 import { GetAuctionConditionsUseCase } from "../application/useCases/auction/get-auction-conditions.usecase";
-import { AuctionController } from "../presentation/controllers/auction.controller";
+import { AuctionController } from "../presentation/controllers/other/auction.controller";
 import { AuctionRoutes } from "../presentation/routes/auction.routes";
 import { CreateAuctionUseCase } from "../application/useCases/seller/create-auction.usecase";
 import { GenerateAuctionUploadUrlUseCase } from "../application/useCases/seller/generate-auction-upload-url.usecase";

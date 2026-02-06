@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { OfferController } from '../controllers/offer.controller';
+import { OfferController } from '../controllers/other/offer.controller';
 
 export function createOfferRoutes(offerController: OfferController, authMiddleware: any): Router {
     const router = Router();

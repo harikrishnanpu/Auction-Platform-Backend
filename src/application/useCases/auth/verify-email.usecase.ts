@@ -17,29 +17,32 @@ export class VerifyEmailUseCase {
         private logger: ILogger
     ) { }
 
+
     public async execute(dto: VerifyEmailDto): Promise<Result<UserResponseDto>> {
+
 
         const emailResult = Email.create(dto.email);
         if (emailResult.isFailure) return Result.fail(emailResult.error as string);
         const email = emailResult.getValue();
 
+
         const user = await this.userRepository.findByEmail(email);
         if (!user) return Result.fail("User not found");
         if (user.props.is_verified) return Result.fail("User is already verified");
 
-        const otp = await this.otpRepository.findByIdAndPurpose(email.value, OtpPurpose.REGISTER);
 
+        const otp = await this.otpRepository.findByIdAndPurpose(user.id.toString(), OtpPurpose.REGISTER);
         if (!otp) return Result.fail("OTP not found or expired");
-
         if (otp.status !== OtpStatus.PENDING) return Result.fail("OTP is invalid");
 
-        if (new Date() > otp.expires_at) {
+
+        if (otp.isExpired()) {
             otp.markAsExpired();
             await this.otpRepository.save(otp);
             return Result.fail("OTP has expired");
         }
 
-        if (otp.otp_hash !== dto.otp) {
+        if (!otp.verify(dto.otp)) {
             otp.incrementAttempts();
             await this.otpRepository.save(otp);
             return Result.fail("Invalid OTP");
@@ -68,5 +71,6 @@ export class VerifyEmailUseCase {
             is_verified: user.props.is_verified,
             ...tokens
         });
+
     }
 }

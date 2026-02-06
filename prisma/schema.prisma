@@ -90,19 +90,16 @@ model UserSession {
 }
 
 model OTPVerification {
-  otp_id       String     @id @default(uuid())
-  user_id      String
-  identifier   String
-  otp_hash     String
-  purpose      OtpPurpose
-  channel      OtpChannel
-  expires_at   DateTime
-  attempts     Int        @default(0)
-  max_attempts Int        @default(3)
-  status       OtpStatus  @default(PENDING)
-  created_at   DateTime   @default(now())
-
-  User User @relation(fields: [user_id], references: [user_id])
+  otp_id     String     @id @default(uuid())
+  user_id    String
+  otp        String
+  purpose    OtpPurpose
+  channel    OtpChannel
+  expires_at DateTime
+  attempts   Int        @default(0)
+  status     OtpStatus  @default(PENDING)
+  created_at DateTime   @default(now())
+  User       User       @relation(fields: [user_id], references: [user_id])
 }
 
 model KYCProfile {

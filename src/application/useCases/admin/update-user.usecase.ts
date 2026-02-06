@@ -1,6 +1,5 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
 import { Result } from "../../../domain/shared/result";
-import { UserId } from "../../../domain/user/user-id.vo";
 
 export interface UpdateUserDto {
     name?: string;
@@ -14,10 +13,7 @@ export class UpdateUserUseCase {
     constructor(private userRepository: IUserRepository) { }
 
     public async execute(userId: string, dto: UpdateUserDto): Promise<Result<void>> {
-        const userIdOrError = UserId.create(userId);
-        if (userIdOrError.isFailure) return Result.fail("Invalid User ID");
-
-        const user = await this.userRepository.findById(userIdOrError.getValue());
+        const user = await this.userRepository.findById(userId);
         if (!user) return Result.fail("User not found");
 
         // Update fields

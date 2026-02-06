@@ -1,7 +1,6 @@
 import { IUserRepository } from '../../../domain/user/user.repository';
 import { CompleteKycUploadDto } from '../../dtos/kyc/kyc.dto';
 import { Result } from '../../../domain/shared/result';
-import { UserId } from '../../../domain/user/user-id.vo';
 import { IKYCRepository, KYCStatus } from '../../../domain/kyc/kyc.repository';
 
 export class CompleteKycUploadUseCase {
@@ -11,12 +10,7 @@ export class CompleteKycUploadUseCase {
     ) { }
 
     async execute(dto: CompleteKycUploadDto): Promise<Result<void>> {
-        const userIdOrError = UserId.create(dto.userId);
-        if (userIdOrError.isFailure) {
-            return Result.fail('Invalid user ID');
-        }
-
-        const user = await this.userRepository.findById(userIdOrError.getValue());
+        const user = await this.userRepository.findById(dto.userId);
         if (!user) {
             return Result.fail('User not found');
         }

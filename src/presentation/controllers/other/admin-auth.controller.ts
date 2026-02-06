@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { LoginAdminUseCase } from '../../application/useCases/admin/login-admin.usecase';
-import { loginSchema } from '../validators/auth.validator';
-import { LoginUserDto } from '../../application/dtos/auth/auth.dto';
+import { LoginAdminUseCase } from '../../../application/useCases/admin/login-admin.usecase';
+import { loginSchema } from '../../validators/auth.validator';
+import { LoginUserDto } from '../../../application/dtos/auth/auth.dto';
 
 export class AdminAuthController {
     constructor(
@@ -13,14 +13,14 @@ export class AdminAuthController {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 15 * 60 * 1000 
+            maxAge: 15 * 60 * 1000
         });
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000 
+            maxAge: 7 * 24 * 60 * 60 * 1000
         });
     }
 

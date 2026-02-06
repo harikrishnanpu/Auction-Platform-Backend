@@ -1,14 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import { GetActiveAuctionsUseCase } from "../../application/useCases/auction/get-active-auctions.usecase";
-import { GetAuctionByIdUseCase } from "../../application/useCases/auction/get-auction-by-id.usecase";
-import { CreateAuctionUseCase } from "../../application/useCases/seller/create-auction.usecase";
-import { AddAuctionAssetsUseCase } from "../../application/useCases/auction/add-auction-assets.usecase";
-import { PublishAuctionUseCase } from "../../application/useCases/seller/publish-auction.usecase";
-import { EnterAuctionUseCase } from "../../application/useCases/auction/enter-auction.usecase";
-import { RevokeUserUseCase } from "../../application/useCases/auction/revoke-user.usecase";
-import { GetUpcomingAuctionsUseCase } from "../../application/useCases/auction/get-upcoming-auctions.usecase";
-import { GetAuctionCategoriesUseCase } from "../../application/useCases/auction/get-auction-categories.usecase";
-import { GetAuctionConditionsUseCase } from "../../application/useCases/auction/get-auction-conditions.usecase";
+import { GetActiveAuctionsUseCase } from "../../../application/useCases/auction/get-active-auctions.usecase";
+import { GetAuctionByIdUseCase } from "../../../application/useCases/auction/get-auction-by-id.usecase";
+import { CreateAuctionUseCase } from "../../../application/useCases/seller/create-auction.usecase";
+import { AddAuctionAssetsUseCase } from "../../../application/useCases/auction/add-auction-assets.usecase";
+import { PublishAuctionUseCase } from "../../../application/useCases/seller/publish-auction.usecase";
+import { EnterAuctionUseCase } from "../../../application/useCases/auction/enter-auction.usecase";
+import { RevokeUserUseCase } from "../../../application/useCases/auction/revoke-user.usecase";
+import { GetUpcomingAuctionsUseCase } from "../../../application/useCases/auction/get-upcoming-auctions.usecase";
+import { GetAuctionCategoriesUseCase } from "../../../application/useCases/auction/get-auction-categories.usecase";
+import { GetAuctionConditionsUseCase } from "../../../application/useCases/auction/get-auction-conditions.usecase";
 
 export class AuctionController {
     constructor(

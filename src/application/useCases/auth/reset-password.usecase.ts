@@ -23,8 +23,8 @@ export class ResetPasswordUseCase {
         const user = await this.userRepository.findByEmail(email);
         if (!user) return Result.fail("User not found");
 
-        const otpRecord = await this.otpRepository.findLatestByIdAndPurpose(
-            user.email.value,
+        const otpRecord = await this.otpRepository.findByIdAndPurpose(
+            user.id.toString(),
             OtpPurpose.RESET_PASSWORD
         );
 
@@ -32,7 +32,7 @@ export class ResetPasswordUseCase {
             return Result.fail("Invalid or expired reset token");
         }
 
-        if (otpRecord.otp_hash !== dto.token) {
+        if (otpRecord.otp !== dto.token) {
             return Result.fail("Invalid OTP");
         }
 

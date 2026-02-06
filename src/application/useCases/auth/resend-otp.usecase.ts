@@ -13,7 +13,7 @@ export class ResendOtpUseCase {
         private otpRepository: IOTPRepository,
         private emailService: IEmailService,
         private logger: ILogger
-    
+
     ) { }
 
     public async execute(dto: ResendOtpDto): Promise<Result<void>> {
@@ -36,8 +36,7 @@ export class ResendOtpUseCase {
 
         const otpResult = OTP.create({
             user_id: user.id.toString(),
-            identifier: user.email.value,
-            otp_hash: otpCode,
+            otp: otpCode,
             purpose: dto.purpose as OtpPurpose || OtpPurpose.REGISTER,
             channel: OtpChannel.EMAIL,
             expires_at: otpExpiresAt,

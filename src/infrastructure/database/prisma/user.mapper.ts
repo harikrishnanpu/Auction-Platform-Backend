@@ -2,7 +2,6 @@ import { User as PrismaUser, Role } from "@prisma/client";
 import { User, UserRole } from "../../../domain/user/user.entity";
 import { Result } from "../../../domain/shared/result";
 import { Email } from "../../../domain/user/email.vo";
-import { UserId } from "../../../domain/user/user-id.vo";
 import { Password } from "../../../domain/user/password.vo";
 
 type PrismaUserWithRoles = PrismaUser & { UserRole: { role: Role }[] };
@@ -10,10 +9,6 @@ type PrismaUserWithRoles = PrismaUser & { UserRole: { role: Role }[] };
 export class UserMapper {
     public static toDomain(raw: PrismaUserWithRoles): Result<User> {
         const email = Email.create(raw.email);
-        const usrId = UserId.create(raw.user_id);
-
-        if (email.isFailure) return Result.fail<User>(email.error as string);
-        if (usrId.isFailure) return Result.fail<User>(usrId.error as string);
 
         let password;
         if (raw.password_hash) {
@@ -41,7 +36,7 @@ export class UserMapper {
                 is_verified: raw.is_verified,
                 created_at: raw.created_at
             },
-            usrId.getValue().value
+            raw.user_id
         );
 
 

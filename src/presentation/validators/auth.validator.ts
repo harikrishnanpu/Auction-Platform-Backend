@@ -1,22 +1,23 @@
 import { z } from 'zod';
+import { AUTH_MESSAGES } from '../../constants/auth.constants';
 
 export const registerSchema = z.object({
-    firstName: z.string().min(1, "First Name is required"),
-    lastName: z.string().min(1, "Last Name is required"),
-    email: z.string().email("Invalid email"),
-    phone: z.string().min(10, "Phone number must be at least 10 digits"),
-    address: z.string().min(1, "Address is required"),
+    firstName: z.string().min(1, AUTH_MESSAGES.FIRST_NAME_REQUIRED),
+    lastName: z.string().min(1, AUTH_MESSAGES.LAST_NAME_REQUIRED),
+    email: z.string().email(AUTH_MESSAGES.INVALID_EMAIL),
+    phone: z.string().min(10, AUTH_MESSAGES.PHONE_MIN_LENGTH),
+    address: z.string().min(1, AUTH_MESSAGES.ADDRESS_REQUIRED),
     avatar_url: z.string().optional(),
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    password: z.string().min(6, AUTH_MESSAGES.PASSWORD_MIN_LENGTH),
 });
 
 export const loginSchema = z.object({
-    email: z.string().email("Invalid email"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    email: z.string().email(AUTH_MESSAGES.INVALID_EMAIL),
+    password: z.string().min(6, AUTH_MESSAGES.PASSWORD_MIN_LENGTH),
 });
 
 
 export const verifyEmailSchema = z.object({
-    email: z.string().email("Invalid email"),
-    otp: z.string().min(6, "OTP must be 6 digits"),
+    email: z.string().email(AUTH_MESSAGES.INVALID_EMAIL),
+    otp: z.string().min(6, AUTH_MESSAGES.OTP_MIN_LENGTH),
 });

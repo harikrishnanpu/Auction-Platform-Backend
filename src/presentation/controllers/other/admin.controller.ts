@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
-import { GetUsersUseCase } from '../../application/useCases/admin/get-users.usecase';
-import { GetUserByIdUseCase } from '../../application/useCases/admin/get-user-by-id.usecase';
-import { UpdateUserUseCase } from '../../application/useCases/admin/update-user.usecase';
-import { BlockUserUseCase } from '../../application/useCases/admin/block-user.usecase';
-import { DeleteUserUseCase } from '../../application/useCases/admin/delete-user.usecase';
-import { GetSellersUseCase } from '../../application/useCases/admin/get-sellers.usecase';
-import { GetSellerByIdUseCase } from '../../application/useCases/admin/get-seller-by-id.usecase';
-import { VerifySellerKycUseCase } from '../../application/useCases/admin/verify-seller-kyc.usecase';
-import { AssignSellerRoleUseCase } from '../../application/useCases/admin/assign-seller-role.usecase';
+import { GetUsersUseCase } from '../../../application/useCases/admin/get-users.usecase';
+import { GetUserByIdUseCase } from '../../../application/useCases/admin/get-user-by-id.usecase';
+import { UpdateUserUseCase } from '../../../application/useCases/admin/update-user.usecase';
+import { BlockUserUseCase } from '../../../application/useCases/admin/block-user.usecase';
+import { DeleteUserUseCase } from '../../../application/useCases/admin/delete-user.usecase';
+import { GetSellersUseCase } from '../../../application/useCases/admin/get-sellers.usecase';
+import { GetSellerByIdUseCase } from '../../../application/useCases/admin/get-seller-by-id.usecase';
+import { VerifySellerKycUseCase } from '../../../application/useCases/admin/verify-seller-kyc.usecase';
+import { AssignSellerRoleUseCase } from '../../../application/useCases/admin/assign-seller-role.usecase';
 import { GetAdminStatsUseCase } from '@application/useCases/admin/get-admin-stats.usecase';
 
 export class AdminController {
@@ -35,7 +35,7 @@ export class AdminController {
     }
 
     public getUsers = async (req: Request, res: Response): Promise<void> => {
-        
+
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         const search = req.query.search as string;

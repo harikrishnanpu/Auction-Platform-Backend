@@ -1,14 +1,14 @@
 import { Request, Response } from 'express';
-import { RespondToOfferUseCase } from '../../application/useCases/offer/respond-to-offer.usecase';
-import { IOfferRepository } from '../../domain/offer/offer.repository';
-import { IAuctionRepository } from '../../domain/auction/repositories/auction.repository';
+import { RespondToOfferUseCase } from '../../../application/useCases/offer/respond-to-offer.usecase';
+import { IOfferRepository } from '../../../domain/offer/offer.repository';
+import { IAuctionRepository } from '../../../domain/auction/repositories/auction.repository';
 
 export class OfferController {
     constructor(
         private respondToOfferUseCase: RespondToOfferUseCase,
         private offerRepository: IOfferRepository,
         private auctionRepository: IAuctionRepository
-    ) {}
+    ) { }
 
     /**
      * GET /api/v1/users/me/pending-offers

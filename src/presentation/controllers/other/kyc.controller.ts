@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { GenerateUploadUrlUseCase } from '../../application/useCases/kyc/generate-upload-url.usecase';
-import { CompleteKycUploadUseCase } from '../../application/useCases/kyc/complete-kyc-upload.usecase';
-import { SubmitKycUseCase } from '../../application/useCases/kyc/submit-kyc.usecase';
-import { GenerateUploadUrlDto, CompleteKycUploadDto } from '../../application/dtos/kyc/kyc.dto';
-import { GetKycStatusUseCase } from '../../application/useCases/kyc/get-kyc-status.usecase';
+import { GenerateUploadUrlUseCase } from '../../../application/useCases/kyc/generate-upload-url.usecase';
+import { CompleteKycUploadUseCase } from '../../../application/useCases/kyc/complete-kyc-upload.usecase';
+import { SubmitKycUseCase } from '../../../application/useCases/kyc/submit-kyc.usecase';
+import { GenerateUploadUrlDto, CompleteKycUploadDto } from '../../../application/dtos/kyc/kyc.dto';
+import { GetKycStatusUseCase } from '../../../application/useCases/kyc/get-kyc-status.usecase';
 
 export class KycController {
     constructor(

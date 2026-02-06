@@ -2,7 +2,6 @@ import { IAuctionRepository } from "../../../domain/auction/repositories/auction
 import { IAuctionParticipantRepository } from "../../../domain/auction/repositories/participant.repository";
 import { IAuctionActivityRepository } from "../../../domain/auction/repositories/activity.repository";
 import { IUserRepository } from "../../../domain/user/user.repository";
-import { UserId } from "../../../domain/user/user-id.vo";
 import { ensureAuctionActive, ensureAuctionWindow } from "../../../domain/auction/auction.policy";
 import { AuctionError } from "../../../domain/auction/auction.errors";
 
@@ -22,17 +21,11 @@ export class EnterAuctionUseCase {
         ensureAuctionActive(auction);
         ensureAuctionWindow(auction, new Date());
 
-        const userIdVo = UserId.create(userId);
-        if (userIdVo.isFailure) {
-            throw new AuctionError("NOT_ALLOWED", "Invalid user");
-        }
-        const user = await this.userRepository.findById(userIdVo.getValue());
-        // Removed phone requirement - users can enter without phone
+        const user = await this.userRepository.findById(userId);
         if (!user || user.is_blocked || !user.is_active || !user.is_verified) {
             throw new AuctionError("NOT_ALLOWED", "User not eligible to enter");
         }
 
-        // Prevent seller from joining their own auction as a user
         if (auction.sellerId === userId) {
             throw new AuctionError("NOT_ALLOWED", "Sellers cannot join their own auction as participants. Please use the seller dashboard.");
         }

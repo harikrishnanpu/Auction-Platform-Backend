@@ -1,6 +1,5 @@
 import { Entity } from "../shared/entity";
 import { Result } from "../shared/result";
-import { UserId } from "./user-id.vo";
 import { Email } from "./email.vo";
 import { Password } from "./password.vo";
 
@@ -70,5 +69,5 @@ export class User extends Entity<UserProps> {
         this.props.roles.push(role);
     }
 
-    
+
 }

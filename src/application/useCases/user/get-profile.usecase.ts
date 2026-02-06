@@ -1,18 +1,12 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
 import { UserResponseDto } from "../../dtos/auth/auth.dto";
 import { Result } from "../../../domain/shared/result";
-import { UserId } from "../../../domain/user/user-id.vo";
 
 export class GetProfileUseCase {
     constructor(private userRepository: IUserRepository) { }
 
     public async execute(userId: string): Promise<Result<UserResponseDto>> {
-        const userIdResult = UserId.create(userId);
-        if (userIdResult.isFailure) {
-            return Result.fail(userIdResult.error as string);
-        }
-
-        const user = await this.userRepository.findById(userIdResult.getValue());
+        const user = await this.userRepository.findById(userId);
 
         if (!user) {
             return Result.fail("User not found");

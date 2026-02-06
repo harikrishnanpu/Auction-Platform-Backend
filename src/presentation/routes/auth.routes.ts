@@ -1,6 +1,9 @@
 import { Router } from "express";
-import { UserAuthController } from "../controllers/user.auth.controller";
+import { UserAuthController } from "../controllers/auth/auth.controller";
 import { authenticate } from "../middlewares/authenticate.middleware";
+
+import { validateRequest } from "../middlewares/validation.middleware";
+import { loginSchema, registerSchema, verifyEmailSchema } from "../validators/auth.validator";
 
 export class AuthRoutes {
   private _router: Router;
@@ -10,17 +13,21 @@ export class AuthRoutes {
   }
 
   register(): Router {
-    this._router.post('/register', this._authController.register);
-    this._router.post('/login', this._authController.login);
-    this._router.post('/verify-email', this._authController.verifyEmail);
+    this._router.post('/register', validateRequest(registerSchema), this._authController.register);
+    this._router.post('/verify-email', validateRequest(verifyEmailSchema), this._authController.verifyEmail);
+    this._router.post('/login', validateRequest(loginSchema), this._authController.login);
+
+
     this._router.post('/resend-otp', this._authController.resendOtp);
     this._router.post('/refresh-token', this._authController.refreshToken);
     this._router.post('/forgot-password', this._authController.forgotPassword);
     this._router.post('/reset-password', this._authController.resetPassword);
-    this._router.post('/logout', this._authController.logout);
+
     this._router.get('/google', this._authController.googleAuth);
     this._router.get('/google/callback', this._authController.googleAuthCallback);
+
     this._router.get('/me', authenticate, this._authController.getProfile);
+    this._router.post('/logout', this._authController.logout);
 
     return this._router;
   }
