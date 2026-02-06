@@ -41,6 +41,7 @@ export interface UserResponseDto {
     is_active?: boolean;
     is_verified?: boolean;
     is_blocked?: boolean;
+    is_profile_completed?: boolean;
     address?: string;
     created_at?: Date;
     updated_at?: Date;

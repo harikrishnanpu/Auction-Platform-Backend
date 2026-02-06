@@ -1,9 +1,9 @@
-import { IUserRepository } from "../../domain/user/user.repository";
-import { User } from "../../domain/user/user.entity";
-import { Email } from "../../domain/user/email.vo";
-import prisma from "../../utils/prismaClient";
-import { UserMapper } from "../database/prisma/user.mapper";
-import { Phone } from "../../domain/user/phone.vo";
+import { IUserRepository } from "../../../domain/user/user.repository";
+import { User } from "../../../domain/user/user.entity";
+import { Email } from "../../../domain/user/email.vo";
+import prisma from "../../../utils/prismaClient";
+import { UserMapper } from "../../../infrastructure/database/prisma/user.mapper";
+import { Phone } from "../../../domain/user/phone.vo";
 
 export class PrismaUserRepository implements IUserRepository {
     async save(user: User): Promise<void> {
@@ -19,9 +19,9 @@ export class PrismaUserRepository implements IUserRepository {
                 address: raw.address,
                 avatar_url: raw.avatar_url,
                 password_hash: raw.password_hash,
-                is_active: raw.is_active,
                 is_blocked: raw.is_blocked,
                 is_verified: raw.is_verified,
+                is_profile_completed: raw.is_profile_completed,
                 UserRole: {
                     deleteMany: {},
                     create: roles
@@ -35,11 +35,11 @@ export class PrismaUserRepository implements IUserRepository {
                 address: raw.address,
                 avatar_url: raw.avatar_url,
                 password_hash: raw.password_hash,
-                is_active: raw.is_active,
                 is_blocked: raw.is_blocked,
                 is_verified: raw.is_verified,
                 updated_at: raw.updated_at,
                 created_at: raw.created_at,
+                is_profile_completed: raw.is_profile_completed,
                 UserRole: {
                     create: roles
                 }
@@ -120,6 +120,20 @@ export class PrismaUserRepository implements IUserRepository {
         }
 
         return { users, total };
+    }
+
+
+    async update(id: string, data: User): Promise<User> {
+
+        const raw = UserMapper.toPersistence(data);
+        const updatedUser = await prisma.user.update({
+            where: { user_id: id },
+            data: raw
+        });
+
+        // const userOrError = UserMapper.toDomain(updatedUser);
+        // return userOrError.getValue();
+        return updatedUser as any;
     }
 
     async emailExists(email: Email): Promise<boolean> {
@@ -226,7 +240,6 @@ export class PrismaUserRepository implements IUserRepository {
             address: user.address,
             avatar_url: user.avatar_url,
             roles: user.UserRole.map((r: any) => r.role),
-            is_active: user.is_active,
             is_blocked: user.is_blocked,
             is_verified: user.is_verified,
             kyc_status: user.KYCProfile.length > 0

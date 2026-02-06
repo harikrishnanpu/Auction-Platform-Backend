@@ -16,7 +16,6 @@ export interface AdminUserDetailDto {
     address: string;
     avatar_url?: string;
     roles: string[];
-    is_active: boolean;
     is_blocked: boolean;
     is_verified: boolean;
     joined_at: Date;

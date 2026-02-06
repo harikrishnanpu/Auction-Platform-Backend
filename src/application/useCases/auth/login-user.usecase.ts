@@ -28,9 +28,6 @@ export class LoginUserUseCase {
             return Result.fail("Invalid email or password");
         }
 
-        if (!user.props.is_active) {
-            return Result.fail("Account is inactive");
-        }
         if (user.props.is_blocked) {
             return Result.fail("Account is blocked");
         }
@@ -38,9 +35,9 @@ export class LoginUserUseCase {
             return Result.fail("Please verify your email address");
         }
 
-        if (user.props.password) {   
+        if (user.props.password) {
             const isValidPassword = await this.passwordHasher.compare(dto.password, user.props.password.value);
-            
+
             if (!isValidPassword) {
                 return Result.fail("Invalid email or password");
             }

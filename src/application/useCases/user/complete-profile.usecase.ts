@@ -1,13 +1,12 @@
 import { IUserRepository } from "../../../domain/user/user.repository";
-import { UserResponseDto } from "../../dtos/auth/auth.dto";
 import { Result } from "../../../domain/shared/result";
+import { UserResponseDto } from "../../dtos/auth/auth.dto";
 
-export class GetProfileUseCase {
+export class CompleteProfileUseCase {
     constructor(private userRepository: IUserRepository) { }
 
-    public async execute(userId: string): Promise<Result<UserResponseDto>> {
+    public async execute(userId: string, phone: string, address: string): Promise<Result<UserResponseDto>> {
         const user = await this.userRepository.findById(userId);
-
         if (!user) {
             return Result.fail("User not found");
         }
@@ -15,6 +14,13 @@ export class GetProfileUseCase {
         if (user.is_blocked) {
             return Result.fail("Account is blocked");
         }
+
+        const updateResult = user.completeProfile(phone, address);
+        if (updateResult.isFailure) {
+            return Result.fail(updateResult.error as string);
+        }
+
+        await this.userRepository.save(user);
 
         return Result.ok<UserResponseDto>({
             id: user.id.toString(),

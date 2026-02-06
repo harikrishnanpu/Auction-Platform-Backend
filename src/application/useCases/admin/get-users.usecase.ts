@@ -16,7 +16,6 @@ export class GetUsersUseCase {
             roles: user.roles,
             is_blocked: user.is_blocked,
             is_verified: user.is_verified,
-            is_active: user.is_active,
         }));
 
         return Result.ok<UserListResponseDto>({

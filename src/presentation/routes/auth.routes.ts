@@ -3,7 +3,7 @@ import { UserAuthController } from "../controllers/auth/auth.controller";
 import { authenticate } from "../middlewares/authenticate.middleware";
 
 import { validateRequest } from "../middlewares/validation.middleware";
-import { loginSchema, registerSchema, verifyEmailSchema } from "../validators/auth.validator";
+import { completeProfileSchema, loginSchema, registerSchema, verifyEmailSchema } from "../validators/auth.validator";
 
 export class AuthRoutes {
   private _router: Router;
@@ -17,7 +17,7 @@ export class AuthRoutes {
     this._router.post('/verify-email', validateRequest(verifyEmailSchema), this._authController.verifyEmail);
     this._router.post('/login', validateRequest(loginSchema), this._authController.login);
 
-
+    this._router.post('/send-verification-otp', authenticate, this._authController.sendVerificationOtp);
     this._router.post('/resend-otp', this._authController.resendOtp);
     this._router.post('/refresh-token', this._authController.refreshToken);
     this._router.post('/forgot-password', this._authController.forgotPassword);
@@ -27,6 +27,8 @@ export class AuthRoutes {
     this._router.get('/google/callback', this._authController.googleAuthCallback);
 
     this._router.get('/me', authenticate, this._authController.getProfile);
+    this._router.put('/complete-profile', authenticate, validateRequest(completeProfileSchema), this._authController.completeProfile);
+    this._router.get('/logout', this._authController.logout);
     this._router.post('/logout', this._authController.logout);
 
     return this._router;

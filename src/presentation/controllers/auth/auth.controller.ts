@@ -7,6 +7,7 @@ import { ForgotPasswordUseCase } from '../../../application/useCases/auth/forgot
 import { ResetPasswordUseCase } from '../../../application/useCases/auth/reset-password.usecase';
 import { RefreshTokenUseCase } from '../../../application/useCases/auth/refresh-token.usecase';
 import { GetProfileUseCase } from '../../../application/useCases/user/get-profile.usecase';
+import { CompleteProfileUseCase } from '../../../application/useCases/user/complete-profile.usecase';
 import { RegisterUserDto, LoginUserDto, ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto } from '../../../application/dtos/auth/auth.dto';
 import { LoginWithGoogleUseCase } from '../../../application/useCases/auth/login-google.usecase';
 import passport from 'passport';
@@ -14,6 +15,7 @@ import { STATUS_CODE } from '../../../constants/status.code';
 import { AUTH_MESSAGES } from '../../../constants/auth.constants';
 import { AppError } from '../../../shared/app.error';
 import expressAsyncHandler from 'express-async-handler';
+import { SendVerificationOtpUseCase } from '../../../application/useCases/auth/send-verification-otp.usecase';
 
 
 export class UserAuthController {
@@ -25,9 +27,11 @@ export class UserAuthController {
         private resendOtpUseCase: ResendOtpUseCase,
         private refreshTokenUseCase: RefreshTokenUseCase,
         private getProfileUseCase: GetProfileUseCase,
+        private completeProfileUseCase: CompleteProfileUseCase,
         private forgotPasswordUseCase: ForgotPasswordUseCase,
         private resetPasswordUseCase: ResetPasswordUseCase,
         private loginWithGoogleUseCase: LoginWithGoogleUseCase,
+        private sendVerificationOtpUseCase: SendVerificationOtpUseCase,
     ) { }
 
 
@@ -150,36 +154,41 @@ export class UserAuthController {
 
 
     getProfile = expressAsyncHandler(async (req: Request, res: Response) => {
-        console.log("====== acccessed porofile route");
-
         const userId = (req as any).user?.userId;
 
-        console.log("===== userid ==", userId);
-
-
         if (!userId) {
-            console.log("IJBDUHFBVDJFBIEBFIUBUIBF");
-
             res.status(STATUS_CODE.UNAUTHORIZED).json({ success: false, message: AUTH_MESSAGES.AUTHENTICATION_REQUIRED });
             return;
         }
 
         const result = await this.getProfileUseCase.execute(userId);
 
-        if (result.isSuccess) {
-            console.log("==result===", result.getValue());
-
-            res.status(STATUS_CODE.SUCCESS).json({ success: true, code: STATUS_CODE.SUCCESS, data: { user: result.getValue() } });
-        } else {
-            this.removeCookies(res);
-            res.status(STATUS_CODE.NOT_FOUND).json({ success: false, code: STATUS_CODE.NOT_FOUND, message: AUTH_MESSAGES.PROFILE_NOT_FOUND });
+        if (!result.isSuccess) {
+            throw new AppError(result.error as string, STATUS_CODE.NOT_FOUND);
         }
+
+        res.status(STATUS_CODE.SUCCESS).json({ success: true, code: STATUS_CODE.SUCCESS, data: { user: result.getValue() } });
     });
 
 
 
+    completeProfile = expressAsyncHandler(async (req: Request, res: Response) => {
+        const userId = (req as any).user?.userId;
+        const { phone, address } = req.body;
 
+        if (!userId) {
+            res.status(STATUS_CODE.UNAUTHORIZED).json({ success: false, message: AUTH_MESSAGES.AUTHENTICATION_REQUIRED });
+            return;
+        }
 
+        const result = await this.completeProfileUseCase.execute(userId, phone, address);
+
+        if (!result.isSuccess) {
+            throw new AppError(result.error as string, STATUS_CODE.BAD_REQUEST);
+        }
+
+        res.status(STATUS_CODE.SUCCESS).json({ success: true, code: STATUS_CODE.SUCCESS, data: { user: result.getValue() } });
+    });
 
 
 
@@ -220,6 +229,23 @@ export class UserAuthController {
 
         if (result.isSuccess) {
             res.status(STATUS_CODE.SUCCESS).json({ success: true, message: "OTP resent successfully" });
+        } else {
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: result.error });
+        }
+    });
+
+    sendVerificationOtp = expressAsyncHandler(async (req: Request, res: Response) => {
+        const userId = (req as any).user?.userId;
+
+        if (!userId) {
+            res.status(STATUS_CODE.UNAUTHORIZED).json({ success: false, message: AUTH_MESSAGES.AUTHENTICATION_REQUIRED });
+            return;
+        }
+
+        const result = await this.sendVerificationOtpUseCase.execute(userId);
+
+        if (result.isSuccess) {
+            res.status(STATUS_CODE.SUCCESS).json({ success: true, message: "Verification OTP sent successfully" });
         } else {
             res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: result.error });
         }
@@ -271,7 +297,7 @@ export class UserAuthController {
     logout = expressAsyncHandler(async (req: Request, res: Response) => {
         res.clearCookie('accessToken', { path: '/' });
         res.clearCookie('refreshToken', { path: '/' });
-        res.status(STATUS_CODE.SUCCESS).json({ success: true, message: "Logged out successfully" });
+        res.status(STATUS_CODE.SUCCESS).json({ success: true, code: STATUS_CODE.SUCCESS, message: AUTH_MESSAGES.LOGGED_OUT_SUCCESSFULLY });
     });
 
     googleAuth = (req: Request, res: Response, next: any) => {
@@ -311,7 +337,7 @@ export class UserAuthController {
                 if (result.isSuccess) {
                     const { accessToken, refreshToken, user: domainUser } = result.getValue();
                     this.setCookies(res, accessToken, refreshToken);
-                    return res.redirect(`${process.env.CLIENT_URL}/`);
+                    return res.redirect(`${process.env.FRONTEND_URL}/home`);
                 } else {
                     return res.redirect(`${clientRedirectUrl}?error=${encodeURIComponent(result.error as string)}`);
                 }

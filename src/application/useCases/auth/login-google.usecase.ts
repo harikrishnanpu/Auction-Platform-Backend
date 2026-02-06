@@ -1,4 +1,4 @@
-import { User, UserRole } from "../../../domain/user/user.entity";
+import { User, UserProps, UserRole } from "../../../domain/user/user.entity";
 import { IUserRepository } from "../../../domain/user/user.repository";
 import { ITokenService, TokenPayload } from "../../services/token/auth.token.service";
 import { Email } from "../../../domain/user/email.vo";
@@ -31,33 +31,33 @@ export class LoginWithGoogleUseCase {
                 const existingUser = await this.userRepository.findByEmail(email);
 
                 if (existingUser) {
-                const payload: TokenPayload = {
-                userId: existingUser.id.toString(),
-                email: existingUser.props.email.value,
-                roles: existingUser.props.roles
-            };
+                    const payload: TokenPayload = {
+                        userId: existingUser.id.toString(),
+                        email: existingUser.props.email.value,
+                        roles: existingUser.props.roles
+                    };
 
-            const tokens = this.tokenService.generateTokens(payload);
+                    const tokens = this.tokenService.generateTokens(payload);
 
-            return Result.ok({ ...tokens, user: existingUser });
+                    return Result.ok({ ...tokens, user: existingUser });
                 }
 
-                const userProps = {
+                const userProps: UserProps = {
                     name: dto.name,
                     email: email,
                     phone: undefined,
-                    address: "Not Provided",
+                    address: "",
                     avatar_url: dto.avatar,
                     roles: [UserRole.USER],
-                    is_active: true,
                     is_blocked: false,
-                    is_verified: true,
+                    is_verified: false,
                     created_at: new Date(),
+                    is_profile_completed: false,
                     googleId: dto.googleId,
-                    password: undefined
+                    password: undefined,
                 };
 
-                const userResult = User.create(userProps as any);
+                const userResult = User.create(userProps);
                 if (userResult.isFailure) {
                     return Result.fail(userResult.error as string);
                 }
@@ -81,7 +81,7 @@ export class LoginWithGoogleUseCase {
             return Result.ok({ ...tokens, user });
 
         } catch (error) {
-            console.error(error);
+            console.log(error);
             return Result.fail("Internal server error during Google Login");
         }
     }

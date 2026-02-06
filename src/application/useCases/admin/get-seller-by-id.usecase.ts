@@ -11,7 +11,6 @@ export interface SellerDetailDto {
     address: string;
     avatar_url?: string;
     roles: string[];
-    is_active: boolean;
     is_blocked: boolean;
     is_verified: boolean;
     joined_at: Date;
@@ -71,7 +70,6 @@ export class GetSellerByIdUseCase {
             address: user.address,
             avatar_url: user.avatar_url,
             roles: user.roles,
-            is_active: user.is_active,
             is_blocked: user.is_blocked,
             is_verified: user.is_verified,
             joined_at: user.created_at,

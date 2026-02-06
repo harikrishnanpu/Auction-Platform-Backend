@@ -22,7 +22,7 @@ export class EnterAuctionUseCase {
         ensureAuctionWindow(auction, new Date());
 
         const user = await this.userRepository.findById(userId);
-        if (!user || user.is_blocked || !user.is_active || !user.is_verified) {
+        if (!user || user.is_blocked || !user.is_verified) {
             throw new AuctionError("NOT_ALLOWED", "User not eligible to enter");
         }
 

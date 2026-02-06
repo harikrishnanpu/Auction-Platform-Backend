@@ -41,32 +41,32 @@ enum OtpStatus {
 }
 
 model User {
-  user_id             String               @id @default(uuid())
-  name                String
-  email               String               @unique
-  google_id           String?              @unique
-  phone               String?              @unique
-  address             String
-  avatar_url          String?
-  password_hash       String?
-  is_active           Boolean              @default(true)
-  is_blocked          Boolean              @default(false)
-  is_verified         Boolean              @default(false)
-  is_critical         Boolean              @default(false)
-  updated_at          DateTime             @default(now())
-  created_at          DateTime             @default(now())
-  UserRole            UserRole[]
-  UserSession         UserSession[]
-  KYCProfile          KYCProfile[]
-  OTPVerification     OTPVerification[]
-  Auctions            Auction[]            @relation("SellerAuctions")
-  WonAuctions         Auction[]            @relation("WonAuctions")
-  Bids                Bid[]
-  AuctionParticipants AuctionParticipant[]
-  AuctionChatMessages AuctionChatMessage[]
-  AuctionPayments     AuctionPayment[]
-  AuctionOffers       AuctionOffer[]
-  CriticalUserRecords CriticalUser[]
+  user_id              String               @id @default(uuid())
+  name                 String
+  email                String               @unique
+  google_id            String?              @unique
+  phone                String?              @unique
+  address              String
+  avatar_url           String?
+  password_hash        String?
+  is_blocked           Boolean              @default(false)
+  is_verified          Boolean              @default(false)
+  is_critical          Boolean              @default(false)
+  is_profile_completed Boolean              @default(true)
+  updated_at           DateTime             @default(now())
+  created_at           DateTime             @default(now())
+  UserRole             UserRole[]
+  UserSession          UserSession[]
+  KYCProfile           KYCProfile[]
+  OTPVerification      OTPVerification[]
+  Auctions             Auction[]            @relation("SellerAuctions")
+  WonAuctions          Auction[]            @relation("WonAuctions")
+  Bids                 Bid[]
+  AuctionParticipants  AuctionParticipant[]
+  AuctionChatMessages  AuctionChatMessage[]
+  AuctionPayments      AuctionPayment[]
+  AuctionOffers        AuctionOffer[]
+  CriticalUserRecords  CriticalUser[]
 }
 
 model UserRole {

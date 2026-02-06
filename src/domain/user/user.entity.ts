@@ -2,6 +2,7 @@ import { Entity } from "../shared/entity";
 import { Result } from "../shared/result";
 import { Email } from "./email.vo";
 import { Password } from "./password.vo";
+import { Phone } from "./phone.vo";
 
 export enum UserRole {
     USER = 'USER',
@@ -10,7 +11,7 @@ export enum UserRole {
     ADMIN = "ADMIN"
 }
 
-interface UserProps {
+export interface UserProps {
     name: string;
     email: Email;
     phone?: string;
@@ -19,9 +20,9 @@ interface UserProps {
     password?: Password;
     googleId?: string;
     roles: UserRole[];
-    is_active: boolean;
     is_blocked: boolean;
     is_verified: boolean;
+    is_profile_completed?: boolean;
     created_at?: Date;
 }
 
@@ -52,10 +53,10 @@ export class User extends Entity<UserProps> {
     public get password(): Password | undefined { return this.props.password; }
     public get googleId(): string | undefined { return this.props.googleId; }
     public get roles(): UserRole[] { return this.props.roles; }
-    public get is_active(): boolean { return this.props.is_active; }
     public get is_blocked(): boolean { return this.props.is_blocked; }
     public get is_verified(): boolean { return this.props.is_verified; }
     public get created_at(): Date { return this.props.created_at || new Date(); }
+    public get is_profile_completed(): boolean { return this.props.is_profile_completed || false; }
 
     public verify(): void {
         this.props.is_verified = true;
@@ -69,5 +70,22 @@ export class User extends Entity<UserProps> {
         this.props.roles.push(role);
     }
 
+    public completeProfile(phone: string, address: string): Result<void> {
+        const phoneResult = Phone.create(phone);
+        if (phoneResult.isFailure) {
+            return Result.fail<void>(phoneResult.error as string);
+        }
+
+        const normalizedAddress = address.trim();
+        if (!normalizedAddress) {
+            return Result.fail<void>("Address is required");
+        }
+
+        this.props.phone = phoneResult.getValue().value;
+        this.props.address = normalizedAddress;
+        this.props.is_profile_completed = true;
+
+        return Result.ok<void>();
+    }
 
 }

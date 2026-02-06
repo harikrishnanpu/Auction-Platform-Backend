@@ -35,10 +35,6 @@ export class ForgotPasswordUseCase {
             return Result.fail("User not found");
         }
 
-        if (user.is_blocked || !user.is_active || !user.is_verified) {
-            return Result.fail("User account not verified");
-        }
-
         const resetToken = this.resetTokenService.generateToken(32);
 
         this.logger.info("Reset Password Token Generated");

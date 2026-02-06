@@ -16,6 +16,7 @@ export const AUTH_MESSAGES = {
     LOGIN_SUCCESSFULLY: "Login successful",
     PROFILE_NOT_FOUND: "User profile not found",
     AUTHENTICATION_REQUIRED: "Authentication Required",
+    LOGGED_OUT_SUCCESSFULLY: "Logged out successfully",
 };
 
 export const AUTH_CONSTANTS = {

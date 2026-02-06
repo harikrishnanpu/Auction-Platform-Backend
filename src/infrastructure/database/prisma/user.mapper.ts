@@ -31,9 +31,9 @@ export class UserMapper {
                 password: password,
                 googleId: raw.google_id || undefined,
                 roles: roles,
-                is_active: raw.is_active,
                 is_blocked: raw.is_blocked,
                 is_verified: raw.is_verified,
+                is_profile_completed: raw.is_profile_completed,
                 created_at: raw.created_at
             },
             raw.user_id
@@ -53,9 +53,9 @@ export class UserMapper {
             avatar_url: user.avatar_url || null,
             password_hash: user.password?.value || null,
             google_id: user.googleId || null,
-            is_active: user.is_active,
             is_blocked: user.is_blocked,
             is_verified: user.is_verified,
+            is_profile_completed: user.is_profile_completed,
             updated_at: new Date(),
             created_at: user.created_at,
         } as PrismaUser;

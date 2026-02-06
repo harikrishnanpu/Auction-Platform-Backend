@@ -59,7 +59,6 @@ export class RegisterUserUseCase {
             roles: [UserRole.USER],
             is_verified: false,
             is_blocked: false,
-            is_active: true,
         });
 
         if (userOrError.isFailure) return Result.fail(userOrError.error as string);

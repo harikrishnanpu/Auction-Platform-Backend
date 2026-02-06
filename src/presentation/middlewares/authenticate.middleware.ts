@@ -5,14 +5,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     const accessToken = req.cookies?.accessToken;
     const refreshToken = req.cookies?.refreshToken;
 
-    console.log("====== acccessed porofile route");
-
-    console.log(req.cookies);
-
-
-
-
-
     if (!accessToken) {
         if (!refreshToken) {
             return res.status(401).json({ message: 'Authentication required' });
@@ -78,8 +70,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     }
 
     (req as any).user = decoded;
-
-    console.log("PASSED: ====", req.user);
 
     next();
 };

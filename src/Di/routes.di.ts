@@ -2,8 +2,10 @@ import { LoginUserUseCase } from "../application/useCases/auth/login-user.usecas
 import { RegisterUserUseCase } from "../application/useCases/auth/register-user.usecase";
 import { VerifyEmailUseCase } from "../application/useCases/auth/verify-email.usecase";
 import { ResendOtpUseCase } from "../application/useCases/auth/resend-otp.usecase";
+import { SendVerificationOtpUseCase } from "../application/useCases/auth/send-verification-otp.usecase";
 import { RefreshTokenUseCase } from "../application/useCases/auth/refresh-token.usecase";
 import { GetProfileUseCase } from "../application/useCases/user/get-profile.usecase";
+import { CompleteProfileUseCase } from "../application/useCases/user/complete-profile.usecase";
 import { LoginWithGoogleUseCase } from "../application/useCases/auth/login-google.usecase";
 import { ForgotPasswordUseCase } from "../application/useCases/auth/forgot-password.usecase";
 import { ResetPasswordUseCase } from "../application/useCases/auth/reset-password.usecase";
@@ -95,6 +97,10 @@ const getProfileUseCase = new GetProfileUseCase(
     userRepository
 );
 
+const completeProfileUseCase = new CompleteProfileUseCase(
+    userRepository
+);
+
 const forgotPasswordUseCase = new ForgotPasswordUseCase(
     userRepository,
     otpRepository,
@@ -112,6 +118,14 @@ const resetPasswordUseCase = new ResetPasswordUseCase(
 const loginWithGoogleUseCase = new LoginWithGoogleUseCase(
     userRepository,
     tokenService
+);
+
+const sendVerificationOtpUseCase = new SendVerificationOtpUseCase(
+    userRepository,
+    otpRepository,
+    emailService,
+    otpService,
+    loggerService
 );
 
 const getUsersUseCase = new GetUsersUseCase(userRepository);
@@ -138,9 +152,11 @@ const authController = new UserAuthController(
     resendOtpUseCase,
     refreshTokenUseCase,
     getProfileUseCase,
+    completeProfileUseCase,
     forgotPasswordUseCase,
     resetPasswordUseCase,
-    loginWithGoogleUseCase
+    loginWithGoogleUseCase,
+    sendVerificationOtpUseCase
 );
 
 const adminAuthController = new AdminAuthController(

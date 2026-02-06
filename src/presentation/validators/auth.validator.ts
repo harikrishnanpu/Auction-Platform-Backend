@@ -21,3 +21,8 @@ export const verifyEmailSchema = z.object({
     email: z.string().email(AUTH_MESSAGES.INVALID_EMAIL),
     otp: z.string().min(6, AUTH_MESSAGES.OTP_MIN_LENGTH),
 });
+
+export const completeProfileSchema = z.object({
+    phone: z.string().min(10, AUTH_MESSAGES.PHONE_MIN_LENGTH),
+    address: z.string().min(1, AUTH_MESSAGES.ADDRESS_REQUIRED),
+});
