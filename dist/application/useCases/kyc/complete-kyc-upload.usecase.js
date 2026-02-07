@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CompleteKycUploadUseCase = void 0;
 const result_1 = require("../../../domain/shared/result");
-const user_id_vo_1 = require("../../../domain/user/user-id.vo");
 const kyc_repository_1 = require("../../../domain/kyc/kyc.repository");
 class CompleteKycUploadUseCase {
     constructor(userRepository, kycRepository) {
@@ -10,16 +9,13 @@ class CompleteKycUploadUseCase {
         this.kycRepository = kycRepository;
     }
     async execute(dto) {
-        const userIdOrError = user_id_vo_1.UserId.create(dto.userId);
-        if (userIdOrError.isFailure) {
-            return result_1.Result.fail('Invalid user ID');
-        }
-        const user = await this.userRepository.findById(userIdOrError.getValue());
+        const user = await this.userRepository.findById(dto.userId);
         if (!user) {
             return result_1.Result.fail('User not found');
         }
         try {
-            const existingKyc = await this.kycRepository.findByUserId(dto.userId);
+            const kycType = dto.kycType || kyc_repository_1.KYCType.SELLER;
+            const existingKyc = await this.kycRepository.findByUserId(dto.userId, kycType);
             const updateData = {
                 user_id: dto.userId,
                 verification_status: kyc_repository_1.KYCStatus.PENDING,
@@ -44,6 +40,9 @@ class CompleteKycUploadUseCase {
             }
             if (dto.kycType) {
                 updateData.kyc_type = dto.kycType;
+            }
+            else {
+                updateData.kyc_type = kycType;
             }
             if (existingKyc) {
                 updateData.kyc_id = existingKyc.kyc_id;

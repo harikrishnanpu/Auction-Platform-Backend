@@ -10,7 +10,6 @@ import { ResumeAuctionUseCase } from "../application/useCases/seller/resume-auct
 import { EndAuctionUseCase } from "../application/useCases/auction/end-auction.usecase";
 
 export const initSocketHandlers = (io: Server) => {
-    // Instantiate Use Cases (or get from DI if available)
     const placeBidUseCase = new PlaceBidUseCase(auctionRepository, bidRepository, participantRepository, activityRepository, transactionManager);
     const sendChatMessageUseCase = new SendChatMessageUseCase(chatMessageRepository, participantRepository, auctionRepository);
     const getRoomStateUseCase = new GetAuctionRoomStateUseCase(auctionRepository, bidRepository, chatMessageRepository, activityRepository);

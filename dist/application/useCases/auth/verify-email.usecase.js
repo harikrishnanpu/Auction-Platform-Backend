@@ -21,17 +21,17 @@ class VerifyEmailUseCase {
             return result_1.Result.fail("User not found");
         if (user.props.is_verified)
             return result_1.Result.fail("User is already verified");
-        const otp = await this.otpRepository.findByIdAndPurpose(email.value, otp_entity_1.OtpPurpose.REGISTER);
+        const otp = await this.otpRepository.findByIdAndPurpose(user.id.toString(), otp_entity_1.OtpPurpose.REGISTER);
         if (!otp)
             return result_1.Result.fail("OTP not found or expired");
         if (otp.status !== otp_entity_1.OtpStatus.PENDING)
             return result_1.Result.fail("OTP is invalid");
-        if (new Date() > otp.expires_at) {
+        if (otp.isExpired()) {
             otp.markAsExpired();
             await this.otpRepository.save(otp);
             return result_1.Result.fail("OTP has expired");
         }
-        if (otp.otp_hash !== dto.otp) {
+        if (!otp.verify(dto.otp)) {
             otp.incrementAttempts();
             await this.otpRepository.save(otp);
             return result_1.Result.fail("Invalid OTP");

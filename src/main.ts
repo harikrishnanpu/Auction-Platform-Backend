@@ -12,10 +12,7 @@ const startServer = async () => {
     try {
         const httpServer = createServer(app);
 
-        // Initialize Socket Server
         const io = SocketServer.init(httpServer, {});
-
-        // Initialize Socket Handlers
         initSocketHandlers(io);
 
         httpServer.listen(PORT, () => {

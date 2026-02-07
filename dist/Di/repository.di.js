@@ -3,8 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.transactionManager = exports.conditionRepository = exports.categoryRepository = exports.activityRepository = exports.participantRepository = exports.chatMessageRepository = exports.bidRepository = exports.auctionRepository = exports.kycRepository = exports.otpRepository = exports.userRepository = void 0;
-const prisma_user_repository_1 = require("../infrastructure/repositories/prisma-user.repository");
+exports.paymentRepository = exports.transactionManager = exports.conditionRepository = exports.categoryRepository = exports.activityRepository = exports.participantRepository = exports.chatMessageRepository = exports.bidRepository = exports.auctionRepository = exports.kycRepository = exports.otpRepository = exports.userRepository = void 0;
+const prisma_user_repository_1 = require("../infrastructure/repositories/user/prisma-user.repository");
 const prisma_otp_repository_1 = require("../infrastructure/repositories/otp/prisma-otp.repository");
 const prisma_kyc_repository_1 = require("../infrastructure/repositories/prisma-kyc.repository");
 const prismaClient_1 = __importDefault(require("../utils/prismaClient"));
@@ -16,6 +16,7 @@ const prisma_auction_category_repository_1 = require("../infrastructure/reposito
 const prisma_auction_condition_repository_1 = require("../infrastructure/repositories/auction/prisma-auction-condition.repository");
 const prisma_activity_repository_1 = require("../infrastructure/repositories/auction/prisma-activity.repository");
 const prisma_transaction_manager_1 = require("../infrastructure/database/prisma/prisma-transaction.manager");
+const prisma_payment_repository_1 = require("../infrastructure/repositories/payment/prisma-payment.repository");
 exports.userRepository = new prisma_user_repository_1.PrismaUserRepository();
 exports.otpRepository = new prisma_otp_repository_1.PrismaOTPRepository(prismaClient_1.default);
 exports.kycRepository = new prisma_kyc_repository_1.PrismaKYCRepository();
@@ -27,3 +28,4 @@ exports.activityRepository = new prisma_activity_repository_1.PrismaAuctionActiv
 exports.categoryRepository = new prisma_auction_category_repository_1.PrismaAuctionCategoryRepository(prismaClient_1.default);
 exports.conditionRepository = new prisma_auction_condition_repository_1.PrismaAuctionConditionRepository(prismaClient_1.default);
 exports.transactionManager = new prisma_transaction_manager_1.PrismaTransactionManager(prismaClient_1.default);
+exports.paymentRepository = new prisma_payment_repository_1.PrismaPaymentRepository(prismaClient_1.default);

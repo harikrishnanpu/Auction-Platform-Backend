@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RefreshTokenUseCase = void 0;
 const result_1 = require("../../../domain/shared/result");
-const user_id_vo_1 = require("../../../domain/user/user-id.vo");
 class RefreshTokenUseCase {
     constructor(userRepository, tokenService, logger) {
         this.userRepository = userRepository;
@@ -17,11 +16,8 @@ class RefreshTokenUseCase {
         if (!decoded || !decoded.userId) {
             return result_1.Result.fail("Invalid or expired refresh token");
         }
-        const userId = user_id_vo_1.UserId.create(decoded.userId);
-        if (userId.isFailure) {
-            return result_1.Result.fail('Invalid User ID');
-        }
-        const user = await this.userRepository.findById(userId.getValue());
+        const userId = decoded.userId;
+        const user = await this.userRepository.findById(userId);
         if (!user) {
             return result_1.Result.fail("User not found");
         }

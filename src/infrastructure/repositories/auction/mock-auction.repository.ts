@@ -5,7 +5,6 @@ import { TransactionContext } from "../../../application/ports/transaction.port"
 export class MockAuctionRepository implements IAuctionRepository {
     async create(auction: Auction): Promise<Auction> {
         console.log("Saving auction to DB (Mock):", auction);
-        // Simulate DB save
         return auction;
     }
 

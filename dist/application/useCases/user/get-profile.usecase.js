@@ -2,40 +2,44 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetProfileUseCase = void 0;
 const result_1 = require("../../../domain/shared/result");
-const user_id_vo_1 = require("../../../domain/user/user-id.vo");
 class GetProfileUseCase {
-    constructor(userRepository) {
+    constructor(userRepository, storageService) {
         this.userRepository = userRepository;
+        this.storageService = storageService;
     }
     async execute(userId) {
-        const userIdResult = user_id_vo_1.UserId.create(userId);
-        if (userIdResult.isFailure) {
-            return result_1.Result.fail(userIdResult.error);
-        }
-        const user = await this.userRepository.findById(userIdResult.getValue());
+        const user = await this.userRepository.findById(userId);
         if (!user) {
             return result_1.Result.fail("User not found");
         }
         if (user.is_blocked) {
             return result_1.Result.fail("Account is blocked");
         }
-        if (!user.is_active) {
-            return result_1.Result.fail("Account is inactive");
-        }
-        if (!user.is_verified) {
-            return result_1.Result.fail("User not verified");
+        let avatarUrl = user.avatar_url;
+        if (avatarUrl && !avatarUrl.startsWith('http')) {
+            try {
+                avatarUrl = await this.storageService.getPresignedDownloadUrl(avatarUrl, 3600); // 1 hour expiry
+            }
+            catch (error) {
+                // Fallback or leave as key if signing fails? 
+                // Better to leave as key or null? Let's leave as null to avoid broken image.
+                // Or keep original to debug.
+                console.error("Failed to sign avatar URL", error);
+            }
         }
         return result_1.Result.ok({
             id: user.id.toString(),
             name: user.name,
             email: user.email.value,
             roles: user.roles,
-            is_active: user.is_active,
             is_verified: user.is_verified,
+            is_profile_completed: user.is_profile_completed,
             phone: user.phone,
             address: user.address,
-            avatar_url: user.avatar_url,
-            created_at: user.created_at
+            avatar_url: avatarUrl,
+            created_at: user.created_at,
+            has_password: !!user.password,
+            is_google_user: !!user.googleId
         });
     }
 }

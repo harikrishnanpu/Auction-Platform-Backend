@@ -6,6 +6,9 @@ const ensureAuctionActive = (auction) => {
     if (auction.status !== "ACTIVE") {
         throw new auction_errors_1.AuctionError("NOT_ALLOWED", "Auction not active");
     }
+    if (auction.isPaused) {
+        throw new auction_errors_1.AuctionError("NOT_ALLOWED", "Auction is paused");
+    }
 };
 exports.ensureAuctionActive = ensureAuctionActive;
 const ensureAuctionWindow = (auction, now) => {

@@ -4,16 +4,10 @@ exports.UserMapper = void 0;
 const user_entity_1 = require("../../../domain/user/user.entity");
 const result_1 = require("../../../domain/shared/result");
 const email_vo_1 = require("../../../domain/user/email.vo");
-const user_id_vo_1 = require("../../../domain/user/user-id.vo");
 const password_vo_1 = require("../../../domain/user/password.vo");
 class UserMapper {
     static toDomain(raw) {
         const email = email_vo_1.Email.create(raw.email);
-        const usrId = user_id_vo_1.UserId.create(raw.user_id);
-        if (email.isFailure)
-            return result_1.Result.fail(email.error);
-        if (usrId.isFailure)
-            return result_1.Result.fail(usrId.error);
         let password;
         if (raw.password_hash) {
             const passwordOrError = password_vo_1.Password.create(raw.password_hash);
@@ -33,11 +27,11 @@ class UserMapper {
             password: password,
             googleId: raw.google_id || undefined,
             roles: roles,
-            is_active: raw.is_active,
             is_blocked: raw.is_blocked,
             is_verified: raw.is_verified,
+            is_profile_completed: raw.is_profile_completed,
             created_at: raw.created_at
-        }, usrId.getValue().value);
+        }, raw.user_id);
         return usr;
     }
     static toPersistence(user) {
@@ -50,9 +44,9 @@ class UserMapper {
             avatar_url: user.avatar_url || null,
             password_hash: user.password?.value || null,
             google_id: user.googleId || null,
-            is_active: user.is_active,
             is_blocked: user.is_blocked,
             is_verified: user.is_verified,
+            is_profile_completed: user.is_profile_completed,
             updated_at: new Date(),
             created_at: user.created_at,
         };

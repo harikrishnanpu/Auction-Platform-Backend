@@ -35,16 +35,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateUserUseCase = void 0;
 const result_1 = require("../../../domain/shared/result");
-const user_id_vo_1 = require("../../../domain/user/user-id.vo");
 class UpdateUserUseCase {
     constructor(userRepository) {
         this.userRepository = userRepository;
     }
     async execute(userId, dto) {
-        const userIdOrError = user_id_vo_1.UserId.create(userId);
-        if (userIdOrError.isFailure)
-            return result_1.Result.fail("Invalid User ID");
-        const user = await this.userRepository.findById(userIdOrError.getValue());
+        const user = await this.userRepository.findById(userId);
         if (!user)
             return result_1.Result.fail("User not found");
         // Update fields

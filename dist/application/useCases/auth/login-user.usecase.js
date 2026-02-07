@@ -20,9 +20,6 @@ class LoginUserUseCase {
         if (!user) {
             return result_1.Result.fail("Invalid email or password");
         }
-        if (!user.props.is_active) {
-            return result_1.Result.fail("Account is inactive");
-        }
         if (user.props.is_blocked) {
             return result_1.Result.fail("Account is blocked");
         }

@@ -25,13 +25,11 @@ var OtpStatus;
 })(OtpStatus || (exports.OtpStatus = OtpStatus = {}));
 class OTP extends entity_1.Entity {
     get user_id() { return this.props.user_id; }
-    get identifier() { return this.props.identifier; }
-    get otp_hash() { return this.props.otp_hash; }
+    get otp() { return this.props.otp; }
     get purpose() { return this.props.purpose; }
     get channel() { return this.props.channel; }
     get expires_at() { return this.props.expires_at; }
     get attempts() { return this.props.attempts; }
-    get max_attempts() { return this.props.max_attempts; }
     get status() { return this.props.status; }
     get created_at() { return this.props.created_at; }
     constructor(props, id) {
@@ -41,7 +39,6 @@ class OTP extends entity_1.Entity {
         return result_1.Result.ok(new OTP({
             ...props,
             attempts: props.attempts ?? 0,
-            max_attempts: props.max_attempts ?? 3,
             status: props.status ?? OtpStatus.PENDING,
             created_at: props.created_at ?? new Date(),
         }, id));
@@ -52,11 +49,8 @@ class OTP extends entity_1.Entity {
     incrementAttempts() {
         this.props.attempts++;
     }
-    isMaxAttemptsReached() {
-        return this.props.attempts >= this.props.max_attempts;
-    }
-    verify(otpHash) {
-        return this.props.otp_hash === otpHash;
+    verify(otp) {
+        return this.props.otp === otp;
     }
     markAsVerified() {
         this.props.status = OtpStatus.VERIFIED;

@@ -7,24 +7,29 @@ class PrismaAuctionRepository {
         this.prisma = prisma;
     }
     async create(auction) {
+        const data = {
+            id: auction.id,
+            seller_id: auction.sellerId,
+            category_id: auction.categoryId,
+            condition_id: auction.conditionId,
+            title: auction.title,
+            description: auction.description,
+            start_at: auction.startAt,
+            end_at: auction.endAt,
+            start_price: auction.startPrice,
+            min_bid_increment: auction.minBidIncrement,
+            current_price: auction.currentPrice,
+            status: auction.status,
+            is_paused: auction.isPaused,
+            anti_snipe_threshold_seconds: auction.antiSnipeThresholdSeconds,
+            anti_snipe_extension_seconds: auction.antiSnipeExtensionSeconds,
+            max_extensions: auction.maxExtensions,
+            bid_cooldown_seconds: auction.bidCooldownSeconds,
+            created_at: auction.createdAt,
+            updated_at: auction.updatedAt
+        };
         const created = await this.prisma.auction.create({
-            data: {
-                id: auction.id,
-                seller_id: auction.sellerId,
-                category_id: auction.categoryId,
-                condition_id: auction.conditionId,
-                title: auction.title,
-                description: auction.description,
-                start_at: auction.startAt,
-                end_at: auction.endAt,
-                start_price: auction.startPrice,
-                min_bid_increment: auction.minBidIncrement,
-                current_price: auction.currentPrice,
-                status: auction.status,
-                is_paused: auction.isPaused,
-                created_at: auction.createdAt,
-                updated_at: auction.updatedAt
-            },
+            data,
             include: {
                 assets: true
             }
@@ -49,8 +54,13 @@ class PrismaAuctionRepository {
         return auctions.map(a => this.mapToEntity(a));
     }
     async findActive() {
+        const now = new Date();
         const auctions = await this.prisma.auction.findMany({
-            where: { status: "ACTIVE" },
+            where: {
+                status: "ACTIVE",
+                start_at: { lte: now },
+                end_at: { gt: now }
+            },
             include: { assets: true },
             orderBy: { created_at: "desc" }
         });
@@ -86,6 +96,14 @@ class PrismaAuctionRepository {
             data.is_paused = dto.isPaused;
         if (dto.status !== undefined)
             data.status = dto.status;
+        if (dto.antiSnipeThresholdSeconds !== undefined)
+            data.anti_snipe_threshold_seconds = dto.antiSnipeThresholdSeconds;
+        if (dto.antiSnipeExtensionSeconds !== undefined)
+            data.anti_snipe_extension_seconds = dto.antiSnipeExtensionSeconds;
+        if (dto.maxExtensions !== undefined)
+            data.max_extensions = dto.maxExtensions;
+        if (dto.bidCooldownSeconds !== undefined)
+            data.bid_cooldown_seconds = dto.bidCooldownSeconds;
         const updated = await this.prisma.auction.update({
             where: { id: auctionId },
             data,
@@ -144,7 +162,7 @@ class PrismaAuctionRepository {
     }
     mapToEntity(data) {
         const assets = (data.assets || []).map((asset) => new auction_entity_1.AuctionAsset(asset.id, asset.auction_id, asset.asset_type, asset.url, asset.position, asset.created_at));
-        return new auction_entity_1.Auction(data.id, data.seller_id, data.category_id, data.condition_id, data.title, data.description, data.start_at, data.end_at, data.start_price, data.min_bid_increment, data.current_price, assets, data.status, data.is_paused, data.extension_count || 0, data.created_at, data.updated_at);
+        return new auction_entity_1.Auction(data.id, data.seller_id, data.category_id, data.condition_id, data.title, data.description, data.start_at, data.end_at, data.start_price, data.min_bid_increment, data.current_price, assets, data.status, data.is_paused, data.extension_count || 0, data.anti_snipe_threshold_seconds ?? 30, data.anti_snipe_extension_seconds ?? 30, data.max_extensions ?? 5, data.bid_cooldown_seconds ?? 60, data.created_at, data.updated_at);
     }
 }
 exports.PrismaAuctionRepository = PrismaAuctionRepository;

@@ -30,11 +30,16 @@ export class SubmitKycUseCase {
             return Result.fail('KYC is already verified.');
         }
 
+        // Allow resubmission if rejected - clear rejection reasons
         await this.kycRepository.save({
             kyc_id: kycProfile.kyc_id,
             user_id: userId,
             verification_status: KYCStatus.PENDING,
-            kyc_type: kycType
+            kyc_type: kycType,
+            // Clear rejection information on resubmission
+            rejection_reason_type: null,
+            rejection_reason_message: null,
+            rejected_at: null
         });
 
         return Result.ok<void>(undefined);

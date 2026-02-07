@@ -8,6 +8,9 @@ import { ResetPasswordUseCase } from '../../../application/useCases/auth/reset-p
 import { RefreshTokenUseCase } from '../../../application/useCases/auth/refresh-token.usecase';
 import { GetProfileUseCase } from '../../../application/useCases/user/get-profile.usecase';
 import { CompleteProfileUseCase } from '../../../application/useCases/user/complete-profile.usecase';
+import { UpdateProfileUseCase } from '../../../application/useCases/user/update-profile.usecase';
+import { ChangePasswordUseCase } from '../../../application/useCases/user/change-password.usecase';
+import { UpdateAvatarUseCase } from '../../../application/useCases/user/update-avatar.usecase';
 import { RegisterUserDto, LoginUserDto, ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto } from '../../../application/dtos/auth/auth.dto';
 import { LoginWithGoogleUseCase } from '../../../application/useCases/auth/login-google.usecase';
 import passport from 'passport';
@@ -16,6 +19,7 @@ import { AUTH_MESSAGES } from '../../../constants/auth.constants';
 import { AppError } from '../../../shared/app.error';
 import expressAsyncHandler from 'express-async-handler';
 import { SendVerificationOtpUseCase } from '../../../application/useCases/auth/send-verification-otp.usecase';
+import { OtpPurpose } from '../../../domain/otp/otp.entity';
 
 
 export class UserAuthController {
@@ -28,6 +32,9 @@ export class UserAuthController {
         private refreshTokenUseCase: RefreshTokenUseCase,
         private getProfileUseCase: GetProfileUseCase,
         private completeProfileUseCase: CompleteProfileUseCase,
+        private updateProfileUseCase: UpdateProfileUseCase,
+        private updateAvatarUseCase: UpdateAvatarUseCase,
+        private changePasswordUseCase: ChangePasswordUseCase,
         private forgotPasswordUseCase: ForgotPasswordUseCase,
         private resetPasswordUseCase: ResetPasswordUseCase,
         private loginWithGoogleUseCase: LoginWithGoogleUseCase,
@@ -190,9 +197,66 @@ export class UserAuthController {
         res.status(STATUS_CODE.SUCCESS).json({ success: true, code: STATUS_CODE.SUCCESS, data: { user: result.getValue() } });
     });
 
+    updateProfile = expressAsyncHandler(async (req: Request, res: Response) => {
+        const userId = (req as any).user?.userId;
 
+        if (!userId) {
+            res.status(STATUS_CODE.UNAUTHORIZED).json({ success: false, message: AUTH_MESSAGES.AUTHENTICATION_REQUIRED });
+            return;
+        }
 
+        const result = await this.updateProfileUseCase.execute({ userId, ...req.body });
 
+        if (!result.isSuccess) {
+            throw new AppError(result.error as string, STATUS_CODE.BAD_REQUEST);
+        }
+
+        res.status(STATUS_CODE.SUCCESS).json({ success: true, message: "Profile updated successfully", data: { user: result.getValue() } });
+    });
+
+    sendChangePasswordOtp = expressAsyncHandler(async (req: Request, res: Response) => {
+        const userId = (req as any).user?.userId;
+
+        // We expect email in body for OTP sending to verify it's the right user/intention
+        const { email } = req.body;
+
+        if (!email) {
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: "Email is required" });
+            return;
+        }
+
+        const result = await this.resendOtpUseCase.execute({ email, purpose: OtpPurpose.RESET_PASSWORD });
+
+        if (result.isSuccess) {
+            res.status(STATUS_CODE.SUCCESS).json({ success: true, message: "OTP sent successfully" });
+        } else {
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: result.error });
+        }
+    });
+
+    updatePassword = expressAsyncHandler(async (req: Request, res: Response) => {
+        const userId = (req as any).user?.userId;
+        if (!userId) {
+            res.status(STATUS_CODE.UNAUTHORIZED).json({ success: false, message: AUTH_MESSAGES.AUTHENTICATION_REQUIRED });
+            return;
+        }
+
+        const { oldPassword, newPassword, confirmPassword, otp } = req.body;
+
+        const result = await this.changePasswordUseCase.execute({
+            userId,
+            oldPassword,
+            newPassword,
+            confirmPassword,
+            otp
+        });
+
+        if (result.isSuccess) {
+            res.status(STATUS_CODE.SUCCESS).json({ success: true, message: "Password updated successfully" });
+        } else {
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: result.error });
+        }
+    });
 
     refreshToken = expressAsyncHandler(async (req: Request, res: Response) => {
         const refreshToken = req.cookies.refreshToken;
@@ -347,4 +411,32 @@ export class UserAuthController {
             }
         })(req, res, next);
     }
+
+
+    updateAvatar = expressAsyncHandler(async (req: Request, res: Response) => {
+        const userId = (req as any).user?.userId;
+        if (!userId) {
+            res.status(STATUS_CODE.UNAUTHORIZED).json({ success: false, message: AUTH_MESSAGES.AUTHENTICATION_REQUIRED });
+            return;
+        }
+
+        const { avatarKey } = req.body;
+
+        if (!avatarKey) {
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: "Avatar key is required" });
+            return;
+        }
+
+        const result = await this.updateAvatarUseCase.execute({
+            userId,
+            avatarKey
+        });
+
+        if (result.isSuccess) {
+            res.status(STATUS_CODE.SUCCESS).json({ success: true, message: "Avatar updated successfully", data: { user: result.getValue() } });
+        } else {
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: result.error });
+        }
+    });
 }
+

@@ -13,7 +13,7 @@ class AuctionAsset {
 }
 exports.AuctionAsset = AuctionAsset;
 class Auction {
-    constructor(id, sellerId, categoryId, conditionId, title, description, startAt, endAt, startPrice, minBidIncrement, currentPrice, assets, status = 'DRAFT', isPaused = false, extensionCount = 0, createdAt = new Date(), updatedAt = new Date()) {
+    constructor(id, sellerId, categoryId, conditionId, title, description, startAt, endAt, startPrice, minBidIncrement, currentPrice, assets, status = 'DRAFT', isPaused = false, extensionCount = 0, antiSnipeThresholdSeconds = 30, antiSnipeExtensionSeconds = 30, maxExtensions = 5, bidCooldownSeconds = 60, createdAt = new Date(), updatedAt = new Date()) {
         this.id = id;
         this.sellerId = sellerId;
         this.categoryId = categoryId;
@@ -29,6 +29,10 @@ class Auction {
         this.status = status;
         this.isPaused = isPaused;
         this.extensionCount = extensionCount;
+        this.antiSnipeThresholdSeconds = antiSnipeThresholdSeconds;
+        this.antiSnipeExtensionSeconds = antiSnipeExtensionSeconds;
+        this.maxExtensions = maxExtensions;
+        this.bidCooldownSeconds = bidCooldownSeconds;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

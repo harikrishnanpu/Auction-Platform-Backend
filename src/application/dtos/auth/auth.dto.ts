@@ -47,4 +47,6 @@ export interface UserResponseDto {
     updated_at?: Date;
     accessToken?: string;
     refreshToken?: string;
+    has_password?: boolean;
+    is_google_user?: boolean;
 }

@@ -32,15 +32,15 @@ class LoginWithGoogleUseCase {
                     name: dto.name,
                     email: email,
                     phone: undefined,
-                    address: "Not Provided",
+                    address: "",
                     avatar_url: dto.avatar,
                     roles: [user_entity_1.UserRole.USER],
-                    is_active: true,
                     is_blocked: false,
-                    is_verified: true,
+                    is_verified: false,
                     created_at: new Date(),
+                    is_profile_completed: false,
                     googleId: dto.googleId,
-                    password: undefined
+                    password: undefined,
                 };
                 const userResult = user_entity_1.User.create(userProps);
                 if (userResult.isFailure) {
@@ -61,7 +61,7 @@ class LoginWithGoogleUseCase {
             return result_1.Result.ok({ ...tokens, user });
         }
         catch (error) {
-            console.error(error);
+            console.log(error);
             return result_1.Result.fail("Internal server error during Google Login");
         }
     }

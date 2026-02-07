@@ -28,6 +28,11 @@ export class AuthRoutes {
 
     this._router.get('/me', authenticate, this._authController.getProfile);
     this._router.put('/complete-profile', authenticate, validateRequest(completeProfileSchema), this._authController.completeProfile);
+    this._router.patch('/profile', authenticate, this._authController.updateProfile);
+    this._router.post('/change-password/otp', authenticate, this._authController.sendChangePasswordOtp);
+    this._router.patch('/avatar', authenticate, this._authController.updateAvatar);
+
+    this._router.patch('/change-password', authenticate, this._authController.updatePassword);
     this._router.get('/logout', this._authController.logout);
     this._router.post('/logout', this._authController.logout);
 

@@ -6,8 +6,8 @@ class GetSellersUseCase {
     constructor(userRepository) {
         this.userRepository = userRepository;
     }
-    async execute(page, limit) {
-        const { sellers, total } = await this.userRepository.findSellers(page, limit);
+    async execute(page, limit, search, sortBy, sortOrder, kycStatus) {
+        const { sellers, total } = await this.userRepository.findSellers(page, limit, search, sortBy, sortOrder, kycStatus);
         return result_1.Result.ok({
             sellers,
             users: sellers,

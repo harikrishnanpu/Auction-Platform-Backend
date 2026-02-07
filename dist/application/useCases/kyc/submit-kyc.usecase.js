@@ -2,23 +2,18 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubmitKycUseCase = void 0;
 const result_1 = require("../../../domain/shared/result");
-const user_id_vo_1 = require("../../../domain/user/user-id.vo");
 const kyc_repository_1 = require("../../../domain/kyc/kyc.repository");
 class SubmitKycUseCase {
     constructor(userRepository, kycRepository) {
         this.userRepository = userRepository;
         this.kycRepository = kycRepository;
     }
-    async execute(userId) {
-        const userIdOrError = user_id_vo_1.UserId.create(userId);
-        if (userIdOrError.isFailure) {
-            return result_1.Result.fail('Invalid user ID');
-        }
-        const user = await this.userRepository.findById(userIdOrError.getValue());
+    async execute(userId, kycType = kyc_repository_1.KYCType.SELLER) {
+        const user = await this.userRepository.findById(userId);
         if (!user) {
             return result_1.Result.fail('User not found');
         }
-        const kycProfile = await this.kycRepository.findByUserId(userId);
+        const kycProfile = await this.kycRepository.findByUserId(userId, kycType);
         if (!kycProfile) {
             return result_1.Result.fail('KYC profile not found. Please upload documents first.');
         }
@@ -34,7 +29,7 @@ class SubmitKycUseCase {
             kyc_id: kycProfile.kyc_id,
             user_id: userId,
             verification_status: kyc_repository_1.KYCStatus.PENDING,
-            kyc_type: kyc_repository_1.KYCType.SELLER
+            kyc_type: kycType
         });
         return result_1.Result.ok(undefined);
     }

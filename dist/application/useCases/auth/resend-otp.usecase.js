@@ -27,8 +27,7 @@ class ResendOtpUseCase {
         this.logger.info("OTP Code: " + otpCode);
         const otpResult = otp_entity_1.OTP.create({
             user_id: user.id.toString(),
-            identifier: user.email.value,
-            otp_hash: otpCode,
+            otp: otpCode,
             purpose: dto.purpose || otp_entity_1.OtpPurpose.REGISTER,
             channel: otp_entity_1.OtpChannel.EMAIL,
             expires_at: otpExpiresAt,

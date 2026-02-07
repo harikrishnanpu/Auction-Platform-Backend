@@ -4,7 +4,6 @@ exports.MockAuctionRepository = void 0;
 class MockAuctionRepository {
     async create(auction) {
         console.log("Saving auction to DB (Mock):", auction);
-        // Simulate DB save
         return auction;
     }
     async findById(auctionId) {

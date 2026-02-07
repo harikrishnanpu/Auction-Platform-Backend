@@ -27,15 +27,11 @@ class ForgotPasswordUseCase {
         if (!user) {
             return result_1.Result.fail("User not found");
         }
-        if (user.is_blocked || !user.is_active || !user.is_verified) {
-            return result_1.Result.fail("User account not verified");
-        }
         const resetToken = this.resetTokenService.generateToken(32);
         this.logger.info("Reset Password Token Generated");
         const otpResult = otp_entity_1.OTP.create({
             user_id: user.id.toString(),
-            identifier: user.email.value,
-            otp_hash: resetToken,
+            otp: resetToken,
             purpose: otp_entity_1.OtpPurpose.RESET_PASSWORD,
             channel: otp_entity_1.OtpChannel.EMAIL,
             expires_at: new Date(Date.now() + 15 * 60 * 1000),

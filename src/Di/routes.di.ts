@@ -95,7 +95,8 @@ const refreshTokenUseCase = new RefreshTokenUseCase(
 );
 
 const getProfileUseCase = new GetProfileUseCase(
-    userRepository
+    userRepository,
+    storageService
 );
 
 const completeProfileUseCase = new CompleteProfileUseCase(
@@ -146,6 +147,20 @@ const completeKycUploadUseCase = new CompleteKycUploadUseCase(userRepository, ky
 const getKycStatusUseCase = new GetKycStatusUseCase(userRepository, kycRepository);
 const submitKycUseCase = new SubmitKycUseCase(userRepository, kycRepository);
 
+import { UpdateProfileUseCase } from "../application/useCases/user/update-profile.usecase";
+import { ChangePasswordUseCase } from "../application/useCases/user/change-password.usecase";
+import { UpdateAvatarUseCase } from "../application/useCases/user/update-avatar.usecase";
+
+const updateProfileUseCase = new UpdateProfileUseCase(userRepository);
+
+const updateAvatarUseCase = new UpdateAvatarUseCase(userRepository, storageService);
+
+const changePasswordUseCase = new ChangePasswordUseCase(
+    userRepository,
+    otpRepository,
+    passwordHasher
+);
+
 const authController = new UserAuthController(
     registerUserUseCase,
     loginUserUseCase,
@@ -154,6 +169,9 @@ const authController = new UserAuthController(
     refreshTokenUseCase,
     getProfileUseCase,
     completeProfileUseCase,
+    updateProfileUseCase,
+    updateAvatarUseCase,
+    changePasswordUseCase,
     forgotPasswordUseCase,
     resetPasswordUseCase,
     loginWithGoogleUseCase,

@@ -62,9 +62,10 @@ class RedisService {
      * @param auctionId Auction ID
      * @param userId User ID
      */
-    async recordBid(auctionId, userId) {
+    async recordBid(auctionId, userId, cooldownSeconds = 60) {
         const key = `bid:${auctionId}:${userId}:lastBid`;
-        await this.client.set(key, Date.now().toString(), 'EX', 120); // Keep for 2 minutes
+        const ttl = Math.max(cooldownSeconds * 2, 120);
+        await this.client.set(key, Date.now().toString(), 'EX', ttl);
     }
     /**
      * Get remaining time until user can bid again
@@ -72,12 +73,11 @@ class RedisService {
      * @param userId User ID
      * @returns Seconds remaining, or 0 if can bid now
      */
-    async getSecondsUntilCanBid(auctionId, userId) {
+    async getSecondsUntilCanBid(auctionId, userId, cooldownSeconds = 60) {
         const secondsSince = await this.getSecondsSinceLastBid(auctionId, userId);
         if (secondsSince === null)
             return 0;
-        const RATE_LIMIT_SECONDS = 60; // 1 minute
-        const remaining = RATE_LIMIT_SECONDS - secondsSince;
+        const remaining = cooldownSeconds - secondsSince;
         return remaining > 0 ? remaining : 0;
     }
     /**
