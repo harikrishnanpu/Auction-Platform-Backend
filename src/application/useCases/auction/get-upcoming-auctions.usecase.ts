@@ -15,8 +15,7 @@ export class GetUpcomingAuctionsUseCase {
     const allAuctions = await this.auctionRepository.findAll();
     
     const upcoming = allAuctions.filter(auction =>
-      auction.status === 'ACTIVE' && 
-      !auction.isPaused &&
+      auction.status === 'ACTIVE' &&
       auction.startAt > now
     );
 

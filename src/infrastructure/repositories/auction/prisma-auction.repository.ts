@@ -7,8 +7,7 @@ export class PrismaAuctionRepository implements IAuctionRepository {
     constructor(private prisma: PrismaClient) { }
 
     async create(auction: Auction): Promise<Auction> {
-        const created = await this.prisma.auction.create({
-            data: {
+        const data = {
                 id: auction.id,
                 seller_id: auction.sellerId,
                 category_id: auction.categoryId,
@@ -28,7 +27,10 @@ export class PrismaAuctionRepository implements IAuctionRepository {
                 bid_cooldown_seconds: auction.bidCooldownSeconds,
                 created_at: auction.createdAt,
                 updated_at: auction.updatedAt
-            },
+        } as Prisma.AuctionUncheckedCreateInput;
+
+        const created = await this.prisma.auction.create({
+            data,
             include: {
                 assets: true
             }
@@ -61,7 +63,6 @@ export class PrismaAuctionRepository implements IAuctionRepository {
         const auctions = await this.prisma.auction.findMany({
             where: {
                 status: "ACTIVE",
-                is_paused: false,
                 start_at: { lte: now },
                 end_at: { gt: now }
             },

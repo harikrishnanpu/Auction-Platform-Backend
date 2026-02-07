@@ -39,7 +39,6 @@ export class EnterAuctionUseCase {
         }
 
         const result = await this.participantRepository.upsertParticipant(auctionId, userId);
-        // Don't log user join - participants panel already shows who joined
         return result;
     }
 }

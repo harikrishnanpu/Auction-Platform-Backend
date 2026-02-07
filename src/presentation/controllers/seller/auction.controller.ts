@@ -8,6 +8,8 @@ import { GetSellerAuctionByIdUseCase } from "../../../application/useCases/selle
 import { PauseAuctionUseCase } from "../../../application/useCases/seller/pause-auction.usecase";
 import { ResumeAuctionUseCase } from "../../../application/useCases/seller/resume-auction.usecase";
 import { EndAuctionUseCase } from "../../../application/useCases/seller/end-auction.usecase";
+import { STATUS_CODE } from "../../../constants/status.code";
+import { SELLER_MESSAGES } from "../../../constants/seller.constants";
 
 export class SellerAuctionController {
     constructor(
@@ -27,7 +29,7 @@ export class SellerAuctionController {
             // Basic Auth Check (Robustness)
             const sellerId = (req as any).user?.userId;
             if (!sellerId) {
-                res.status(401).json({ message: "Unauthorized" });
+                res.status(STATUS_CODE.UNAUTHORIZED).json({ message: SELLER_MESSAGES.UNAUTHORIZED });
                 return;
             }
 
@@ -47,10 +49,10 @@ export class SellerAuctionController {
                 bidCooldownSeconds: req.body.bid_cooldown_seconds != null ? Number(req.body.bid_cooldown_seconds) : undefined
             });
 
-            res.status(201).json({ success: true, data: { ...auction, auctionId: auction.id } });
+            res.status(STATUS_CODE.CREATED).json({ success: true, data: { ...auction, auctionId: auction.id } });
         } catch (error) {
             console.error("Create Auction Error:", error);
-            res.status(400).json({ success: false, message: (error as Error).message });
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: (error as Error).message });
         }
     }
 
@@ -58,7 +60,7 @@ export class SellerAuctionController {
         try {
             const sellerId = (req as any).user?.userId;
             if (!sellerId) {
-                res.status(401).json({ message: "Unauthorized" });
+                res.status(STATUS_CODE.UNAUTHORIZED).json({ message: SELLER_MESSAGES.UNAUTHORIZED });
                 return;
             }
 
@@ -72,9 +74,9 @@ export class SellerAuctionController {
             });
 
             if (result.isSuccess) {
-                res.status(200).json({ success: true, data: result.getValue() });
+                res.status(STATUS_CODE.SUCCESS).json({ success: true, data: result.getValue() });
             } else {
-                res.status(400).json({ success: false, message: result.error });
+                res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: result.error });
             }
 
         } catch (error) {
@@ -86,12 +88,12 @@ export class SellerAuctionController {
         try {
             const sellerId = (req as any).user?.userId;
             if (!sellerId) {
-                res.status(401).json({ message: "Unauthorized" });
+                res.status(STATUS_CODE.UNAUTHORIZED).json({ message: SELLER_MESSAGES.UNAUTHORIZED });
                 return;
             }
 
             const auctions = await this.getSellerAuctionsUseCase.execute(sellerId);
-            res.status(200).json({ success: true, data: auctions });
+            res.status(STATUS_CODE.SUCCESS).json({ success: true, data: auctions });
         } catch (error) {
             next(error);
         }
@@ -101,15 +103,15 @@ export class SellerAuctionController {
         try {
             const sellerId = (req as any).user?.userId;
             if (!sellerId) {
-                res.status(401).json({ message: "Unauthorized" });
+                res.status(STATUS_CODE.UNAUTHORIZED).json({ message: SELLER_MESSAGES.UNAUTHORIZED });
                 return;
             }
 
             const { id } = req.params;
             const auction = await this.getSellerAuctionByIdUseCase.execute(id, sellerId);
-            res.status(200).json({ success: true, data: auction });
+            res.status(STATUS_CODE.SUCCESS).json({ success: true, data: auction });
         } catch (error) {
-            res.status(404).json({ success: false, message: (error as Error).message });
+            res.status(STATUS_CODE.NOT_FOUND).json({ success: false, message: (error as Error).message });
         }
     }
 
@@ -117,15 +119,15 @@ export class SellerAuctionController {
         try {
             const sellerId = (req as any).user?.userId;
             if (!sellerId) {
-                res.status(401).json({ message: "Unauthorized" });
+                res.status(STATUS_CODE.UNAUTHORIZED).json({ message: SELLER_MESSAGES.UNAUTHORIZED });
                 return;
             }
 
             const { id } = req.params;
             const auction = await this.publishAuctionUseCase.execute(id, sellerId);
-            res.status(200).json({ success: true, data: auction });
+            res.status(STATUS_CODE.SUCCESS).json({ success: true, data: auction });
         } catch (error) {
-            res.status(400).json({ success: false, message: (error as Error).message });
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: (error as Error).message });
         }
     }
 
@@ -133,7 +135,7 @@ export class SellerAuctionController {
         try {
             const sellerId = (req as any).user?.userId;
             if (!sellerId) {
-                res.status(401).json({ message: "Unauthorized" });
+                res.status(STATUS_CODE.UNAUTHORIZED).json({ message: SELLER_MESSAGES.UNAUTHORIZED });
                 return;
             }
 
@@ -151,9 +153,9 @@ export class SellerAuctionController {
                 maxExtensions: body.max_extensions != null ? Number(body.max_extensions) : undefined,
                 bidCooldownSeconds: body.bid_cooldown_seconds != null ? Number(body.bid_cooldown_seconds) : undefined
             });
-            res.status(200).json({ success: true, data: auction });
+            res.status(STATUS_CODE.SUCCESS).json({ success: true, data: auction });
         } catch (error) {
-            res.status(400).json({ success: false, message: (error as Error).message });
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: (error as Error).message });
         }
     }
 
@@ -161,15 +163,15 @@ export class SellerAuctionController {
         try {
             const sellerId = (req as any).user?.userId;
             if (!sellerId) {
-                res.status(401).json({ message: "Unauthorized" });
+                res.status(STATUS_CODE.UNAUTHORIZED).json({ message: SELLER_MESSAGES.UNAUTHORIZED });
                 return;
             }
 
             const { id } = req.params;
             await this.pauseAuctionUseCase.execute(id, sellerId);
-            res.status(200).json({ success: true, message: "Auction paused successfully" });
+            res.status(STATUS_CODE.SUCCESS).json({ success: true, message: SELLER_MESSAGES.AUCTION_PAUSED });
         } catch (error) {
-            res.status(400).json({ success: false, message: (error as Error).message });
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: (error as Error).message });
         }
     }
 
@@ -177,15 +179,15 @@ export class SellerAuctionController {
         try {
             const sellerId = (req as any).user?.userId;
             if (!sellerId) {
-                res.status(401).json({ message: "Unauthorized" });
+                res.status(STATUS_CODE.UNAUTHORIZED).json({ message: SELLER_MESSAGES.UNAUTHORIZED });
                 return;
             }
 
             const { id } = req.params;
             await this.resumeAuctionUseCase.execute(id, sellerId);
-            res.status(200).json({ success: true, message: "Auction resumed successfully" });
+            res.status(STATUS_CODE.SUCCESS).json({ success: true, message: SELLER_MESSAGES.AUCTION_RESUMED });
         } catch (error) {
-            res.status(400).json({ success: false, message: (error as Error).message });
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: (error as Error).message });
         }
     }
 
@@ -193,15 +195,15 @@ export class SellerAuctionController {
         try {
             const sellerId = (req as any).user?.userId;
             if (!sellerId) {
-                res.status(401).json({ message: "Unauthorized" });
+                res.status(STATUS_CODE.UNAUTHORIZED).json({ message: SELLER_MESSAGES.UNAUTHORIZED });
                 return;
             }
 
             const { id } = req.params;
             await this.endAuctionUseCase.execute(id, sellerId);
-            res.status(200).json({ success: true, message: "Auction ended successfully" });
+            res.status(STATUS_CODE.SUCCESS).json({ success: true, message: SELLER_MESSAGES.AUCTION_ENDED });
         } catch (error) {
-            res.status(400).json({ success: false, message: (error as Error).message });
+            res.status(STATUS_CODE.BAD_REQUEST).json({ success: false, message: (error as Error).message });
         }
     }
 }

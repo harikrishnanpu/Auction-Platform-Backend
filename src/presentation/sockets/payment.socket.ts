@@ -7,13 +7,13 @@ export function setupPaymentSocket(io: Server, socket: Socket) {
     const user = (socket as any).user;
 
     if (!user) {
-        console.error('❌ No user found in socket');
+        console.error('No user found in socket');
         return;
     }
 
     // Join user's personal room for payment notifications
     socket.join(`user:${user.userId}`);
-    console.log(`✅ User ${user.userId} joined personal room for payment notifications`);
+    console.log(`User ${user.userId} joined personal room for payment notifications`);
 }
 
 /**
@@ -21,7 +21,7 @@ export function setupPaymentSocket(io: Server, socket: Socket) {
  */
 export function emitPaymentSuccess(io: Server, auctionId: string, userId: string, amount: number, sellerId: string) {
     // Notify auction room
-    io.to(`auction:${auctionId}`).emit('payment:success', {
+    io.to(auctionId).emit('payment:success', {
         auctionId,
         userId,
         amount,
@@ -36,7 +36,7 @@ export function emitPaymentSuccess(io: Server, auctionId: string, userId: string
         timestamp: new Date()
     });
 
-    console.log(`✅ Payment success event emitted for auction ${auctionId}`);
+    console.log(`Payment success event emitted for auction ${auctionId}`);
 }
 
 /**
@@ -52,18 +52,18 @@ export function emitOfferCreated(io: Server, userId: string, offerId: string, au
         timestamp: new Date()
     });
 
-    console.log(`✅ Offer created event emitted to user ${userId}`);
+    console.log(`Offer created event emitted to user ${userId}`);
 }
 
 /**
  * Emit auction completion status change
  */
 export function emitAuctionCompleted(io: Server, auctionId: string, completionStatus: string) {
-    io.to(`auction:${auctionId}`).emit('auction:completed', {
+    io.to(auctionId).emit('auction:completed', {
         auctionId,
         status: completionStatus,
         timestamp: new Date()
     });
 
-    console.log(`✅ Auction completed event emitted: ${auctionId} - ${completionStatus}`);
+    console.log(`Auction completed event emitted: ${auctionId} - ${completionStatus}`);
 }

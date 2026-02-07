@@ -1,0 +1,66 @@
+export const AUCTION_SOCKET_EVENTS = {
+    ROOM_JOIN: "room:join",
+    ROOM_ERROR: "room:error",
+    ROOM_STATE: "room:state",
+    PARTICIPANT_ONLINE: "participant:online",
+    PARTICIPANT_OFFLINE: "participant:offline",
+    PARTICIPANTS_UPDATED: "participants:updated",
+
+    BID_PLACE: "bid:place",
+    BID_CREATED: "bid:created",
+    BID_ERROR: "bid:error",
+
+    CHAT_SEND: "chat:send",
+    CHAT_CREATED: "chat:created",
+    CHAT_ERROR: "chat:error",
+
+    ACTIVITY_CREATED: "activity:created",
+
+    AUCTION_EXTENDED: "auction:extended",
+    AUCTION_PAUSED: "auction:paused",
+    AUCTION_RESUMED: "auction:resumed",
+    AUCTION_ENDED: "auction:ended",
+
+    SELLER_JOIN: "seller:join",
+    ADMIN_JOIN: "admin:join",
+    SELLER_REVOKE_USER: "seller:revoke-user",
+    SELLER_PAUSE_AUCTION: "seller:pause-auction",
+    SELLER_RESUME_AUCTION: "seller:resume-auction",
+    SELLER_END_AUCTION: "seller:end-auction",
+
+    USER_REVOKED: "user:revoked",
+    REVOKE_SUCCESS: "revoke:success",
+};
+
+export const AUCTION_ERROR_CODES = {
+    AUCTION_NOT_FOUND: "AUCTION_NOT_FOUND",
+    NOT_ALLOWED: "NOT_ALLOWED",
+    SELLER_NOT_ALLOWED: "SELLER_NOT_ALLOWED",
+    USER_REVOKED: "USER_REVOKED",
+    BID_TOO_LOW: "BID_TOO_LOW",
+    RATE_LIMITED: "RATE_LIMITED",
+};
+
+export const AUCTION_MESSAGES = {
+    NOT_FOUND: "Auction not found",
+    USER_NOT_ELIGIBLE: "User not eligible to enter",
+    SELLER_CANNOT_JOIN: "Sellers cannot join their own auction as user.",
+    USER_REVOKED: "You have been revoked from this auction.",
+    NOT_ALLOWED: "Not allowed",
+    REVOKED_BY_SELLER: "Revoked by seller",
+
+    PAUSED_SUCCESS: "Auction paused successfully",
+    RESUMED_SUCCESS: "Auction resumed successfully",
+    ENDED_SUCCESS: "Auction ended successfully",
+
+    SELLER_MESSAGE: "SELLER_MESSAGE",
+    AUCTION_PAUSED_ACTIVITY: "AUCTION_PAUSED",
+    AUCTION_RESUMED_ACTIVITY: "AUCTION_RESUMED",
+    AUCTION_ENDED_ACTIVITY: "AUCTION_ENDED",
+    USER_REVOKED_ACTIVITY: "USER_REVOKED",
+
+    PAUSED_BY_SELLER: "Paused by seller",
+    RESUMED_BY_SELLER: "Resumed by seller",
+    ENDED_BY_SELLER: "Ended by seller",
+    USER_REVOKED_DESC: "User revoked"
+};

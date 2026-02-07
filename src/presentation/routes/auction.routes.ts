@@ -19,11 +19,15 @@ export class AuctionRoutes {
 
         this._router.get('/', this._auctionController.list);
         this._router.get('/active', this._auctionController.list);
+
         this._router.get('/upcoming', this._auctionController.getUpcoming);
         this._router.get('/categories', this._auctionController.getCategories);
+
         this._router.get('/conditions', this._auctionController.getConditions);
         this._router.get('/:id', this._auctionController.getById);
+
         this._router.post('/:id/enter', authenticate, this._auctionController.enter);
+        
         return this._router;
     }
 }
