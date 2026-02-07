@@ -4,6 +4,8 @@ export interface ChatMessageEntity {
     userId: string;
     message: string;
     createdAt: Date;
+    username?: string;
+    userAvatar?: string | null;
 }
 
 export interface IChatMessageRepository {

@@ -24,6 +24,7 @@ export const AUCTION_SOCKET_EVENTS = {
     SELLER_JOIN: "seller:join",
     ADMIN_JOIN: "admin:join",
     SELLER_REVOKE_USER: "seller:revoke-user",
+    SELLER_UNREVOKE_USER: "seller:unrevoke-user",
     SELLER_PAUSE_AUCTION: "seller:pause-auction",
     SELLER_RESUME_AUCTION: "seller:resume-auction",
     SELLER_END_AUCTION: "seller:end-auction",

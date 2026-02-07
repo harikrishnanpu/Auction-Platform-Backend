@@ -26,7 +26,7 @@ export class SellerAuctionController {
 
     public create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            // Basic Auth Check (Robustness)
+
             const sellerId = (req as any).user?.userId;
             if (!sellerId) {
                 res.status(STATUS_CODE.UNAUTHORIZED).json({ message: SELLER_MESSAGES.UNAUTHORIZED });

@@ -14,18 +14,23 @@ export class SellerRoutes {
     }
 
     public register() {
-        // Apply authentication to all seller routes
+
         this._router.use(authenticate);
-        // Authorization: Ensure user is a Seller (or Admin)
         this._router.use(authorize([UserRole.SELLER, UserRole.ADMIN]));
 
         this._router.post('/auction', this._sellerAuctionController.create);
         this._router.post('/auction/upload-url', this._sellerAuctionController.getUploadUrl);
+
+
         this._router.get('/auctions', this._sellerAuctionController.getMyAuctions);
         this._router.get('/auctions/:id', this._sellerAuctionController.getById);
+
+
         this._router.patch('/auctions/:id', this._sellerAuctionController.update);
+
         this._router.post('/auction/:id/publish', this._sellerAuctionController.publish);
         this._router.post('/auctions/:id/pause', this._sellerAuctionController.pause);
+
         this._router.post('/auctions/:id/resume', this._sellerAuctionController.resume);
         this._router.post('/auctions/:id/end', this._sellerAuctionController.end);
 

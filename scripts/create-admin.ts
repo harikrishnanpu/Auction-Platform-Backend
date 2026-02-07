@@ -5,10 +5,10 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function createAdmin() {
-    const email = 'admin@hm.com'; 
-    const password = 'admin123'; 
+    const email = 'admin@hm.com';
+    const password = 'admin123';
     const name = 'Admin User';
-    const phone = '+1234567890';  
+    const phone = '+1234567890';
     const address = 'Admin Address';
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -20,7 +20,7 @@ async function createAdmin() {
             phone,
             address,
             password_hash: passwordHash,
-             is_blocked: false,
+            is_blocked: false,
             is_verified: true,
             UserRole: {
                 create: {
@@ -30,7 +30,6 @@ async function createAdmin() {
         }
     });
 
-    console.log('Admin user created:', user);
 }
 
 createAdmin()

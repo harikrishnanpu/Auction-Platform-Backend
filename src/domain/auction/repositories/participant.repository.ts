@@ -18,12 +18,13 @@ export interface AuctionParticipantEntity {
 export interface IAuctionParticipantRepository {
     findByAuctionAndUser(auctionId: string, userId: string): Promise<AuctionParticipantEntity | null>;
     upsertParticipant(auctionId: string, userId: string): Promise<AuctionParticipantEntity>;
-    
+
     revokeParticipant(auctionId: string, userId: string): Promise<AuctionParticipantEntity>;
+    unrevokeParticipant(auctionId: string, userId: string): Promise<AuctionParticipantEntity>;
     listActiveParticipants(auctionId: string): Promise<AuctionParticipantEntity[]>;
-   
+
     setOnlineStatus(auctionId: string, userId: string, isOnline: boolean, socketId?: string): Promise<void>;
     updateLastSeen(auctionId: string, userId: string): Promise<void>;
-    
+
     listParticipantsWithStatus(auctionId: string): Promise<AuctionParticipantEntity[]>;
 }

@@ -75,6 +75,8 @@ export class CreateAuctionUseCase {
             maxExtensions,
             bidCooldownSeconds
         );
+
+        
         return await this.auctionRepository.create(auction);
     }
 }

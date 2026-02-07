@@ -28,6 +28,7 @@ export class PrismaAuctionRepository implements IAuctionRepository {
                 created_at: auction.createdAt,
                 updated_at: auction.updatedAt
         } as Prisma.AuctionUncheckedCreateInput;
+        
 
         const created = await this.prisma.auction.create({
             data,

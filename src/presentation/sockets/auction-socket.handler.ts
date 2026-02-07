@@ -4,6 +4,7 @@ import { PlaceBidUseCase } from "../../application/useCases/auction/place-bid.us
 import { SendChatMessageUseCase } from "../../application/useCases/auction/send-chat-message.usecase";
 import { GetAuctionRoomStateUseCase } from "../../application/useCases/auction/get-auction-room-state.usecase";
 import { RevokeUserUseCase } from "../../application/useCases/auction/revoke-user.usecase";
+import { UnrevokeUserUseCase } from "../../application/useCases/auction/unrevoke-user.usecase";
 import { PauseAuctionUseCase } from "../../application/useCases/seller/pause-auction.usecase";
 import { ResumeAuctionUseCase } from "../../application/useCases/seller/resume-auction.usecase";
 import { EndAuctionUseCase } from "../../application/useCases/auction/end-auction.usecase";
@@ -26,6 +27,7 @@ export class AuctionSocketHandler {
         private sendChatMessageUseCase: SendChatMessageUseCase,
         private getRoomStateUseCase: GetAuctionRoomStateUseCase,
         private revokeUserUseCase: RevokeUserUseCase,
+        private unrevokeUserUseCase: UnrevokeUserUseCase,
         private pauseAuctionUseCase: PauseAuctionUseCase,
         private resumeAuctionUseCase: ResumeAuctionUseCase,
         private endAuctionUseCase: EndAuctionUseCase
@@ -39,9 +41,7 @@ export class AuctionSocketHandler {
     private authMiddleware = (socket: Socket, next: (err?: Error) => void) => {
         console.log(`[Socket] New connection attempt: ${socket.id}`);
 
-        const token = socket.handshake.auth?.token
-            || (socket.handshake.headers.authorization || "").replace("Bearer ", "")
-            || this.parseCookieToken(socket.handshake.headers.cookie);
+        const token = socket.handshake.auth?.token || this.parseCookieToken(socket.handshake.headers.cookie);
 
         console.log(`[Socket] Token parsed: ${token ? "Yes (Length: " + token.length + ")" : "No"}`);
 
@@ -69,9 +69,9 @@ export class AuctionSocketHandler {
         const user = (socket as any).user;
         console.log(`Socket connected: ${socket.id}, User: ${user?.userId || 'unknown'}`);
 
-        if (user) {
-            setupPaymentSocket(this.io, socket);
-        }
+        // if (user) {
+        //     setupPaymentSocket(this.io, socket);
+        // }
 
         socket.on(AUCTION_SOCKET_EVENTS.ROOM_JOIN, (data) => this.handleRoomJoin(socket, data));
         socket.on(AUCTION_SOCKET_EVENTS.BID_PLACE, (data, callback) => this.handlePlaceBid(socket, data, callback));
@@ -79,6 +79,7 @@ export class AuctionSocketHandler {
         socket.on(AUCTION_SOCKET_EVENTS.SELLER_JOIN, (data) => this.handleSellerJoin(socket, data));
         socket.on(AUCTION_SOCKET_EVENTS.ADMIN_JOIN, (data) => this.handleAdminJoin(socket, data));
         socket.on(AUCTION_SOCKET_EVENTS.SELLER_REVOKE_USER, (data) => this.handleRevokeUser(socket, data));
+        socket.on(AUCTION_SOCKET_EVENTS.SELLER_UNREVOKE_USER, (data) => this.handleUnrevokeUser(socket, data));
         socket.on(AUCTION_SOCKET_EVENTS.SELLER_PAUSE_AUCTION, (data, callback) => this.handlePauseAuction(socket, data, callback));
         socket.on(AUCTION_SOCKET_EVENTS.SELLER_RESUME_AUCTION, (data, callback) => this.handleResumeAuction(socket, data, callback));
         socket.on(AUCTION_SOCKET_EVENTS.SELLER_END_AUCTION, (data, callback) => this.handleEndAuction(socket, data, callback));
@@ -255,6 +256,24 @@ export class AuctionSocketHandler {
             const participants = await this.participantRepository.listParticipantsWithStatus(auctionId);
             this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.PARTICIPANTS_UPDATED, { participants });
             socket.emit(AUCTION_SOCKET_EVENTS.REVOKE_SUCCESS, { userId, invalidatedBids: result.invalidatedBids, newPrice: result.newPrice });
+        } catch (error) {
+            socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { message: (error as Error).message });
+        }
+    }
+
+    private async handleUnrevokeUser(socket: Socket, { auctionId, userId }: any) {
+        const user = (socket as any).user;
+        try {
+            const auction = await this.auctionRepository.findById(auctionId);
+            if (!auction || auction.sellerId !== user.userId) return;
+
+            await this.unrevokeUserUseCase.execute(auctionId, user.userId, userId);
+
+            const activity = await this.activityRepository.logActivity(auctionId, "USER_RESTORED" as any, "User access restored by seller", user.userId, { restoredUserId: userId }).catch(() => null);
+            if (activity) this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.ACTIVITY_CREATED, activity);
+
+            const participants = await this.participantRepository.listParticipantsWithStatus(auctionId);
+            this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.PARTICIPANTS_UPDATED, { participants });
         } catch (error) {
             socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { message: (error as Error).message });
         }

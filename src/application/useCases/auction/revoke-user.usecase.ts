@@ -15,7 +15,6 @@ export class RevokeUserUseCase {
     ) { }
 
     async execute(auctionId: string, sellerId: string, userId: string) {
-        // Verify auction and seller
         const auction = await this.auctionRepository.findById(auctionId);
         if (!auction) {
             throw new AuctionError("AUCTION_NOT_FOUND", "Auction not found");
@@ -24,39 +23,31 @@ export class RevokeUserUseCase {
             throw new AuctionError("NOT_ALLOWED", "Only owner can revoke users");
         }
 
-        // Check if user has any bids
         const bidCount = await this.bidRepository.countUserBids(auctionId, userId);
-        
+
         return await this.transactionManager.runInTransaction(async (tx) => {
-            // Revoke participant
             const participant = await this.participantRepository.revokeParticipant(auctionId, userId);
-            
-            // Invalidate all user's bids
+
             let invalidatedCount = 0;
             let priceChanged = false;
             let newPrice = auction.currentPrice;
-            
+
             if (bidCount > 0) {
                 invalidatedCount = await this.bidRepository.invalidateUserBids(auctionId, userId, tx);
-                
-                // Find the highest valid bid after invalidation
                 const highestValidBid = await this.bidRepository.findHighestValidBid(auctionId, tx);
-                
+
                 if (highestValidBid) {
                     newPrice = highestValidBid.amount;
                 } else {
-                    // No valid bids left, reset to start price
                     newPrice = auction.startPrice;
                 }
-                
-                // Update auction current price if it changed
+
                 if (newPrice !== auction.currentPrice) {
                     await this.auctionRepository.updateCurrentPrice(auctionId, newPrice, tx);
                     priceChanged = true;
                 }
             }
-            
-            // Log activity
+
             await this.activityRepository.logActivity(
                 auctionId,
                 "USER_REVOKED",
@@ -70,7 +61,7 @@ export class RevokeUserUseCase {
                     newPrice
                 }
             );
-            
+
             return {
                 participant,
                 invalidatedBids: invalidatedCount,

@@ -58,6 +58,7 @@ export class RegisterUserUseCase {
             password: passwordOrError.getValue(),
             roles: [UserRole.USER],
             is_verified: false,
+            is_profile_completed: true,
             is_blocked: false,
         });
 

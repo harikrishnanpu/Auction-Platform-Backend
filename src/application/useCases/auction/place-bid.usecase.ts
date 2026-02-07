@@ -17,10 +17,9 @@ export class PlaceBidUseCase {
     ) { }
 
     async execute(auctionId: string, userId: string, amount: number) {
-        // Acquire distributed lock for this auction
         const lockKey = `auction:${auctionId}:bid`;
-        const lockAcquired = await redisService.acquireLock(lockKey, 5000); // 5 second lock
-        
+        const lockAcquired = await redisService.acquireLock(lockKey, 5000);
+
         if (!lockAcquired) {
             throw new AuctionError(
                 "BID_IN_PROGRESS",
@@ -29,7 +28,7 @@ export class PlaceBidUseCase {
         }
 
         try {
-            // Check participant eligibility
+
             const participant = await this.participantRepository.findByAuctionAndUser(auctionId, userId);
             if (!participant) {
                 throw new AuctionError("NOT_ALLOWED", "User not entered in auction");
@@ -82,7 +81,7 @@ export class PlaceBidUseCase {
                     auction.extensionCount < auction.maxExtensions) {
                     newEndTime = new Date(endTime.getTime() + (auction.antiSnipeExtensionSeconds * 1000));
                     const newExtensionCount = auction.extensionCount + 1;
-                    
+
                     await this.auctionRepository.extendAuction(auctionId, newEndTime, newExtensionCount, tx);
                     extended = true;
 
@@ -94,7 +93,7 @@ export class PlaceBidUseCase {
                         "AUCTION_EXTENDED",
                         `Auction extended by ${auction.antiSnipeExtensionSeconds}s due to late bid (${newExtensionCount}/${auction.maxExtensions})`,
                         userId,
-                        { 
+                        {
                             extensionNumber: newExtensionCount,
                             maxExtensions: auction.maxExtensions,
                             newEndTime: newEndTime.toISOString(),
@@ -115,9 +114,9 @@ export class PlaceBidUseCase {
                 // Record bid timestamp for rate limiting
                 await redisService.recordBid(auctionId, userId, auction.bidCooldownSeconds);
 
-                return { 
-                    bid, 
-                    extended, 
+                return {
+                    bid,
+                    extended,
                     newEndTime: extended ? newEndTime : endTime,
                     extensionCount: extended ? auction.extensionCount + 1 : auction.extensionCount
                 };
