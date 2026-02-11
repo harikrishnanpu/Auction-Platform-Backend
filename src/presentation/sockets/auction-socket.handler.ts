@@ -17,6 +17,8 @@ import { IUserRepository } from "../../domain/user/user.repository";
 import { AUCTION_ERROR_CODES, AUCTION_MESSAGES, AUCTION_SOCKET_EVENTS } from "../../constants/auction.constants";
 
 export class AuctionSocketHandler {
+
+    
     constructor(
         private io: Server,
         private auctionRepository: IAuctionRepository,
@@ -139,7 +141,7 @@ export class AuctionSocketHandler {
             this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.PARTICIPANT_ONLINE, { userId: user.userId, socketId: socket.id });
             console.log(`[RoomJoin] Join completed successfully.`);
         } catch (error) {
-            console.error(`[RoomJoin] Error joining room:`, error);
+            console.log(`[RoomJoin] Error joining room:`, error);
             socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { message: (error as Error).message });
         }
     }
@@ -173,6 +175,9 @@ export class AuctionSocketHandler {
         }
     }
 
+
+
+
     private async handleChatSend(socket: Socket, { auctionId, message, isSeller }: any, callback: any) {
         const user = (socket as any).user;
         console.log(`[ChatSend] Request from ${user.userId} for ${auctionId}: "${message}"`);
@@ -196,7 +201,9 @@ export class AuctionSocketHandler {
             socket.emit(AUCTION_SOCKET_EVENTS.CHAT_ERROR, errorResponse);
             if (callback) callback(errorResponse);
         }
-    }
+    } 
+
+
 
     private async handleSellerJoin(socket: Socket, { auctionId }: { auctionId: string }) {
         try {
@@ -214,6 +221,9 @@ export class AuctionSocketHandler {
             socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { message: (error as Error).message });
         }
     }
+
+
+    
 
     private async handleAdminJoin(socket: Socket, { auctionId }: { auctionId: string }) {
         try {

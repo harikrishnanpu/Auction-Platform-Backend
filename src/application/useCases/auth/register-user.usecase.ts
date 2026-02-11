@@ -37,7 +37,7 @@ export class RegisterUserUseCase {
         const email = emailResult.getValue();
         const phone = phoneResult.getValue();
 
-        const [emailExists, phoneExists] = await Promise.all([
+        const [emailExists, phoneExists] = await Promise.all([ 
             this.userRepository.emailExists(email),
             this.userRepository.phoneExists(phone)
         ]);
