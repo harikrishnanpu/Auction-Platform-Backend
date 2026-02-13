@@ -1,8 +1,9 @@
-import { IUserRepository } from '../../../domain/user/user.repository';
-import { Result } from '../../../domain/shared/result';
-import { IKYCRepository, KYCType } from '../../../domain/kyc/kyc.repository';
+import { IUserRepository } from '@domain/repositories/user.repository';
+import { Result } from '@result/result';
+import { IKYCRepository, KYCType } from '@domain/entities/kyc/kyc.repository';
+import { IGetKycStatusUseCase } from '@application/interfaces/use-cases/kyc.usecase.interface';
 
-export class GetKycStatusUseCase {
+export class GetKycStatusUseCase implements IGetKycStatusUseCase {
     constructor(
         private userRepository: IUserRepository,
         private kycRepository: IKYCRepository
@@ -10,7 +11,6 @@ export class GetKycStatusUseCase {
 
     async execute(userId: string, kycType: KYCType = KYCType.SELLER): Promise<Result<any>> {
         const user = await this.userRepository.findById(userId);
-
 
         if (!user) {
             return Result.fail('User not found');

@@ -1,4 +1,4 @@
-import { UserRole } from "@domain/user/user.entity";
+import { UserRole } from "@domain/entities/user/user.entity";
 
 export interface TokenPayload {
     userId: string;
@@ -8,6 +8,6 @@ export interface TokenPayload {
 
 export interface ITokenService {
     generateTokens(payload: any): { accessToken: string; refreshToken: string };
-    verifyAccessToken(token: string): TokenPayload | null;    
+    verifyAccessToken(token: string): TokenPayload | null;
     verifyRefreshToken(token: string): TokenPayload | null;
 }

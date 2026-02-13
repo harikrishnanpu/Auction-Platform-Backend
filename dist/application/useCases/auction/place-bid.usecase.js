@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PlaceBidUseCase = void 0;
-const auction_policy_1 = require("../../../domain/auction/auction.policy");
-const auction_errors_1 = require("../../../domain/auction/auction.errors");
-const redis_service_1 = require("../../../infrastructure/services/redis/redis.service");
+const auction_policy_1 = require("@domain/entities/auction/auction.policy");
+const result_1 = require("@result/result");
+const redis_service_1 = require("@infrastructure/services/redis/redis.service");
 class PlaceBidUseCase {
     constructor(auctionRepository, bidRepository, participantRepository, activityRepository, transactionManager) {
         this.auctionRepository = auctionRepository;
@@ -13,36 +13,44 @@ class PlaceBidUseCase {
         this.transactionManager = transactionManager;
     }
     async execute(auctionId, userId, amount) {
-        // Acquire distributed lock for this auction
         const lockKey = `auction:${auctionId}:bid`;
-        const lockAcquired = await redis_service_1.redisService.acquireLock(lockKey, 5000); // 5 second lock
+        const lockAcquired = await redis_service_1.redisService.acquireLock(lockKey, 5000);
         if (!lockAcquired) {
-            throw new auction_errors_1.AuctionError("BID_IN_PROGRESS", "Another bid is being processed. Please try again in a moment.");
+            return result_1.Result.fail("Another bid is being processed. Please try again in a moment.");
         }
         try {
-            // Check participant eligibility
             const participant = await this.participantRepository.findByAuctionAndUser(auctionId, userId);
             if (!participant) {
-                throw new auction_errors_1.AuctionError("NOT_ALLOWED", "User not entered in auction");
+                return result_1.Result.fail("User not entered in auction");
             }
             if (participant.revokedAt) {
-                throw new auction_errors_1.AuctionError("USER_REVOKED", "User revoked from auction");
+                return result_1.Result.fail("User revoked from auction");
             }
-            return await this.transactionManager.runInTransaction(async (tx) => {
+            const result = await this.transactionManager.runInTransaction(async (tx) => {
                 const auction = await this.auctionRepository.findByIdForUpdate(auctionId, tx);
                 if (!auction) {
-                    throw new auction_errors_1.AuctionError("AUCTION_NOT_FOUND", "Auction not found");
+                    return result_1.Result.fail("Auction not found");
                 }
                 const secondsRemaining = await redis_service_1.redisService.getSecondsUntilCanBid(auctionId, userId, auction.bidCooldownSeconds);
                 if (secondsRemaining > 0) {
-                    throw new auction_errors_1.AuctionError("RATE_LIMITED", `Please wait ${secondsRemaining} seconds before placing another bid`);
+                    return result_1.Result.fail(`Please wait ${secondsRemaining} seconds before placing another bid`);
                 }
-                (0, auction_policy_1.ensureAuctionActive)(auction);
-                (0, auction_policy_1.ensureAuctionWindow)(auction, new Date());
+                try {
+                    (0, auction_policy_1.ensureAuctionActive)(auction);
+                    (0, auction_policy_1.ensureAuctionWindow)(auction, new Date());
+                }
+                catch (e) {
+                    return result_1.Result.fail(e.message);
+                }
                 if (auction.sellerId === userId) {
-                    throw new auction_errors_1.AuctionError("NOT_ALLOWED", "Seller cannot bid");
+                    return result_1.Result.fail("Seller cannot bid");
                 }
-                (0, auction_policy_1.ensureBidAmount)(auction, amount);
+                try {
+                    (0, auction_policy_1.ensureBidAmount)(auction, amount);
+                }
+                catch (e) {
+                    return result_1.Result.fail(e.message);
+                }
                 // Create bid
                 const bid = await this.bidRepository.createBid(auctionId, userId, amount, tx);
                 await this.auctionRepository.updateCurrentPrice(auctionId, amount, tx);
@@ -59,8 +67,7 @@ class PlaceBidUseCase {
                     const newExtensionCount = auction.extensionCount + 1;
                     await this.auctionRepository.extendAuction(auctionId, newEndTime, newExtensionCount, tx);
                     extended = true;
-                    console.log(`🕐 Anti-snipe: Auction ${auctionId} extended by ${auction.antiSnipeExtensionSeconds}s (extension ${newExtensionCount}/${auction.maxExtensions})`);
-                    // Log extension activity
+                    // Log extension activity (non-blocking)
                     this.activityRepository.logActivity(auctionId, "AUCTION_EXTENDED", `Auction extended by ${auction.antiSnipeExtensionSeconds}s due to late bid (${newExtensionCount}/${auction.maxExtensions})`, userId, {
                         extensionNumber: newExtensionCount,
                         maxExtensions: auction.maxExtensions,
@@ -68,7 +75,7 @@ class PlaceBidUseCase {
                         triggerBidId: bid.id
                     }).catch(err => console.error('Failed to log extension activity:', err));
                 }
-                // Log bid activity
+                // Log bid activity (non-blocking)
                 this.activityRepository.logActivity(auctionId, "BID_PLACED", `New bid placed: ₹${amount.toLocaleString()}`, userId, { bidId: bid.id, amount, extended }).catch(err => console.error('Failed to log bid activity:', err));
                 // Record bid timestamp for rate limiting
                 await redis_service_1.redisService.recordBid(auctionId, userId, auction.bidCooldownSeconds);
@@ -79,9 +86,12 @@ class PlaceBidUseCase {
                     extensionCount: extended ? auction.extensionCount + 1 : auction.extensionCount
                 };
             });
+            return result_1.Result.ok(result);
+        }
+        catch (error) {
+            return result_1.Result.fail(error.message);
         }
         finally {
-            // Always release the lock
             await redis_service_1.redisService.releaseLock(lockKey);
         }
     }

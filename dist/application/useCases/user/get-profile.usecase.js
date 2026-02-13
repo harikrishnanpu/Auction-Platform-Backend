@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetProfileUseCase = void 0;
-const result_1 = require("../../../domain/shared/result");
+const result_1 = require("@result/result");
 class GetProfileUseCase {
     constructor(userRepository, storageService) {
         this.userRepository = userRepository;
@@ -18,23 +18,20 @@ class GetProfileUseCase {
         let avatarUrl = user.avatar_url;
         if (avatarUrl && !avatarUrl.startsWith('http')) {
             try {
-                avatarUrl = await this.storageService.getPresignedDownloadUrl(avatarUrl, 3600); // 1 hour expiry
+                avatarUrl = await this.storageService.getPresignedDownloadUrl(avatarUrl, 3600);
             }
             catch (error) {
-                // Fallback or leave as key if signing fails? 
-                // Better to leave as key or null? Let's leave as null to avoid broken image.
-                // Or keep original to debug.
                 console.error("Failed to sign avatar URL", error);
             }
         }
         return result_1.Result.ok({
-            id: user.id.toString(),
+            id: user.id,
             name: user.name,
-            email: user.email.value,
+            email: user.email.getValue(),
             roles: user.roles,
             is_verified: user.is_verified,
             is_profile_completed: user.is_profile_completed,
-            phone: user.phone,
+            phone: user.phone?.getValue(),
             address: user.address,
             avatar_url: avatarUrl,
             created_at: user.created_at,

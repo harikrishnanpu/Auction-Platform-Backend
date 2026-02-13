@@ -1,7 +1,7 @@
-import { ICriticalUserRepository } from '../../../domain/critical-user/critical-user.repository';
+import { ICriticalUserRepository } from '../../../domain/entities/critical-user/critical-user.repository';
 
 export class MarkCriticalUseCase {
-    constructor(private criticalUserRepository: ICriticalUserRepository) {}
+    constructor(private criticalUserRepository: ICriticalUserRepository) { }
 
     async execute(
         userId: string,

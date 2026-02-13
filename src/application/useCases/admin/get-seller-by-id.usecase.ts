@@ -1,7 +1,8 @@
-import { IUserRepository } from "../../../domain/user/user.repository";
-import { Result } from "../../../domain/shared/result";
-import { UserRole } from "../../../domain/user/user.entity";
-import { IKYCRepository, KYCType } from "../../../domain/kyc/kyc.repository";
+import { IUserRepository } from "@domain/repositories/user.repository";
+import { Result } from "@result/result";
+import { IKYCRepository, KYCType } from "@domain/entities/kyc/kyc.repository";
+import { IStorageService } from "@application/services/storage/storage.service";
+import { IGetSellerByIdUseCase } from "@application/interfaces/use-cases/admin.usecase.interface";
 
 export interface SellerDetailDto {
     id: string;
@@ -18,9 +19,7 @@ export interface SellerDetailDto {
     kyc_profile: any;
 }
 
-import { IStorageService } from "../../services/storage/storage.service";
-
-export class GetSellerByIdUseCase {
+export class GetSellerByIdUseCase implements IGetSellerByIdUseCase {
     constructor(
         private userRepository: IUserRepository,
         private kycRepository: IKYCRepository,
@@ -37,44 +36,43 @@ export class GetSellerByIdUseCase {
     }
 
     public async execute(id: string): Promise<Result<SellerDetailDto>> {
-        const user = await this.userRepository.findById(id);
-        if (!user) return Result.fail("User not found");
+        try {
+            const user = await this.userRepository.findById(id);
+            if (!user) return Result.fail("User not found");
 
-        const hasSellerRole = user.roles.includes(UserRole.SELLER);
-        const kycProfile = await this.kycRepository.findByUserId(id, KYCType.SELLER);
+            const kycProfile = await this.kycRepository.findByUserId(id, KYCType.SELLER);
 
-        if (!hasSellerRole && !kycProfile) {
-            return Result.fail("User is not a seller and has no seller KYC profile");
+            if (kycProfile) {
+                if (kycProfile.id_front_url) {
+                    const key = this.extractS3Key(kycProfile.id_front_url);
+                    kycProfile.id_front_url = await this.storageService.getPresignedDownloadUrl(key);
+                }
+                if (kycProfile.id_back_url) {
+                    const key = this.extractS3Key(kycProfile.id_back_url);
+                    kycProfile.id_back_url = await this.storageService.getPresignedDownloadUrl(key);
+                }
+                if (kycProfile.address_proof_url) {
+                    const key = this.extractS3Key(kycProfile.address_proof_url);
+                    kycProfile.address_proof_url = await this.storageService.getPresignedDownloadUrl(key);
+                }
+            }
+
+            return Result.ok<SellerDetailDto>({
+                id: user.id || id,
+                name: user.name,
+                email: user.email.getValue(),
+                phone: user.phone?.getValue(),
+                address: user.address,
+                avatar_url: user.avatar_url,
+                roles: user.roles,
+                is_blocked: user.is_blocked,
+                is_verified: user.is_verified,
+                joined_at: user.created_at,
+                kyc_status: kycProfile?.verification_status || 'NOT_SUBMITTED',
+                kyc_profile: kycProfile
+            });
+        } catch (error) {
+            return Result.fail((error as Error).message);
         }
-
-        if (kycProfile) {
-            if (kycProfile.id_front_url) {
-                const key = this.extractS3Key(kycProfile.id_front_url);
-                kycProfile.id_front_url = await this.storageService.getPresignedDownloadUrl(key);
-            }
-            if (kycProfile.id_back_url) {
-                const key = this.extractS3Key(kycProfile.id_back_url);
-                kycProfile.id_back_url = await this.storageService.getPresignedDownloadUrl(key);
-            }
-            if (kycProfile.address_proof_url) {
-                const key = this.extractS3Key(kycProfile.address_proof_url);
-                kycProfile.address_proof_url = await this.storageService.getPresignedDownloadUrl(key);
-            }
-        }
-
-        return Result.ok<SellerDetailDto>({
-            id: user.id.toString(),
-            name: user.name,
-            email: user.email.value,
-            phone: user.phone,
-            address: user.address,
-            avatar_url: user.avatar_url,
-            roles: user.roles,
-            is_blocked: user.is_blocked,
-            is_verified: user.is_verified,
-            joined_at: user.created_at,
-            kyc_status: kycProfile?.verification_status || 'NOT_SUBMITTED',
-            kyc_profile: kycProfile
-        });
     }
 }

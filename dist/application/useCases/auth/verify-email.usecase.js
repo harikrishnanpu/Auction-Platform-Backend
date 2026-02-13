@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VerifyEmailUseCase = void 0;
-const result_1 = require("../../../domain/shared/result");
-const otp_entity_1 = require("../../../domain/otp/otp.entity");
-const email_vo_1 = require("../../../domain/user/email.vo");
+const result_1 = require("@result/result");
+const otp_entity_1 = require("@domain/entities/otp/otp.entity");
+const email_vo_1 = require("@domain/value-objects/user/email.vo");
 class VerifyEmailUseCase {
     constructor(userRepository, otpRepository, tokenService, logger) {
         this.userRepository = userRepository;
@@ -19,9 +19,9 @@ class VerifyEmailUseCase {
         const user = await this.userRepository.findByEmail(email);
         if (!user)
             return result_1.Result.fail("User not found");
-        if (user.props.is_verified)
+        if (user.is_verified)
             return result_1.Result.fail("User is already verified");
-        const otp = await this.otpRepository.findByIdAndPurpose(user.id.toString(), otp_entity_1.OtpPurpose.REGISTER);
+        const otp = await this.otpRepository.findByIdAndPurpose(user.id, otp_entity_1.OtpPurpose.REGISTER);
         if (!otp)
             return result_1.Result.fail("OTP not found or expired");
         if (otp.status !== otp_entity_1.OtpStatus.PENDING)
@@ -41,18 +41,19 @@ class VerifyEmailUseCase {
         user.verify();
         await this.userRepository.save(user);
         const payload = {
-            userId: user.id.toString(),
-            email: user.props.email.value,
-            roles: user.props.roles
+            userId: user.id,
+            email: user.email.getValue(),
+            roles: user.roles
         };
         const tokens = this.tokenService.generateTokens(payload);
         return result_1.Result.ok({
-            id: user.id.toString(),
-            name: user.props.name,
-            email: user.props.email.value,
-            roles: user.props.roles,
-            is_verified: user.props.is_verified,
-            ...tokens
+            id: user.id,
+            name: user.name,
+            email: user.email.getValue(),
+            roles: user.roles,
+            is_verified: user.is_verified,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken
         });
     }
 }

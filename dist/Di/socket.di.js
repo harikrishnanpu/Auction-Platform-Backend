@@ -7,19 +7,20 @@ const place_bid_usecase_1 = require("../application/useCases/auction/place-bid.u
 const send_chat_message_usecase_1 = require("../application/useCases/auction/send-chat-message.usecase");
 const get_auction_room_state_usecase_1 = require("../application/useCases/auction/get-auction-room-state.usecase");
 const revoke_user_usecase_1 = require("../application/useCases/auction/revoke-user.usecase");
+const unrevoke_user_usecase_1 = require("../application/useCases/auction/unrevoke-user.usecase");
 const pause_auction_usecase_1 = require("../application/useCases/seller/pause-auction.usecase");
 const resume_auction_usecase_1 = require("../application/useCases/seller/resume-auction.usecase");
 const end_auction_usecase_1 = require("../application/useCases/auction/end-auction.usecase");
 const initSocketHandlers = (io) => {
-    // Instantiate Use Cases (or get from DI if available)
     const placeBidUseCase = new place_bid_usecase_1.PlaceBidUseCase(repository_di_1.auctionRepository, repository_di_1.bidRepository, repository_di_1.participantRepository, repository_di_1.activityRepository, repository_di_1.transactionManager);
     const sendChatMessageUseCase = new send_chat_message_usecase_1.SendChatMessageUseCase(repository_di_1.chatMessageRepository, repository_di_1.participantRepository, repository_di_1.auctionRepository);
     const getRoomStateUseCase = new get_auction_room_state_usecase_1.GetAuctionRoomStateUseCase(repository_di_1.auctionRepository, repository_di_1.bidRepository, repository_di_1.chatMessageRepository, repository_di_1.activityRepository);
     const revokeUserUseCase = new revoke_user_usecase_1.RevokeUserUseCase(repository_di_1.auctionRepository, repository_di_1.participantRepository, repository_di_1.bidRepository, repository_di_1.activityRepository, repository_di_1.transactionManager);
+    const unrevokeUserUseCase = new unrevoke_user_usecase_1.UnrevokeUserUseCase(repository_di_1.auctionRepository, repository_di_1.participantRepository, repository_di_1.activityRepository);
     const pauseAuctionUseCase = new pause_auction_usecase_1.PauseAuctionUseCase(repository_di_1.auctionRepository);
     const endAuctionUseCase = new end_auction_usecase_1.EndAuctionUseCase(repository_di_1.auctionRepository, repository_di_1.bidRepository, repository_di_1.activityRepository, repository_di_1.paymentRepository);
     const resumeAuctionUseCase = new resume_auction_usecase_1.ResumeAuctionUseCase(repository_di_1.auctionRepository, endAuctionUseCase);
-    const auctionSocketHandler = new auction_socket_handler_1.AuctionSocketHandler(io, repository_di_1.auctionRepository, repository_di_1.participantRepository, repository_di_1.activityRepository, repository_di_1.userRepository, placeBidUseCase, sendChatMessageUseCase, getRoomStateUseCase, revokeUserUseCase, pauseAuctionUseCase, resumeAuctionUseCase, endAuctionUseCase);
+    const auctionSocketHandler = new auction_socket_handler_1.AuctionSocketHandler(io, repository_di_1.auctionRepository, repository_di_1.participantRepository, repository_di_1.activityRepository, repository_di_1.userRepository, placeBidUseCase, sendChatMessageUseCase, getRoomStateUseCase, revokeUserUseCase, unrevokeUserUseCase, pauseAuctionUseCase, resumeAuctionUseCase, endAuctionUseCase);
     auctionSocketHandler.handle();
 };
 exports.initSocketHandlers = initSocketHandlers;

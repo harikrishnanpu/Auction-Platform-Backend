@@ -5,11 +5,11 @@ import cookieParser from 'cookie-parser';
 import { authRoutes, adminRoutes, kycRoutes, sellerRoutes, auctionRoutes } from './Di/routes.di';
 import { EmailWorker } from './infrastructure/workers/email.worker';
 import { logger } from './infrastructure/logger/pino.logger';
-import { requestLoggerMiddleware } from './presentation/middlewares/request-logger.middleware';
+import { requestLoggerMiddleware } from './presentation/http/middlewares/request-logger.middleware';
 import passport from 'passport';
 import { configureGoogleStrategy } from './presentation/strategies/google.strategy';
 
-import { errorMiddleware } from './presentation/middlewares/error.middleware';
+import { errorMiddleware } from './presentation/http/middlewares/error.middleware';
 
 dotenv.config();
 

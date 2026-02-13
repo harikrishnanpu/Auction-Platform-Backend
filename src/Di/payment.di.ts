@@ -18,11 +18,11 @@ import { HandleOfferExpiryUseCase } from '../application/useCases/offer/handle-o
 import { MarkCriticalUseCase } from '../application/useCases/critical-user/mark-critical.usecase';
 
 // Controllers
-import { PaymentController } from '../presentation/controllers/other/payment.controller';
-import { OfferController } from '../presentation/controllers/other/offer.controller';
+import { PaymentController } from '../presentation/http/controllers/other/payment.controller';
+import { OfferController } from '../presentation/http/controllers/other/offer.controller';
 
 // Cron
-import { AuctionCronService } from '../infrastructure/cron/auction-cron.service';
+// import { AuctionCronService } from '../infrastructure/cron/auction-cron.service';
 
 export function setupPaymentDI(prisma: PrismaClient) {
     // Repositories
@@ -91,12 +91,12 @@ export function setupPaymentDI(prisma: PrismaClient) {
     );
 
     // Cron Service
-    const auctionCronService = new AuctionCronService(
-        prisma,
-        endAuctionUseCase,
-        handlePaymentExpiryUseCase,
-        handleOfferExpiryUseCase
-    );
+    // const auctionCronService = new AuctionCronService(
+    //     prisma,
+    //     endAuctionUseCase,
+    //     handlePaymentExpiryUseCase,
+    //     handleOfferExpiryUseCase
+    // );
 
     return {
         // Repositories
@@ -118,6 +118,6 @@ export function setupPaymentDI(prisma: PrismaClient) {
         offerController,
 
         // Cron
-        auctionCronService
+        // auctionCronService
     };
 }

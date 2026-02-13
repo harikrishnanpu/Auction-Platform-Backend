@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SendChatMessageUseCase = void 0;
-const auction_errors_1 = require("../../../domain/auction/auction.errors");
-const auction_policy_1 = require("../../../domain/auction/auction.policy");
+const auction_policy_1 = require("@domain/entities/auction/auction.policy");
+const result_1 = require("@result/result");
 class SendChatMessageUseCase {
     constructor(chatMessageRepository, participantRepository, auctionRepository) {
         this.chatMessageRepository = chatMessageRepository;
@@ -10,20 +10,31 @@ class SendChatMessageUseCase {
         this.auctionRepository = auctionRepository;
     }
     async execute(auctionId, userId, message) {
-        const auction = await this.auctionRepository.findById(auctionId);
-        if (!auction) {
-            throw new auction_errors_1.AuctionError("AUCTION_NOT_FOUND", "Auction not found");
+        try {
+            const auction = await this.auctionRepository.findById(auctionId);
+            if (!auction) {
+                return result_1.Result.fail("Auction not found");
+            }
+            try {
+                (0, auction_policy_1.ensureAuctionActive)(auction);
+                (0, auction_policy_1.ensureAuctionWindow)(auction, new Date());
+            }
+            catch (e) {
+                return result_1.Result.fail(e.message);
+            }
+            const participant = await this.participantRepository.findByAuctionAndUser(auctionId, userId);
+            if (participant?.revokedAt) {
+                return result_1.Result.fail("User revoked from auction");
+            }
+            if (!message.trim()) {
+                return result_1.Result.fail("Message cannot be empty");
+            }
+            const chatMessage = await this.chatMessageRepository.createMessage(auctionId, userId, message);
+            return result_1.Result.ok(chatMessage);
         }
-        (0, auction_policy_1.ensureAuctionActive)(auction);
-        (0, auction_policy_1.ensureAuctionWindow)(auction, new Date());
-        const participant = await this.participantRepository.findByAuctionAndUser(auctionId, userId);
-        if (participant?.revokedAt) {
-            throw new auction_errors_1.AuctionError("USER_REVOKED", "User revoked from auction");
+        catch (error) {
+            return result_1.Result.fail(error.message);
         }
-        if (!message.trim()) {
-            throw new auction_errors_1.AuctionError("NOT_ALLOWED", "Message cannot be empty");
-        }
-        return this.chatMessageRepository.createMessage(auctionId, userId, message);
     }
 }
 exports.SendChatMessageUseCase = SendChatMessageUseCase;

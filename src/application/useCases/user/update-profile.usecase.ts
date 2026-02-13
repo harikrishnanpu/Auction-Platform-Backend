@@ -1,59 +1,40 @@
-import { IUserRepository } from "../../../domain/user/user.repository";
-import { UserResponseDto } from "../../dtos/auth/auth.dto";
-import { Result } from "../../../domain/shared/result";
-import { Phone } from "../../../domain/user/phone.vo";
+import { IUserRepository } from "@domain/repositories/user.repository";
+import { UserResponseDto } from "@application/dtos/auth/auth.dto";
+import { Result } from "@result/result";
+import { Phone } from "@domain/value-objects/user/phone.vo";
+import { IUpdateProfileUseCase } from "@application/interfaces/use-cases/user.usecase.interface";
 
-export interface UpdateProfileDto {
-    userId: string;
-    name?: string;
-    phone?: string;
-    address?: string;
-    avatar_url?: string;
-}
-
-export class UpdateProfileUseCase {
+export class UpdateProfileUseCase implements IUpdateProfileUseCase {
     constructor(private userRepository: IUserRepository) { }
 
-    public async execute(dto: UpdateProfileDto): Promise<Result<UserResponseDto>> {
-        const user = await this.userRepository.findById(dto.userId);
+    public async execute(request: { userId: string; name?: string; address?: string; phone?: string; avatar_url?: string }): Promise<Result<UserResponseDto>> {
+        const user = await this.userRepository.findById(request.userId);
+        if (!user) return Result.fail("User not found");
 
-        if (!user) {
-            return Result.fail("User not found");
+        let phone: Phone | undefined;
+        if (request.phone) {
+            const phoneResult = Phone.create(request.phone);
+            if (phoneResult.isFailure) return Result.fail(phoneResult.error!);
+            phone = phoneResult.getValue();
         }
 
-        if (dto.name) {
-            // Assuming direct property update or add setter in Entity if strict DDD
-            (user as any).props.name = dto.name;
-        }
-
-        if (dto.address) {
-            (user as any).props.address = dto.address;
-        }
-
-        if (dto.avatar_url) {
-            (user as any).props.avatar_url = dto.avatar_url;
-        }
-
-        if (dto.phone && dto.phone !== user.phone) {
-            const phoneOrError = Phone.create(dto.phone);
-            if (phoneOrError.isFailure) {
-                return Result.fail(phoneOrError.error as string);
-            }
-            (user as any).props.phone = phoneOrError.getValue().value;
-            // Maybe reset verification status if phone changed? 
-            // For now, adhering to user request for simple edit.
-        }
+        user.update({
+            name: request.name,
+            address: request.address,
+            avatar_url: request.avatar_url,
+            phone: phone
+        });
 
         await this.userRepository.save(user);
 
         return Result.ok<UserResponseDto>({
-            id: user.id.toString(),
+            id: user.id!,
             name: user.name,
-            email: user.email.value,
+            email: user.email.getValue(),
             roles: user.roles,
             is_verified: user.is_verified,
             is_profile_completed: user.is_profile_completed,
-            phone: user.phone,
+            phone: user.phone?.getValue(),
             address: user.address,
             avatar_url: user.avatar_url,
             created_at: user.created_at,

@@ -1,5 +1,5 @@
 import { AuctionParticipant, PrismaClient } from "@prisma/client";
-import { AuctionParticipantEntity, IAuctionParticipantRepository } from "../../../domain/auction/repositories/participant.repository";
+import { AuctionParticipantEntity, IAuctionParticipantRepository } from "../../../domain/entities/auction/repositories/participant.repository";
 
 export class PrismaAuctionParticipantRepository implements IAuctionParticipantRepository {
     constructor(private prisma: PrismaClient) { }

@@ -1,5 +1,5 @@
 import { AuctionChatMessage, PrismaClient } from "@prisma/client";
-import { ChatMessageEntity, IChatMessageRepository } from "../../../domain/auction/repositories/chat-message.repository";
+import { ChatMessageEntity, IChatMessageRepository } from "../../../domain/entities/auction/repositories/chat-message.repository";
 
 export class PrismaChatMessageRepository implements IChatMessageRepository {
     constructor(private prisma: PrismaClient) { }

@@ -10,10 +10,10 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const routes_di_1 = require("./Di/routes.di");
 const email_worker_1 = require("./infrastructure/workers/email.worker");
 const pino_logger_1 = require("./infrastructure/logger/pino.logger");
-const request_logger_middleware_1 = require("./presentation/middlewares/request-logger.middleware");
+const request_logger_middleware_1 = require("./presentation/http/middlewares/request-logger.middleware");
 const passport_1 = __importDefault(require("passport"));
 const google_strategy_1 = require("./presentation/strategies/google.strategy");
-const error_middleware_1 = require("./presentation/middlewares/error.middleware");
+const error_middleware_1 = require("./presentation/http/middlewares/error.middleware");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const corsOptions = {

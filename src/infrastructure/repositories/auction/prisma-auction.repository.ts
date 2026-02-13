@@ -1,5 +1,5 @@
-import { Auction, AuctionAsset } from "../../../domain/auction/auction.entity";
-import { IAuctionRepository, UpdateAuctionDto } from "../../../domain/auction/repositories/auction.repository";
+import { Auction, AuctionAsset } from "../../../domain/entities/auction/auction.entity";
+import { IAuctionRepository, UpdateAuctionDto } from "../../../domain/entities/auction/repositories/auction.repository";
 import { TransactionContext } from "../../../domain/shared/transaction";
 import { Prisma, PrismaClient } from "@prisma/client";
 
@@ -8,27 +8,30 @@ export class PrismaAuctionRepository implements IAuctionRepository {
 
     async create(auction: Auction): Promise<Auction> {
         const data = {
-                id: auction.id,
-                seller_id: auction.sellerId,
-                category_id: auction.categoryId,
-                condition_id: auction.conditionId,
-                title: auction.title,
-                description: auction.description,
-                start_at: auction.startAt,
-                end_at: auction.endAt,
-                start_price: auction.startPrice,
-                min_bid_increment: auction.minBidIncrement,
-                current_price: auction.currentPrice,
-                status: auction.status,
-                is_paused: auction.isPaused,
-                anti_snipe_threshold_seconds: auction.antiSnipeThresholdSeconds,
-                anti_snipe_extension_seconds: auction.antiSnipeExtensionSeconds,
-                max_extensions: auction.maxExtensions,
-                bid_cooldown_seconds: auction.bidCooldownSeconds,
-                created_at: auction.createdAt,
-                updated_at: auction.updatedAt
+            id: auction.id,
+            seller_id: auction.sellerId,
+            category_id: auction.categoryId,
+            condition_id: auction.conditionId,
+            title: auction.title,
+            description: auction.description,
+            start_at: auction.startAt,
+            end_at: auction.endAt,
+            start_price: auction.startPrice,
+            min_bid_increment: auction.minBidIncrement,
+            current_price: auction.currentPrice,
+            status: auction.status,
+            is_paused: auction.isPaused,
+            anti_snipe_threshold_seconds: auction.antiSnipeThresholdSeconds,
+            anti_snipe_extension_seconds: auction.antiSnipeExtensionSeconds,
+            max_extensions: auction.maxExtensions,
+            bid_cooldown_seconds: auction.bidCooldownSeconds,
+            winner_id: auction.winnerId,
+            winner_payment_deadline: auction.winnerPaymentDeadline,
+            completion_status: auction.completionStatus,
+            created_at: auction.createdAt,
+            updated_at: auction.updatedAt
         } as Prisma.AuctionUncheckedCreateInput;
-        
+
 
         const created = await this.prisma.auction.create({
             data,
@@ -98,6 +101,9 @@ export class PrismaAuctionRepository implements IAuctionRepository {
         if (dto.antiSnipeExtensionSeconds !== undefined) data.anti_snipe_extension_seconds = dto.antiSnipeExtensionSeconds;
         if (dto.maxExtensions !== undefined) data.max_extensions = dto.maxExtensions;
         if (dto.bidCooldownSeconds !== undefined) data.bid_cooldown_seconds = dto.bidCooldownSeconds;
+        if (dto.winnerId !== undefined) data.winner_id = dto.winnerId;
+        if (dto.winnerPaymentDeadline !== undefined) data.winner_payment_deadline = dto.winnerPaymentDeadline;
+        if (dto.completionStatus !== undefined) data.completion_status = dto.completionStatus;
         const updated = await this.prisma.auction.update({
             where: { id: auctionId },
             data,
@@ -183,6 +189,9 @@ export class PrismaAuctionRepository implements IAuctionRepository {
             assets,
             data.status,
             data.is_paused,
+            data.winner_id,
+            data.winner_payment_deadline,
+            data.completion_status,
             data.extension_count || 0,
             data.anti_snipe_threshold_seconds ?? 30,
             data.anti_snipe_extension_seconds ?? 30,

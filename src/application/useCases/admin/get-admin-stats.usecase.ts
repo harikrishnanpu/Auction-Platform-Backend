@@ -1,9 +1,10 @@
-import { Result } from "../../../domain/shared/result";
-import { AdminStatsDto } from "../../dtos/admin/admin.dto";
-import { IUserRepository } from "../../../domain/user/user.repository";
-import { IKYCRepository } from "../../../domain/kyc/kyc.repository";
+import { Result } from "@result/result";
+import { AdminStatsDto } from "@application/dtos/admin/admin.dto";
+import { IUserRepository } from "@domain/repositories/user.repository";
+import { IKYCRepository } from "@domain/entities/kyc/kyc.repository";
+import { IGetAdminStatsUseCase } from "@application/interfaces/use-cases/admin.usecase.interface";
 
-export class GetAdminStatsUseCase {
+export class GetAdminStatsUseCase implements IGetAdminStatsUseCase {
     constructor(
         private userRepository: IUserRepository,
         private kycRepository: IKYCRepository
@@ -25,8 +26,7 @@ export class GetAdminStatsUseCase {
                 suspendedUsers
             });
         } catch (error) {
-            console.log('Error fetching:', error);
-            return Result.fail('Failed to fetch admin stats');
+            return Result.fail((error as Error).message || 'Failed to fetch admin stats');
         }
     }
 }

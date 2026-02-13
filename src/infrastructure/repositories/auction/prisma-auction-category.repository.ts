@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
-import { IAuctionCategoryRepository } from '../../../domain/auction/repositories/auction-category.repository';
-import { AuctionCategory } from '../../../domain/auction/auction-category.entity';
+import { IAuctionCategoryRepository } from '../../../domain/entities/auction/repositories/auction-category.repository';
+import { AuctionCategory } from '../../../domain/entities/auction/auction-category.entity';
 
 export class PrismaAuctionCategoryRepository implements IAuctionCategoryRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient) { }
 
   async findAll(): Promise<AuctionCategory[]> {
     const categories = await this.prisma.auctionCategory.findMany({

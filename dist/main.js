@@ -14,9 +14,7 @@ const PORT = process.env.PORT || 4000;
 const startServer = async () => {
     try {
         const httpServer = (0, http_1.createServer)(server_1.default);
-        // Initialize Socket Server
         const io = socket_server_1.SocketServer.init(httpServer, {});
-        // Initialize Socket Handlers
         (0, socket_di_1.initSocketHandlers)(io);
         httpServer.listen(PORT, () => {
             pino_logger_1.logger.info(`Server started on ${PORT}`);

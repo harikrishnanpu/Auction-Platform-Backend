@@ -1,9 +1,10 @@
-import { IUserRepository } from '../../../domain/user/user.repository';
-import { CompleteKycUploadDto } from '../../dtos/kyc/kyc.dto';
-import { Result } from '../../../domain/shared/result';
-import { IKYCRepository, KYCStatus, KYCType } from '../../../domain/kyc/kyc.repository';
+import { IUserRepository } from '@domain/repositories/user.repository';
+import { CompleteKycUploadDto } from '@application/dtos/kyc/kyc.dto';
+import { Result } from '@result/result';
+import { IKYCRepository, KYCStatus, KYCType } from '@domain/entities/kyc/kyc.repository';
+import { ICompleteKycUploadUseCase } from '@application/interfaces/use-cases/kyc.usecase.interface';
 
-export class CompleteKycUploadUseCase {
+export class CompleteKycUploadUseCase implements ICompleteKycUploadUseCase {
     constructor(
         private userRepository: IUserRepository,
         private kycRepository: IKYCRepository

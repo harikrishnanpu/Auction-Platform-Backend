@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VerifyPaymentUseCase = void 0;
 const razorpay_service_1 = require("../../../infrastructure/services/razorpay/razorpay.service");
-const auction_errors_1 = require("../../../domain/auction/auction.errors");
 class VerifyPaymentUseCase {
     constructor(auctionRepository, paymentRepository, activityRepository) {
         this.auctionRepository = auctionRepository;
@@ -14,11 +13,11 @@ class VerifyPaymentUseCase {
         // 1. Get payment by order ID
         const payment = await this.paymentRepository.findByOrderId(razorpayOrderId);
         if (!payment) {
-            throw new auction_errors_1.AuctionError('Payment not found', 'NOT_FOUND');
+            throw new Error('Payment not found');
         }
         // 2. Check if user matches
         if (payment.userId !== userId) {
-            throw new auction_errors_1.AuctionError('Unauthorized payment verification', 'NOT_ALLOWED');
+            throw new Error('Unauthorized payment verification');
         }
         // 3. Check if already verified
         if (payment.status === 'SUCCESS') {
@@ -33,7 +32,7 @@ class VerifyPaymentUseCase {
                 status: 'FAILED',
                 failureReason: 'Invalid signature'
             });
-            throw new auction_errors_1.AuctionError('Payment verification failed', 'PAYMENT_FAILED');
+            throw new Error('Payment verification failed');
         }
         // 5. Get payment details from Razorpay
         const paymentDetails = await razorpay_service_1.razorpayService.getPaymentDetails(razorpayPaymentId);
@@ -42,19 +41,14 @@ class VerifyPaymentUseCase {
             razorpayPaymentId,
             razorpaySignature,
             status: 'SUCCESS',
-            paymentMethod: paymentDetails.method || null
+            paymentMethod: paymentDetails.method || undefined
         });
         // 7. Update auction completion status
         await this.auctionRepository.update(auctionId, {
-            completion_status: 'PAID'
+            completionStatus: 'PAID'
         });
         // 8. Log activity
-        await this.activityRepository.create({
-            auctionId,
-            userId,
-            type: 'PAYMENT_SUCCESS',
-            description: `Payment completed: ₹${payment.amount}`
-        });
+        await this.activityRepository.logActivity(auctionId, 'PAYMENT_SUCCESS', `Payment completed: ₹${payment.amount}`, userId);
         console.log(`✅ Payment verified successfully for auction ${auctionId}`);
         return { success: true, message: 'Payment successful' };
     }

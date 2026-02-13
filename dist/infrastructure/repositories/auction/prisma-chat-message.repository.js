@@ -11,6 +11,14 @@ class PrismaChatMessageRepository {
                 auction_id: auctionId,
                 user_id: userId,
                 message
+            },
+            include: {
+                User: {
+                    select: {
+                        name: true,
+                        avatar_url: true
+                    }
+                }
             }
         });
         return {
@@ -18,12 +26,22 @@ class PrismaChatMessageRepository {
             auctionId: created.auction_id,
             userId: created.user_id,
             message: created.message,
-            createdAt: created.created_at
+            createdAt: created.created_at,
+            username: created.User?.name,
+            userAvatar: created.User?.avatar_url
         };
     }
     async findLatestByAuction(auctionId, limit) {
         const messages = await this.prisma.auctionChatMessage.findMany({
             where: { auction_id: auctionId },
+            include: {
+                User: {
+                    select: {
+                        name: true,
+                        avatar_url: true
+                    }
+                }
+            },
             orderBy: { created_at: 'desc' },
             take: limit
         });
@@ -32,7 +50,9 @@ class PrismaChatMessageRepository {
             auctionId: m.auction_id,
             userId: m.user_id,
             message: m.message,
-            createdAt: m.created_at
+            createdAt: m.created_at,
+            username: m.User?.name,
+            userAvatar: m.User?.avatar_url
         }));
     }
 }

@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RefreshTokenUseCase = void 0;
-const result_1 = require("../../../domain/shared/result");
+const result_1 = require("@result/result");
 class RefreshTokenUseCase {
     constructor(userRepository, tokenService, logger) {
         this.userRepository = userRepository;
@@ -16,23 +16,23 @@ class RefreshTokenUseCase {
         if (!decoded || !decoded.userId) {
             return result_1.Result.fail("Invalid or expired refresh token");
         }
-        const userId = decoded.userId;
-        const user = await this.userRepository.findById(userId);
+        const user = await this.userRepository.findById(decoded.userId);
         if (!user) {
             return result_1.Result.fail("User not found");
         }
         const payload = {
-            userId: user.id.toString(),
-            email: user.email.value,
+            userId: user.id,
+            email: user.email.getValue(),
             roles: user.roles
         };
         const tokens = this.tokenService.generateTokens(payload);
         return result_1.Result.ok({
-            id: user.id.toString(),
+            id: user.id,
             name: user.name,
-            email: user.email.value,
+            email: user.email.getValue(),
             roles: user.roles,
-            ...tokens
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken
         });
     }
 }

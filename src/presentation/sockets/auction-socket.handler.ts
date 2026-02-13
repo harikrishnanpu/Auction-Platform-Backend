@@ -1,38 +1,38 @@
 import { Server, Socket } from "socket.io";
 import { tokenService } from "../../infrastructure/services/jwt/jwt.service";
-import { PlaceBidUseCase } from "../../application/useCases/auction/place-bid.usecase";
-import { SendChatMessageUseCase } from "../../application/useCases/auction/send-chat-message.usecase";
-import { GetAuctionRoomStateUseCase } from "../../application/useCases/auction/get-auction-room-state.usecase";
-import { RevokeUserUseCase } from "../../application/useCases/auction/revoke-user.usecase";
-import { UnrevokeUserUseCase } from "../../application/useCases/auction/unrevoke-user.usecase";
-import { PauseAuctionUseCase } from "../../application/useCases/seller/pause-auction.usecase";
-import { ResumeAuctionUseCase } from "../../application/useCases/seller/resume-auction.usecase";
-import { EndAuctionUseCase } from "../../application/useCases/auction/end-auction.usecase";
-import { AuctionError } from "../../domain/auction/auction.errors";
-import { setupPaymentSocket } from "./payment.socket";
-import { IAuctionRepository } from "../../domain/auction/repositories/auction.repository";
-import { IAuctionParticipantRepository } from "../../domain/auction/repositories/participant.repository";
-import { IAuctionActivityRepository } from "../../domain/auction/repositories/activity.repository";
-import { IUserRepository } from "../../domain/user/user.repository";
+import {
+    IPlaceBidUseCase,
+    ISendChatMessageUseCase,
+    IGetAuctionRoomStateUseCase,
+    IRevokeUserUseCase,
+    IUnrevokeUserUseCase,
+    IEndAuctionUseCase
+} from "../../application/interfaces/use-cases/auction.usecase.interface";
+import {
+    IPauseAuctionUseCase,
+    IResumeAuctionUseCase
+} from "../../application/interfaces/use-cases/seller.usecase.interface";
+import { IAuctionRepository } from "../../domain/entities/auction/repositories/auction.repository";
+import { IAuctionParticipantRepository } from "../../domain/entities/auction/repositories/participant.repository";
+import { IAuctionActivityRepository } from "../../domain/entities/auction/repositories/activity.repository";
+import { IUserRepository } from "@domain/repositories/user.repository";
 import { AUCTION_ERROR_CODES, AUCTION_MESSAGES, AUCTION_SOCKET_EVENTS } from "../../constants/auction.constants";
 
 export class AuctionSocketHandler {
-
-    
     constructor(
         private io: Server,
         private auctionRepository: IAuctionRepository,
         private participantRepository: IAuctionParticipantRepository,
         private activityRepository: IAuctionActivityRepository,
         private userRepository: IUserRepository,
-        private placeBidUseCase: PlaceBidUseCase,
-        private sendChatMessageUseCase: SendChatMessageUseCase,
-        private getRoomStateUseCase: GetAuctionRoomStateUseCase,
-        private revokeUserUseCase: RevokeUserUseCase,
-        private unrevokeUserUseCase: UnrevokeUserUseCase,
-        private pauseAuctionUseCase: PauseAuctionUseCase,
-        private resumeAuctionUseCase: ResumeAuctionUseCase,
-        private endAuctionUseCase: EndAuctionUseCase
+        private placeBidUseCase: IPlaceBidUseCase,
+        private sendChatMessageUseCase: ISendChatMessageUseCase,
+        private getRoomStateUseCase: IGetAuctionRoomStateUseCase,
+        private revokeUserUseCase: IRevokeUserUseCase,
+        private unrevokeUserUseCase: IUnrevokeUserUseCase,
+        private pauseAuctionUseCase: IPauseAuctionUseCase,
+        private resumeAuctionUseCase: IResumeAuctionUseCase,
+        private endAuctionUseCase: IEndAuctionUseCase
     ) { }
 
     public handle() {
@@ -71,10 +71,6 @@ export class AuctionSocketHandler {
         const user = (socket as any).user;
         console.log(`Socket connected: ${socket.id}, User: ${user?.userId || 'unknown'}`);
 
-        // if (user) {
-        //     setupPaymentSocket(this.io, socket);
-        // }
-
         socket.on(AUCTION_SOCKET_EVENTS.ROOM_JOIN, (data) => this.handleRoomJoin(socket, data));
         socket.on(AUCTION_SOCKET_EVENTS.BID_PLACE, (data, callback) => this.handlePlaceBid(socket, data, callback));
         socket.on(AUCTION_SOCKET_EVENTS.CHAT_SEND, (data, callback) => this.handleChatSend(socket, data, callback));
@@ -93,71 +89,67 @@ export class AuctionSocketHandler {
             const user = (socket as any).user;
             console.log(`User ${user.userId} joining room: ${auctionId}`);
 
-            console.log(`[RoomJoin] Fetching auction ${auctionId}...`);
             const auction = await this.auctionRepository.findById(auctionId);
             if (!auction) {
-                console.log(`[RoomJoin] Auction not found`);
                 socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { code: AUCTION_ERROR_CODES.AUCTION_NOT_FOUND, message: AUCTION_MESSAGES.NOT_FOUND });
                 return;
             }
 
-            console.log(`[RoomJoin] Fetching user ${user.userId}...`);
             const domainUser = await this.userRepository.findById(user.userId);
             if (!domainUser || domainUser.is_blocked || !domainUser.is_verified) {
-                console.log(`[RoomJoin] User not eligible (Blocked: ${domainUser?.is_blocked}, Verified: ${domainUser?.is_verified})`);
                 socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { code: AUCTION_ERROR_CODES.NOT_ALLOWED, message: AUCTION_MESSAGES.USER_NOT_ELIGIBLE });
                 return;
             }
 
             if (auction.sellerId === user.userId) {
-                console.log(`[RoomJoin] User is seller, blocking entry as participant`);
                 socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { code: AUCTION_ERROR_CODES.SELLER_NOT_ALLOWED, message: AUCTION_MESSAGES.SELLER_CANNOT_JOIN });
                 return;
             }
 
-            console.log(`[RoomJoin] Checking revocation status...`);
             const existingParticipant = await this.participantRepository.findByAuctionAndUser(auctionId, user.userId);
             if (existingParticipant?.revokedAt) {
-                console.log(`[RoomJoin] User is revoked`);
                 socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { code: AUCTION_ERROR_CODES.USER_REVOKED, message: AUCTION_MESSAGES.USER_REVOKED });
                 return;
             }
 
-            console.log(`[RoomJoin] Upserting participant...`);
             await this.participantRepository.upsertParticipant(auctionId, user.userId);
-
-            console.log(`[RoomJoin] Setting online status...`);
             await this.participantRepository.setOnlineStatus(auctionId, user.userId, true, socket.id);
 
             socket.join(auctionId);
-            console.log(`[RoomJoin] Socket ${socket.id} joined room ${auctionId}`);
 
-            console.log(`[RoomJoin] Fetching room state...`);
-            const state = await this.getRoomStateUseCase.execute(auctionId, 20, user.userId);
+            const result = await this.getRoomStateUseCase.execute(auctionId, 20, user.userId);
+            if (result.isFailure) {
+                socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { message: result.error });
+                return;
+            }
+
+            const state = result.getValue();
             const participants = await this.participantRepository.listParticipantsWithStatus(auctionId);
 
-            console.log(`[RoomJoin] Emitting room:state...`);
             socket.emit(AUCTION_SOCKET_EVENTS.ROOM_STATE, { ...state, participants });
             this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.PARTICIPANT_ONLINE, { userId: user.userId, socketId: socket.id });
-            console.log(`[RoomJoin] Join completed successfully.`);
         } catch (error) {
-            console.log(`[RoomJoin] Error joining room:`, error);
             socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { message: (error as Error).message });
         }
     }
 
     private async handlePlaceBid(socket: Socket, { auctionId, amount }: any, callback: any) {
         const user = (socket as any).user;
-        console.log(`[PlaceBid] Request from ${user.userId} for ${auctionId}, amount: ${amount}`);
         try {
             const result = await this.placeBidUseCase.execute(auctionId, user.userId, Number(amount));
-            console.log(`[PlaceBid] Success. Bid ID: ${result.bid.id}`);
+            if (result.isFailure) {
+                const errorResponse = { success: false, code: AUCTION_ERROR_CODES.NOT_ALLOWED, message: result.error };
+                socket.emit(AUCTION_SOCKET_EVENTS.BID_ERROR, errorResponse);
+                if (callback) callback(errorResponse);
+                return;
+            }
 
+            const data = result.getValue();
             await this.participantRepository.updateLastSeen(auctionId, user.userId);
 
-            this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.BID_CREATED, result.bid);
-            if (result.extended) {
-                this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.AUCTION_EXTENDED, { newEndTime: result.newEndTime, extensionCount: result.extensionCount });
+            this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.BID_CREATED, data.bid);
+            if (data.extended) {
+                this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.AUCTION_EXTENDED, { newEndTime: data.newEndTime, extensionCount: data.extensionCount });
             }
 
             const recentActivities = await this.activityRepository.getRecentActivities(auctionId, 1);
@@ -165,26 +157,26 @@ export class AuctionSocketHandler {
                 this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.ACTIVITY_CREATED, recentActivities[0]);
             }
 
-            if (callback) callback({ success: true, bid: result.bid, extended: result.extended });
+            if (callback) callback({ success: true, bid: data.bid, extended: data.extended });
         } catch (error) {
-            console.error(`[PlaceBid] Error:`, error);
-            const err = error as Error;
-            const errorResponse = { success: false, code: err instanceof AuctionError ? err.code : AUCTION_ERROR_CODES.NOT_ALLOWED, message: err.message };
+            const errorResponse = { success: false, code: AUCTION_ERROR_CODES.NOT_ALLOWED, message: (error as Error).message };
             socket.emit(AUCTION_SOCKET_EVENTS.BID_ERROR, errorResponse);
             if (callback) callback(errorResponse);
         }
     }
 
-
-
-
     private async handleChatSend(socket: Socket, { auctionId, message, isSeller }: any, callback: any) {
         const user = (socket as any).user;
-        console.log(`[ChatSend] Request from ${user.userId} for ${auctionId}: "${message}"`);
         try {
-            const chatMessage = await this.sendChatMessageUseCase.execute(auctionId, user.userId, String(message || ""));
-            console.log(`[ChatSend] Success. Msg ID: ${chatMessage.id}`);
+            const result = await this.sendChatMessageUseCase.execute(auctionId, user.userId, String(message || ""));
+            if (result.isFailure) {
+                const errorResponse = { success: false, code: AUCTION_ERROR_CODES.NOT_ALLOWED, message: result.error };
+                socket.emit(AUCTION_SOCKET_EVENTS.CHAT_ERROR, errorResponse);
+                if (callback) callback(errorResponse);
+                return;
+            }
 
+            const chatMessage = result.getValue();
             await this.participantRepository.updateLastSeen(auctionId, user.userId);
 
             if (isSeller) {
@@ -195,15 +187,11 @@ export class AuctionSocketHandler {
             this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.CHAT_CREATED, chatMessage);
             if (callback) callback({ success: true, message: chatMessage });
         } catch (error) {
-            console.error(`[ChatSend] Error:`, error);
-            const err = error as Error;
-            const errorResponse = { success: false, code: err instanceof AuctionError ? err.code : AUCTION_ERROR_CODES.NOT_ALLOWED, message: err.message };
+            const errorResponse = { success: false, code: AUCTION_ERROR_CODES.NOT_ALLOWED, message: (error as Error).message };
             socket.emit(AUCTION_SOCKET_EVENTS.CHAT_ERROR, errorResponse);
             if (callback) callback(errorResponse);
         }
-    } 
-
-
+    }
 
     private async handleSellerJoin(socket: Socket, { auctionId }: { auctionId: string }) {
         try {
@@ -214,16 +202,16 @@ export class AuctionSocketHandler {
                 return;
             }
             socket.join(auctionId);
-            const state = await this.getRoomStateUseCase.execute(auctionId, 20);
+            const result = await this.getRoomStateUseCase.execute(auctionId, 20);
+            if (result.isFailure) return;
+
+            const state = result.getValue();
             const participants = await this.participantRepository.listParticipantsWithStatus(auctionId);
             socket.emit(AUCTION_SOCKET_EVENTS.ROOM_STATE, { ...state, participants });
         } catch (error) {
             socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { message: (error as Error).message });
         }
     }
-
-
-    
 
     private async handleAdminJoin(socket: Socket, { auctionId }: { auctionId: string }) {
         try {
@@ -234,7 +222,10 @@ export class AuctionSocketHandler {
                 return;
             }
             socket.join(auctionId);
-            const state = await this.getRoomStateUseCase.execute(auctionId, 20);
+            const result = await this.getRoomStateUseCase.execute(auctionId, 20);
+            if (result.isFailure) return;
+
+            const state = result.getValue();
             const participants = await this.participantRepository.listParticipantsWithStatus(auctionId);
             socket.emit(AUCTION_SOCKET_EVENTS.ROOM_STATE, { ...state, participants });
         } catch (error) {
@@ -249,6 +240,12 @@ export class AuctionSocketHandler {
             if (!auction || auction.sellerId !== user.userId) return;
 
             const result = await this.revokeUserUseCase.execute(auctionId, user.userId, userId);
+            if (result.isFailure) {
+                socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { message: result.error });
+                return;
+            }
+
+            const data = result.getValue();
             const sockets = await this.io.in(auctionId).fetchSockets();
 
             for (const s of sockets) {
@@ -265,7 +262,7 @@ export class AuctionSocketHandler {
 
             const participants = await this.participantRepository.listParticipantsWithStatus(auctionId);
             this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.PARTICIPANTS_UPDATED, { participants });
-            socket.emit(AUCTION_SOCKET_EVENTS.REVOKE_SUCCESS, { userId, invalidatedBids: result.invalidatedBids, newPrice: result.newPrice });
+            socket.emit(AUCTION_SOCKET_EVENTS.REVOKE_SUCCESS, { userId, invalidatedBids: data.invalidatedBids, newPrice: data.newPrice });
         } catch (error) {
             socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { message: (error as Error).message });
         }
@@ -277,7 +274,11 @@ export class AuctionSocketHandler {
             const auction = await this.auctionRepository.findById(auctionId);
             if (!auction || auction.sellerId !== user.userId) return;
 
-            await this.unrevokeUserUseCase.execute(auctionId, user.userId, userId);
+            const result = await this.unrevokeUserUseCase.execute(auctionId, user.userId, userId);
+            if (result.isFailure) {
+                socket.emit(AUCTION_SOCKET_EVENTS.ROOM_ERROR, { message: result.error });
+                return;
+            }
 
             const activity = await this.activityRepository.logActivity(auctionId, "USER_RESTORED" as any, "User access restored by seller", user.userId, { restoredUserId: userId }).catch(() => null);
             if (activity) this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.ACTIVITY_CREATED, activity);
@@ -292,7 +293,12 @@ export class AuctionSocketHandler {
     private async handlePauseAuction(socket: Socket, { auctionId }: any, callback: any) {
         const user = (socket as any).user;
         try {
-            await this.pauseAuctionUseCase.execute(auctionId, user.userId);
+            const result = await this.pauseAuctionUseCase.execute(user.userId, auctionId);
+            if (result.isFailure) {
+                if (callback) callback({ success: false, message: result.error });
+                return;
+            }
+
             const activity = await this.activityRepository.logActivity(auctionId, AUCTION_MESSAGES.AUCTION_PAUSED_ACTIVITY, AUCTION_MESSAGES.PAUSED_BY_SELLER, user.userId).catch(() => null);
             this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.AUCTION_PAUSED, { auctionId });
             if (activity) this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.ACTIVITY_CREATED, activity);
@@ -305,7 +311,12 @@ export class AuctionSocketHandler {
     private async handleResumeAuction(socket: Socket, { auctionId }: any, callback: any) {
         const user = (socket as any).user;
         try {
-            await this.resumeAuctionUseCase.execute(auctionId, user.userId);
+            const result = await this.resumeAuctionUseCase.execute(user.userId, auctionId);
+            if (result.isFailure) {
+                if (callback) callback({ success: false, message: result.error });
+                return;
+            }
+
             const updated = await this.auctionRepository.findById(auctionId);
             if (updated?.status === "ENDED") {
                 this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.AUCTION_ENDED, { auctionId });
@@ -324,7 +335,12 @@ export class AuctionSocketHandler {
     private async handleEndAuction(socket: Socket, { auctionId }: any, callback: any) {
         const user = (socket as any).user;
         try {
-            await this.endAuctionUseCase.execute(auctionId, 'SELLER');
+            const result = await this.endAuctionUseCase.execute(auctionId, 'SELLER');
+            if (result.isFailure) {
+                if (callback) callback({ success: false, message: result.error });
+                return;
+            }
+
             const activity = await this.activityRepository.logActivity(auctionId, AUCTION_MESSAGES.AUCTION_ENDED_ACTIVITY, AUCTION_MESSAGES.ENDED_BY_SELLER, user.userId).catch(() => null);
             this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.AUCTION_ENDED, { auctionId });
             if (activity) this.io.to(auctionId).emit(AUCTION_SOCKET_EVENTS.ACTIVITY_CREATED, activity);

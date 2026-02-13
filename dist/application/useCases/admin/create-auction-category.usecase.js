@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateAuctionCategoryUseCase = void 0;
-const auction_category_entity_1 = require("../../../domain/auction/auction-category.entity");
+const auction_category_entity_1 = require("../../../domain/entities/auction/auction-category.entity");
 class CreateAuctionCategoryUseCase {
     constructor(categoryRepository) {
         this.categoryRepository = categoryRepository;

@@ -1,8 +1,8 @@
 import { PrismaClient } from "@prisma/client";
-import { ActivityEntity, IAuctionActivityRepository } from "../../../domain/auction/repositories/activity.repository";
+import { ActivityEntity, IAuctionActivityRepository } from "../../../domain/entities/auction/repositories/activity.repository";
 
 export class PrismaAuctionActivityRepository implements IAuctionActivityRepository {
-    constructor(private prisma: PrismaClient) {}
+    constructor(private prisma: PrismaClient) { }
 
     async logActivity(
         auctionId: string,

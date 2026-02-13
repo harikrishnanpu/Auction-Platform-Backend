@@ -1,15 +1,15 @@
-import { IAuctionRepository } from '../../../domain/auction/repositories/auction.repository';
+import { IAuctionRepository } from '../../../domain/entities/auction/repositories/auction.repository';
 import { IPaymentRepository } from '../../../domain/payment/payment.repository';
-import { IActivityRepository } from '../../../domain/auction/repositories/activity.repository';
+import { IAuctionActivityRepository } from '../../../domain/entities/auction/repositories/activity.repository';
 import { razorpayService } from '../../../infrastructure/services/razorpay/razorpay.service';
-import { AuctionError } from '../../../domain/auction/auction.errors';
+import { AuctionError } from '../../../domain/entities/auction/auction.errors';
 
 export class VerifyPaymentUseCase {
     constructor(
         private auctionRepository: IAuctionRepository,
         private paymentRepository: IPaymentRepository,
-        private activityRepository: IActivityRepository
-    ) {}
+        private activityRepository: IAuctionActivityRepository
+    ) { }
 
     async execute(
         auctionId: string,
@@ -23,12 +23,12 @@ export class VerifyPaymentUseCase {
         // 1. Get payment by order ID
         const payment = await this.paymentRepository.findByOrderId(razorpayOrderId);
         if (!payment) {
-            throw new AuctionError('Payment not found', 'NOT_FOUND');
+            throw new Error('Payment not found');
         }
 
         // 2. Check if user matches
         if (payment.userId !== userId) {
-            throw new AuctionError('Unauthorized payment verification', 'NOT_ALLOWED');
+            throw new Error('Unauthorized payment verification');
         }
 
         // 3. Check if already verified
@@ -46,13 +46,13 @@ export class VerifyPaymentUseCase {
 
         if (!isValid) {
             console.error(`❌ Invalid payment signature for payment ${payment.id}`);
-            
+
             await this.paymentRepository.update(payment.id, {
                 status: 'FAILED',
                 failureReason: 'Invalid signature'
             });
 
-            throw new AuctionError('Payment verification failed', 'PAYMENT_FAILED');
+            throw new Error('Payment verification failed');
         }
 
         // 5. Get payment details from Razorpay
@@ -63,21 +63,21 @@ export class VerifyPaymentUseCase {
             razorpayPaymentId,
             razorpaySignature,
             status: 'SUCCESS',
-            paymentMethod: paymentDetails.method || null
+            paymentMethod: paymentDetails.method || undefined
         });
 
         // 7. Update auction completion status
         await this.auctionRepository.update(auctionId, {
-            completion_status: 'PAID'
+            completionStatus: 'PAID'
         });
 
         // 8. Log activity
-        await this.activityRepository.create({
+        await this.activityRepository.logActivity(
             auctionId,
-            userId,
-            type: 'PAYMENT_SUCCESS',
-            description: `Payment completed: ₹${payment.amount}`
-        });
+            'PAYMENT_SUCCESS',
+            `Payment completed: ₹${payment.amount}`,
+            userId
+        );
 
         console.log(`✅ Payment verified successfully for auction ${auctionId}`);
 

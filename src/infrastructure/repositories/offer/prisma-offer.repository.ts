@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
-import { IOfferRepository } from '../../../domain/offer/offer.repository';
-import { OfferEntity, CreateOfferDTO, UpdateOfferDTO } from '../../../domain/offer/offer.entity';
+import { IOfferRepository } from '../../../domain/entities/offer/offer.repository';
+import { OfferEntity, CreateOfferDTO, UpdateOfferDTO } from '../../../domain/entities/offer/offer.entity';
 
 export class PrismaOfferRepository implements IOfferRepository {
-    constructor(private prisma: PrismaClient) {}
+    constructor(private prisma: PrismaClient) { }
 
     async create(data: CreateOfferDTO): Promise<OfferEntity> {
         const offer = await this.prisma.auctionOffer.create({

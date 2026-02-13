@@ -14,3 +14,4 @@ export const storageService = new S3StorageService();
 export const loggerService = new PinoLogger(logger);
 export const tokenGeneratorService = new ResetTokenService();
 export const otpService = new OtpService();
+export const resentTokenService = new ResetTokenService();

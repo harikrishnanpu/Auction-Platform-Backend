@@ -1,5 +1,5 @@
-import { IAuctionRepository } from "../../../domain/auction/repositories/auction.repository";
-import { IBidRepository, BidEntity } from "../../../domain/auction/repositories/bid.repository";
+import { IAuctionRepository } from "../../../domain/entities/auction/repositories/auction.repository";
+import { IBidRepository, BidEntity } from "../../../domain/entities/auction/repositories/bid.repository";
 
 export class CreateBidUseCase {
     constructor(

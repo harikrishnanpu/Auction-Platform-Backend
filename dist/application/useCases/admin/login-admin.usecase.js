@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoginAdminUseCase = void 0;
-const result_1 = require("../../../domain/shared/result");
-const email_vo_1 = require("../../../domain/user/email.vo");
-const user_entity_1 = require("../../../domain/user/user.entity");
+const result_1 = require("@result/result");
+const email_vo_1 = require("@domain/value-objects/user/email.vo");
+const user_entity_1 = require("@domain/entities/user/user.entity");
 class LoginAdminUseCase {
     constructor(userRepository, passwordHasher, tokenService) {
         this.userRepository = userRepository;
@@ -25,22 +25,23 @@ class LoginAdminUseCase {
         if (!user.password) {
             return result_1.Result.fail("Invalid email or password");
         }
-        const isValidPassword = await this.passwordHasher.compare(dto.password, user.password.value);
+        const isValidPassword = await this.passwordHasher.compare(dto.password, user.password.getValue());
         if (!isValidPassword) {
             return result_1.Result.fail("Invalid email or password");
         }
         const payload = {
-            userId: user.id.toString(),
-            email: user.email.value,
+            userId: user.id,
+            email: user.email.getValue(),
             roles: user.roles
         };
         const tokens = this.tokenService.generateTokens(payload);
         return result_1.Result.ok({
-            id: user.id.toString(),
+            id: user.id,
             name: user.name,
-            email: user.email.value,
+            email: user.email.getValue(),
             roles: user.roles,
-            ...tokens
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken
         });
     }
 }

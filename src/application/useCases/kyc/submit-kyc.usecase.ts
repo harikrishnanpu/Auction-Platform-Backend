@@ -1,8 +1,9 @@
-import { IUserRepository } from '../../../domain/user/user.repository';
-import { Result } from '../../../domain/shared/result';
-import { IKYCRepository, KYCStatus, KYCType } from '../../../domain/kyc/kyc.repository';
+import { IUserRepository } from '@domain/repositories/user.repository';
+import { Result } from '@result/result';
+import { IKYCRepository, KYCStatus, KYCType } from '@domain/entities/kyc/kyc.repository';
+import { ISubmitKycUseCase } from '@application/interfaces/use-cases/kyc.usecase.interface';
 
-export class SubmitKycUseCase {
+export class SubmitKycUseCase implements ISubmitKycUseCase {
     constructor(
         private userRepository: IUserRepository,
         private kycRepository: IKYCRepository
@@ -20,23 +21,19 @@ export class SubmitKycUseCase {
             return Result.fail('KYC profile not found. Please upload documents first.');
         }
 
-        // Validate that necessary documents are present before submission
         if (!kycProfile.id_front_url || !kycProfile.id_back_url || !kycProfile.address_proof_url) {
             return Result.fail('Please upload all required documents (ID Front, ID Back, Address Proof) before submitting.');
         }
 
-        // If already verified, don't change
         if (kycProfile.verification_status === KYCStatus.VERIFIED) {
             return Result.fail('KYC is already verified.');
         }
 
-        // Allow resubmission if rejected - clear rejection reasons
         await this.kycRepository.save({
             kyc_id: kycProfile.kyc_id,
             user_id: userId,
             verification_status: KYCStatus.PENDING,
             kyc_type: kycType,
-            // Clear rejection information on resubmission
             rejection_reason_type: null,
             rejection_reason_message: null,
             rejected_at: null

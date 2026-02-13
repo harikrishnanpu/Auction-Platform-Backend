@@ -1,4 +1,4 @@
-import { KYCType } from "../../../domain/kyc/kyc.repository";
+import { KYCType } from "../../../domain/entities/kyc/kyc.repository";
 
 export interface GenerateUploadUrlDto {
     userId: string;

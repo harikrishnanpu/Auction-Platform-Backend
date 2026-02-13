@@ -1,13 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CompleteProfileUseCase = void 0;
-const result_1 = require("@domain/shared/result");
+const result_1 = require("@result/result");
+const phone_vo_1 = require("@domain/value-objects/user/phone.vo");
 class CompleteProfileUseCase {
     constructor(_userRepository, _logger) {
         this._userRepository = _userRepository;
         this._logger = _logger;
     }
-    async execute(userId, phone, address) {
+    async execute(request) {
+        const { userId, phone, address } = request;
         const user = await this._userRepository.findById(userId);
         if (!user) {
             return result_1.Result.fail("User not found");
@@ -15,12 +17,13 @@ class CompleteProfileUseCase {
         if (user.is_blocked) {
             return result_1.Result.fail("User is blocked");
         }
-        const completeResult = user.completeProfile(phone, address);
-        if (completeResult.isFailure) {
-            return result_1.Result.fail(completeResult.error);
+        const phoneResult = phone_vo_1.Phone.create(phone);
+        if (phoneResult.isFailure) {
+            return result_1.Result.fail(phoneResult.error);
         }
-        const updatedUser = await this._userRepository.update(userId, user);
-        return result_1.Result.ok(updatedUser);
+        user.completeProfile(phoneResult.getValue(), address);
+        await this._userRepository.save(user);
+        return result_1.Result.ok(user);
     }
 }
 exports.CompleteProfileUseCase = CompleteProfileUseCase;

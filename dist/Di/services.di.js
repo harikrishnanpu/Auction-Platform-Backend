@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.otpService = exports.tokenGeneratorService = exports.loggerService = exports.storageService = exports.emailService = exports.tokenService = exports.passwordHasher = void 0;
+exports.resentTokenService = exports.otpService = exports.tokenGeneratorService = exports.loggerService = exports.storageService = exports.emailService = exports.tokenService = exports.passwordHasher = void 0;
 const password_hasher_1 = require("../infrastructure/utils/password-hasher");
 const nodemailer_email_service_1 = require("../infrastructure/services/email/nodemailer-email.service");
 const s3_storage_service_1 = require("../infrastructure/services/storage/s3-storage.service");
@@ -15,3 +15,4 @@ exports.storageService = new s3_storage_service_1.S3StorageService();
 exports.loggerService = new pino_logger_1.PinoLogger(pino_logger_1.logger);
 exports.tokenGeneratorService = new reset_token_service_1.ResetTokenService();
 exports.otpService = new otp_generator_1.OtpService();
+exports.resentTokenService = new reset_token_service_1.ResetTokenService();

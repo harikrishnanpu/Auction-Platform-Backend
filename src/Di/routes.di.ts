@@ -1,16 +1,6 @@
-import { LoginUserUseCase } from "../application/useCases/auth/login-user.usecase";
-import { RegisterUserUseCase } from "../application/useCases/auth/register-user.usecase";
-import { VerifyEmailUseCase } from "../application/useCases/auth/verify-email.usecase";
-import { ResendOtpUseCase } from "../application/useCases/auth/resend-otp.usecase";
-import { SendVerificationOtpUseCase } from "../application/useCases/auth/send-verification-otp.usecase";
-import { RefreshTokenUseCase } from "../application/useCases/auth/refresh-token.usecase";
-import { GetProfileUseCase } from "../application/useCases/user/get-profile.usecase";
-import { CompleteProfileUseCase } from "../application/useCases/user/complete-profile.usecase";
-import { LoginWithGoogleUseCase } from "../application/useCases/auth/login-google.usecase";
-import { ForgotPasswordUseCase } from "../application/useCases/auth/forgot-password.usecase";
-import { ResetPasswordUseCase } from "../application/useCases/auth/reset-password.usecase";
-import { UserAuthController } from "../presentation/controllers/auth/auth.controller";
-import { AuthRoutes } from "../presentation/routes/auth.routes";
+import { AuthRoutes } from "../presentation/http/routes/auth.routes";
+
+
 import { userRepository, otpRepository, kycRepository, auctionRepository, bidRepository, participantRepository, activityRepository, chatMessageRepository, categoryRepository, conditionRepository, transactionManager, paymentRepository } from "./repository.di";
 import { tokenService, emailService, loggerService, tokenGeneratorService, otpService, passwordHasher, storageService } from "./services.di";
 
@@ -25,16 +15,16 @@ import { GetSellerByIdUseCase } from "../application/useCases/admin/get-seller-b
 import { VerifySellerKycUseCase } from "../application/useCases/admin/verify-seller-kyc.usecase";
 import { AssignSellerRoleUseCase } from "../application/useCases/admin/assign-seller-role.usecase";
 import { GetAdminStatsUseCase } from "../application/useCases/admin/get-admin-stats.usecase";
-import { AdminRoutes } from "../presentation/routes/admin.routes";
-import { AdminAuthController } from "../presentation/controllers/other/admin-auth.controller";
-import { AdminController } from "../presentation/controllers/other/admin.controller";
+import { AdminRoutes } from "../presentation/http/routes/admin.routes";
+import { AdminAuthController } from "../presentation/http/controllers/admin/admin-auth.controller";
+import { AdminController } from "../presentation/http/controllers/admin/admin.controller";
 
 import { GenerateUploadUrlUseCase } from "../application/useCases/kyc/generate-upload-url.usecase";
 import { CompleteKycUploadUseCase } from "../application/useCases/kyc/complete-kyc-upload.usecase";
 import { GetKycStatusUseCase } from "../application/useCases/kyc/get-kyc-status.usecase";
 import { SubmitKycUseCase } from "../application/useCases/kyc/submit-kyc.usecase";
-import { KycController } from "../presentation/controllers/other/kyc.controller";
-import { KycRoutes } from "../presentation/routes/kyc.routes";
+import { KycController } from "../presentation/http/controllers/kyc/kyc.controller";
+import { KycRoutes } from "../presentation/http/routes/kyc.routes";
 
 import { GetActiveAuctionsUseCase } from "../application/useCases/auction/get-active-auctions.usecase";
 import { GetAuctionByIdUseCase } from "../application/useCases/auction/get-auction-by-id.usecase";
@@ -44,8 +34,8 @@ import { RevokeUserUseCase } from "../application/useCases/auction/revoke-user.u
 import { GetUpcomingAuctionsUseCase } from "../application/useCases/auction/get-upcoming-auctions.usecase";
 import { GetAuctionCategoriesUseCase } from "../application/useCases/auction/get-auction-categories.usecase";
 import { GetAuctionConditionsUseCase } from "../application/useCases/auction/get-auction-conditions.usecase";
-import { AuctionController } from "../presentation/controllers/other/auction.controller";
-import { AuctionRoutes } from "../presentation/routes/auction.routes";
+import { AuctionController } from "../presentation/http/controllers/auction/auction.controller";
+import { AuctionRoutes } from "../presentation/http/routes/auction.routes";
 import { CreateAuctionUseCase } from "../application/useCases/seller/create-auction.usecase";
 import { GenerateAuctionUploadUrlUseCase } from "../application/useCases/seller/generate-auction-upload-url.usecase";
 import { GetSellerAuctionsUseCase } from "../application/useCases/seller/get-seller-auctions.usecase"; // Ensure path
@@ -56,79 +46,14 @@ import { PauseAuctionUseCase } from "../application/useCases/seller/pause-auctio
 import { ResumeAuctionUseCase } from "../application/useCases/seller/resume-auction.usecase";
 import { EndAuctionUseCase as SellerEndAuctionUseCase } from "../application/useCases/seller/end-auction.usecase";
 import { EndAuctionUseCase as AuctionEndAuctionUseCase } from "../application/useCases/auction/end-auction.usecase";
-import { SellerAuctionController } from "../presentation/controllers/seller/auction.controller";
-import { SellerRoutes } from "../presentation/routes/seller.routes";
-const loginUserUseCase = new LoginUserUseCase(
-    userRepository,
-    passwordHasher,
-    tokenService,
-    loggerService
-);
+import { SellerAuctionController } from "../presentation/http/controllers/seller/auction.controller";
+import { SellerRoutes } from "../presentation/http/routes/seller.routes";
 
-const registerUserUseCase = new RegisterUserUseCase(
-    userRepository,
-    passwordHasher,
-    emailService,
-    otpService,
-    otpRepository,
-    loggerService
-);
 
-const verifyEmailUseCase = new VerifyEmailUseCase(
-    userRepository,
-    otpRepository,
-    tokenService,
-    loggerService
-);
-
-const resendOtpUseCase = new ResendOtpUseCase(
-    userRepository,
-    otpRepository,
-    emailService,
-    loggerService
-);
-
-const refreshTokenUseCase = new RefreshTokenUseCase(
-    userRepository,
-    tokenService,
-    loggerService
-);
-
-const getProfileUseCase = new GetProfileUseCase(
-    userRepository,
-    storageService
-);
-
-const completeProfileUseCase = new CompleteProfileUseCase(
-    userRepository
-);
-
-const forgotPasswordUseCase = new ForgotPasswordUseCase(
-    userRepository,
-    otpRepository,
-    emailService,
-    loggerService,
-    tokenGeneratorService
-);
-
-const resetPasswordUseCase = new ResetPasswordUseCase(
-    userRepository,
-    otpRepository,
-    loggerService
-);
-
-const loginWithGoogleUseCase = new LoginWithGoogleUseCase(
-    userRepository,
-    tokenService
-);
-
-const sendVerificationOtpUseCase = new SendVerificationOtpUseCase(
-    userRepository,
-    otpRepository,
-    emailService,
-    otpService,
-    loggerService
-);
+import { UpdateProfileUseCase } from "../application/useCases/user/update-profile.usecase";
+import { ChangePasswordUseCase } from "../application/useCases/user/change-password.usecase";
+import { UpdateAvatarUseCase } from "../application/useCases/user/update-avatar.usecase";
+import { authController } from "./auth/create.auth.controller";
 
 const getUsersUseCase = new GetUsersUseCase(userRepository);
 const getUserByIdUseCase = new GetUserByIdUseCase(userRepository);
@@ -147,9 +72,6 @@ const completeKycUploadUseCase = new CompleteKycUploadUseCase(userRepository, ky
 const getKycStatusUseCase = new GetKycStatusUseCase(userRepository, kycRepository);
 const submitKycUseCase = new SubmitKycUseCase(userRepository, kycRepository);
 
-import { UpdateProfileUseCase } from "../application/useCases/user/update-profile.usecase";
-import { ChangePasswordUseCase } from "../application/useCases/user/change-password.usecase";
-import { UpdateAvatarUseCase } from "../application/useCases/user/update-avatar.usecase";
 
 const updateProfileUseCase = new UpdateProfileUseCase(userRepository);
 
@@ -161,22 +83,7 @@ const changePasswordUseCase = new ChangePasswordUseCase(
     passwordHasher
 );
 
-const authController = new UserAuthController(
-    registerUserUseCase,
-    loginUserUseCase,
-    verifyEmailUseCase,
-    resendOtpUseCase,
-    refreshTokenUseCase,
-    getProfileUseCase,
-    completeProfileUseCase,
-    updateProfileUseCase,
-    updateAvatarUseCase,
-    changePasswordUseCase,
-    forgotPasswordUseCase,
-    resetPasswordUseCase,
-    loginWithGoogleUseCase,
-    sendVerificationOtpUseCase
-);
+
 
 const adminAuthController = new AdminAuthController(
     loginAdminUseCase

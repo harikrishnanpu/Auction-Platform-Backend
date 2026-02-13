@@ -1,13 +1,13 @@
-import { IAuctionRepository } from '../../../domain/auction/repositories/auction.repository';
+import { IAuctionRepository } from '../../../domain/entities/auction/repositories/auction.repository';
 import { IPaymentRepository } from '../../../domain/payment/payment.repository';
 import { razorpayService } from '../../../infrastructure/services/razorpay/razorpay.service';
-import { AuctionError } from '../../../domain/auction/auction.errors';
+import { AuctionError } from '../../../domain/entities/auction/auction.errors';
 
 export class CreatePaymentOrderUseCase {
     constructor(
         private auctionRepository: IAuctionRepository,
         private paymentRepository: IPaymentRepository
-    ) {}
+    ) { }
 
     async execute(auctionId: string, userId: string): Promise<{
         orderId: string;
@@ -21,17 +21,17 @@ export class CreatePaymentOrderUseCase {
         // 1. Get auction
         const auction = await this.auctionRepository.findById(auctionId);
         if (!auction) {
-            throw new AuctionError('Auction not found', 'NOT_FOUND');
+            throw new Error('Auction not found');
         }
 
         // 2. Check if auction is ended
         if (auction.status !== 'ENDED') {
-            throw new AuctionError('Auction is not ended yet', 'INVALID_STATUS');
+            throw new Error('Auction is not ended yet');
         }
 
         // 3. Check if user is the winner
-        if (auction.winner_id !== userId) {
-            throw new AuctionError('You are not the winner of this auction', 'NOT_ALLOWED');
+        if (auction.winnerId !== userId) {
+            throw new Error('You are not the winner of this auction');
         }
 
         // 4. Check if payment already exists
@@ -39,12 +39,12 @@ export class CreatePaymentOrderUseCase {
         const pendingPayment = existingPayments.find(p => p.userId === userId && p.status === 'PENDING');
 
         if (!pendingPayment) {
-            throw new AuctionError('No pending payment found', 'NOT_FOUND');
+            throw new Error('No pending payment found');
         }
 
         // 5. Check if payment deadline has passed
-        if (auction.winner_payment_deadline && new Date() > auction.winner_payment_deadline) {
-            throw new AuctionError('Payment deadline has passed', 'DEADLINE_EXPIRED');
+        if (auction.winnerPaymentDeadline && new Date() > auction.winnerPaymentDeadline) {
+            throw new Error('Payment deadline has passed');
         }
 
         // 6. Check if Razorpay order already created

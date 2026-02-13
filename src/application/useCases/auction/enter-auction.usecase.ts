@@ -1,11 +1,12 @@
-import { IAuctionRepository } from "../../../domain/auction/repositories/auction.repository";
-import { IAuctionParticipantRepository } from "../../../domain/auction/repositories/participant.repository";
-import { IAuctionActivityRepository } from "../../../domain/auction/repositories/activity.repository";
-import { IUserRepository } from "../../../domain/user/user.repository";
-import { ensureAuctionActive } from "../../../domain/auction/auction.policy";
-import { AuctionError } from "../../../domain/auction/auction.errors";
+import { IAuctionRepository } from "@domain/entities/auction/repositories/auction.repository";
+import { IAuctionParticipantRepository } from "@domain/entities/auction/repositories/participant.repository";
+import { IAuctionActivityRepository } from "@domain/entities/auction/repositories/activity.repository";
+import { IUserRepository } from "@domain/repositories/user.repository";
+import { ensureAuctionActive } from "@domain/entities/auction/auction.policy";
+import { Result } from "@result/result";
+import { IEnterAuctionUseCase } from "@application/interfaces/use-cases/auction.usecase.interface";
 
-export class EnterAuctionUseCase {
+export class EnterAuctionUseCase implements IEnterAuctionUseCase {
     constructor(
         private auctionRepository: IAuctionRepository,
         private participantRepository: IAuctionParticipantRepository,
@@ -13,32 +14,42 @@ export class EnterAuctionUseCase {
         private activityRepository: IAuctionActivityRepository
     ) { }
 
-    async execute(auctionId: string, userId: string) {
-        const auction = await this.auctionRepository.findById(auctionId);
-        if (!auction) {
-            throw new AuctionError("AUCTION_NOT_FOUND", "Auction not found");
-        }
-        ensureAuctionActive(auction);
-        const now = new Date();
-        if (now > auction.endAt) {
-            throw new AuctionError("AUCTION_ENDED", "Auction has ended");
-        }
+    async execute(auctionId: string, userId: string): Promise<Result<any>> {
+        try {
+            const auction = await this.auctionRepository.findById(auctionId);
+            if (!auction) {
+                return Result.fail("Auction not found");
+            }
 
-        const user = await this.userRepository.findById(userId);
-        if (!user || user.is_blocked || !user.is_verified) {
-            throw new AuctionError("NOT_ALLOWED", "User not eligible to enter");
-        }
+            try {
+                ensureAuctionActive(auction);
+            } catch (e) {
+                return Result.fail((e as Error).message);
+            }
 
-        if (auction.sellerId === userId) {
-            throw new AuctionError("NOT_ALLOWED", "Sellers cannot join their own auction as participants. Please use the seller dashboard.");
-        }
+            const now = new Date();
+            if (now > auction.endAt) {
+                return Result.fail("Auction has ended");
+            }
 
-        const participant = await this.participantRepository.findByAuctionAndUser(auctionId, userId);
-        if (participant?.revokedAt) {
-            throw new AuctionError("USER_REVOKED", "You have been revoked from this auction and cannot rejoin");
-        }
+            const user = await this.userRepository.findById(userId);
+            if (!user || user.is_blocked || !user.is_verified) {
+                return Result.fail("User not eligible to enter");
+            }
 
-        const result = await this.participantRepository.upsertParticipant(auctionId, userId);
-        return result;
+            if (auction.sellerId === userId) {
+                return Result.fail("Sellers cannot join their own auction as participants. Please use the seller dashboard.");
+            }
+
+            const participant = await this.participantRepository.findByAuctionAndUser(auctionId, userId);
+            if (participant?.revokedAt) {
+                return Result.fail("You have been revoked from this auction and cannot rejoin");
+            }
+
+            const result = await this.participantRepository.upsertParticipant(auctionId, userId);
+            return Result.ok(result);
+        } catch (error) {
+            return Result.fail((error as Error).message);
+        }
     }
 }

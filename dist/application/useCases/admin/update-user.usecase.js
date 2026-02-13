@@ -34,7 +34,8 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateUserUseCase = void 0;
-const result_1 = require("../../../domain/shared/result");
+const result_1 = require("@result/result");
+const email_vo_1 = require("@domain/value-objects/user/email.vo");
 class UpdateUserUseCase {
     constructor(userRepository) {
         this.userRepository = userRepository;
@@ -43,28 +44,35 @@ class UpdateUserUseCase {
         const user = await this.userRepository.findById(userId);
         if (!user)
             return result_1.Result.fail("User not found");
-        // Update fields
-        if (dto.name !== undefined) {
-            user.props.name = dto.name;
-        }
+        if (dto.name !== undefined)
+            user.update({ name: dto.name });
         if (dto.email !== undefined) {
-            const { Email } = await Promise.resolve().then(() => __importStar(require("../../../domain/user/email.vo")));
-            const emailResult = Email.create(dto.email);
+            const emailResult = email_vo_1.Email.create(dto.email);
             if (emailResult.isFailure)
                 return result_1.Result.fail(emailResult.error);
-            user.props.email = emailResult.getValue();
+            user.update({ email: emailResult.getValue() });
         }
         if (dto.phone !== undefined) {
-            user.props.phone = dto.phone;
+            const { Phone } = await Promise.resolve().then(() => __importStar(require("@domain/value-objects/user/phone.vo")));
+            const phoneResult = Phone.create(dto.phone);
+            if (phoneResult.isFailure)
+                return result_1.Result.fail(phoneResult.error);
+            user.update({ phone: phoneResult.getValue() });
         }
-        if (dto.address !== undefined) {
-            user.props.address = dto.address;
-        }
-        if (dto.avatar_url !== undefined) {
-            user.props.avatar_url = dto.avatar_url;
-        }
+        if (dto.address !== undefined)
+            user.update({ address: dto.address });
+        if (dto.avatar_url !== undefined)
+            user.update({ avatar_url: dto.avatar_url });
         await this.userRepository.save(user);
-        return result_1.Result.ok(undefined);
+        return result_1.Result.ok({
+            id: user.id,
+            name: user.name,
+            email: user.email.getValue(),
+            roles: user.roles,
+            is_blocked: user.is_blocked,
+            is_verified: user.is_verified,
+            created_at: user.created_at
+        });
     }
 }
 exports.UpdateUserUseCase = UpdateUserUseCase;

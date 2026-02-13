@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrismaOTPRepository = void 0;
-const otp_entity_1 = require("../../../domain/otp/otp.entity");
+const otp_entity_1 = require("../../../domain/entities/otp/otp.entity");
 class PrismaOTPRepository {
     constructor(prisma) {
         this.prisma = prisma;

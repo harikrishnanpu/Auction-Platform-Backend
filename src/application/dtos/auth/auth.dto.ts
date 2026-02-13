@@ -50,3 +50,7 @@ export interface UserResponseDto {
     has_password?: boolean;
     is_google_user?: boolean;
 }
+export interface LoginResponseDto extends UserResponseDto {
+    accessToken: string;
+    refreshToken: string;
+}

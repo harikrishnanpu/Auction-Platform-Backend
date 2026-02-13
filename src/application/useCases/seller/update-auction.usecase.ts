@@ -1,57 +1,64 @@
-import { IAuctionRepository, UpdateAuctionDto } from "../../../domain/auction/repositories/auction.repository";
+import { IAuctionRepository, UpdateAuctionDto } from "@domain/entities/auction/repositories/auction.repository";
+import { Result } from "@result/result";
+import { IUpdateAuctionUseCase } from "@application/interfaces/use-cases/seller.usecase.interface";
 
-export class UpdateAuctionUseCase {
+export class UpdateAuctionUseCase implements IUpdateAuctionUseCase {
     constructor(private auctionRepository: IAuctionRepository) { }
 
-    async execute(auctionId: string, sellerId: string, dto: UpdateAuctionDto) {
-        const auction = await this.auctionRepository.findById(auctionId);
-        if (!auction || auction.sellerId !== sellerId) {
-            throw new Error("Auction not found");
-        }
-        if (auction.status !== "DRAFT") {
-            throw new Error("Only draft auctions can be updated");
-        }
+    async execute(sellerId: string, auctionId: string, dto: UpdateAuctionDto): Promise<Result<any>> {
+        try {
+            const auction = await this.auctionRepository.findById(auctionId);
+            if (!auction || auction.sellerId !== sellerId) {
+                return Result.fail("Auction not found");
+            }
+            if (auction.status !== "DRAFT") {
+                return Result.fail("Only draft auctions can be updated");
+            }
 
-        const startAt = dto.startAt ? new Date(dto.startAt) : auction.startAt;
-        const endAt = dto.endAt ? new Date(dto.endAt) : auction.endAt;
-        if (endAt <= startAt) {
-            throw new Error("End time must be after start time");
-        }
+            const startAt = dto.startAt ? new Date(dto.startAt) : auction.startAt;
+            const endAt = dto.endAt ? new Date(dto.endAt) : auction.endAt;
+            if (endAt <= startAt) {
+                return Result.fail("End time must be after start time");
+            }
 
-        const antiSnipeThresholdSeconds = dto.antiSnipeThresholdSeconds ?? auction.antiSnipeThresholdSeconds;
-        const antiSnipeExtensionSeconds = dto.antiSnipeExtensionSeconds ?? auction.antiSnipeExtensionSeconds;
-        const maxExtensions = dto.maxExtensions ?? auction.maxExtensions;
-        const bidCooldownSeconds = dto.bidCooldownSeconds ?? auction.bidCooldownSeconds;
+            const antiSnipeThresholdSeconds = dto.antiSnipeThresholdSeconds ?? auction.antiSnipeThresholdSeconds;
+            const antiSnipeExtensionSeconds = dto.antiSnipeExtensionSeconds ?? auction.antiSnipeExtensionSeconds;
+            const maxExtensions = dto.maxExtensions ?? auction.maxExtensions;
+            const bidCooldownSeconds = dto.bidCooldownSeconds ?? auction.bidCooldownSeconds;
 
-        const allowedThresholds = [30, 60];
-        const allowedExtensions = [30, 60];
-        const allowedMaxExtensions = [3, 5, 10];
-        const allowedCooldowns = [30, 60];
+            const allowedThresholds = [30, 60];
+            const allowedExtensions = [30, 60];
+            const allowedMaxExtensions = [3, 5, 10];
+            const allowedCooldowns = [30, 60];
 
-        if (!allowedThresholds.includes(antiSnipeThresholdSeconds)) {
-            throw new Error("Invalid anti-snipe threshold");
-        }
-        if (!allowedExtensions.includes(antiSnipeExtensionSeconds)) {
-            throw new Error("Invalid anti-snipe extension");
-        }
-        if (!allowedMaxExtensions.includes(maxExtensions)) {
-            throw new Error("Invalid max extensions");
-        }
-        if (!allowedCooldowns.includes(bidCooldownSeconds)) {
-            throw new Error("Invalid bid cooldown");
-        }
+            if (!allowedThresholds.includes(antiSnipeThresholdSeconds)) {
+                return Result.fail("Invalid anti-snipe threshold");
+            }
+            if (!allowedExtensions.includes(antiSnipeExtensionSeconds)) {
+                return Result.fail("Invalid anti-snipe extension");
+            }
+            if (!allowedMaxExtensions.includes(maxExtensions)) {
+                return Result.fail("Invalid max extensions");
+            }
+            if (!allowedCooldowns.includes(bidCooldownSeconds)) {
+                return Result.fail("Invalid bid cooldown");
+            }
 
-        return await this.auctionRepository.update(auctionId, {
-            title: dto.title ?? auction.title,
-            description: dto.description ?? auction.description,
-            startAt,
-            endAt,
-            startPrice: dto.startPrice ?? auction.startPrice,
-            minBidIncrement: dto.minBidIncrement ?? auction.minBidIncrement,
-            antiSnipeThresholdSeconds,
-            antiSnipeExtensionSeconds,
-            maxExtensions,
-            bidCooldownSeconds
-        });
+            const updatedAuction = await this.auctionRepository.update(auctionId, {
+                title: dto.title ?? auction.title,
+                description: dto.description ?? auction.description,
+                startAt,
+                endAt,
+                startPrice: dto.startPrice ?? auction.startPrice,
+                minBidIncrement: dto.minBidIncrement ?? auction.minBidIncrement,
+                antiSnipeThresholdSeconds,
+                antiSnipeExtensionSeconds,
+                maxExtensions,
+                bidCooldownSeconds
+            });
+            return Result.ok(updatedAuction);
+        } catch (error) {
+            return Result.fail((error as Error).message);
+        }
     }
 }

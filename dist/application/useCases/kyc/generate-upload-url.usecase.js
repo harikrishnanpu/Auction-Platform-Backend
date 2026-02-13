@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GenerateUploadUrlUseCase = void 0;
-const kyc_repository_1 = require("../../../domain/kyc/kyc.repository");
-const result_1 = require("../../../domain/shared/result");
+const kyc_repository_1 = require("@domain/entities/kyc/kyc.repository");
+const result_1 = require("@result/result");
 const uuid_1 = require("uuid");
 class GenerateUploadUrlUseCase {
     constructor(storageService) {

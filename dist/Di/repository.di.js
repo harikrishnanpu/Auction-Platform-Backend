@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.paymentRepository = exports.transactionManager = exports.conditionRepository = exports.categoryRepository = exports.activityRepository = exports.participantRepository = exports.chatMessageRepository = exports.bidRepository = exports.auctionRepository = exports.kycRepository = exports.otpRepository = exports.userRepository = void 0;
 const prisma_user_repository_1 = require("../infrastructure/repositories/user/prisma-user.repository");
 const prisma_otp_repository_1 = require("../infrastructure/repositories/otp/prisma-otp.repository");
-const prisma_kyc_repository_1 = require("../infrastructure/repositories/prisma-kyc.repository");
+const prisma_kyc_repository_1 = require("../infrastructure/repositories/kyc/prisma-kyc.repository");
 const prismaClient_1 = __importDefault(require("../utils/prismaClient"));
 const prisma_auction_repository_1 = require("../infrastructure/repositories/auction/prisma-auction.repository");
 const prisma_bid_repository_1 = require("../infrastructure/repositories/auction/prisma-bid.repository");

@@ -1,27 +1,30 @@
-import { IAuctionRepository } from '../../../domain/auction/repositories/auction.repository';
-import { AuctionError } from '../../../domain/auction/auction.errors';
+import { IAuctionRepository } from "@domain/entities/auction/repositories/auction.repository";
+import { Result } from "@result/result";
+import { ISellerEndAuctionUseCase } from "@application/interfaces/use-cases/seller.usecase.interface";
 
-export class EndAuctionUseCase {
-  constructor(private readonly auctionRepository: IAuctionRepository) {}
+export class EndAuctionUseCase implements ISellerEndAuctionUseCase {
+  constructor(private readonly auctionRepository: IAuctionRepository) { }
 
-  async execute(auctionId: string, sellerId: string): Promise<void> {
-    const auction = await this.auctionRepository.findById(auctionId);
+  async execute(sellerId: string, auctionId: string): Promise<Result<void>> {
+    try {
+      const auction = await this.auctionRepository.findById(auctionId);
 
-    if (!auction) {
-      throw AuctionError.notFound();
+      if (!auction) {
+        return Result.fail("Auction not found");
+      }
+
+      if (auction.sellerId !== sellerId) {
+        return Result.fail("Unauthorized: Only the seller can end this auction");
+      }
+
+      if (auction.status !== 'ACTIVE') {
+        return Result.fail("Can only end active auctions");
+      }
+
+      await this.auctionRepository.update(auctionId, { status: 'ENDED' });
+      return Result.ok<void>(undefined);
+    } catch (error) {
+      return Result.fail((error as Error).message);
     }
-
-    // Verify seller ownership
-    if (auction.sellerId !== sellerId) {
-      throw new Error('Unauthorized: Only the seller can end this auction');
-    }
-
-    // Can only end active auctions
-    if (auction.status !== 'ACTIVE') {
-      throw new Error('Can only end active auctions');
-    }
-
-    // Update auction status to ENDED
-    await this.auctionRepository.update(auctionId, { status: 'ENDED' });
   }
 }

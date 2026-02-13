@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrismaAuctionRepository = void 0;
-const auction_entity_1 = require("../../../domain/auction/auction.entity");
+const auction_entity_1 = require("../../../domain/entities/auction/auction.entity");
 class PrismaAuctionRepository {
     constructor(prisma) {
         this.prisma = prisma;
@@ -25,6 +25,9 @@ class PrismaAuctionRepository {
             anti_snipe_extension_seconds: auction.antiSnipeExtensionSeconds,
             max_extensions: auction.maxExtensions,
             bid_cooldown_seconds: auction.bidCooldownSeconds,
+            winner_id: auction.winnerId,
+            winner_payment_deadline: auction.winnerPaymentDeadline,
+            completion_status: auction.completionStatus,
             created_at: auction.createdAt,
             updated_at: auction.updatedAt
         };
@@ -104,6 +107,12 @@ class PrismaAuctionRepository {
             data.max_extensions = dto.maxExtensions;
         if (dto.bidCooldownSeconds !== undefined)
             data.bid_cooldown_seconds = dto.bidCooldownSeconds;
+        if (dto.winnerId !== undefined)
+            data.winner_id = dto.winnerId;
+        if (dto.winnerPaymentDeadline !== undefined)
+            data.winner_payment_deadline = dto.winnerPaymentDeadline;
+        if (dto.completionStatus !== undefined)
+            data.completion_status = dto.completionStatus;
         const updated = await this.prisma.auction.update({
             where: { id: auctionId },
             data,
@@ -162,7 +171,7 @@ class PrismaAuctionRepository {
     }
     mapToEntity(data) {
         const assets = (data.assets || []).map((asset) => new auction_entity_1.AuctionAsset(asset.id, asset.auction_id, asset.asset_type, asset.url, asset.position, asset.created_at));
-        return new auction_entity_1.Auction(data.id, data.seller_id, data.category_id, data.condition_id, data.title, data.description, data.start_at, data.end_at, data.start_price, data.min_bid_increment, data.current_price, assets, data.status, data.is_paused, data.extension_count || 0, data.anti_snipe_threshold_seconds ?? 30, data.anti_snipe_extension_seconds ?? 30, data.max_extensions ?? 5, data.bid_cooldown_seconds ?? 60, data.created_at, data.updated_at);
+        return new auction_entity_1.Auction(data.id, data.seller_id, data.category_id, data.condition_id, data.title, data.description, data.start_at, data.end_at, data.start_price, data.min_bid_increment, data.current_price, assets, data.status, data.is_paused, data.winner_id, data.winner_payment_deadline, data.completion_status, data.extension_count || 0, data.anti_snipe_threshold_seconds ?? 30, data.anti_snipe_extension_seconds ?? 30, data.max_extensions ?? 5, data.bid_cooldown_seconds ?? 60, data.created_at, data.updated_at);
     }
 }
 exports.PrismaAuctionRepository = PrismaAuctionRepository;

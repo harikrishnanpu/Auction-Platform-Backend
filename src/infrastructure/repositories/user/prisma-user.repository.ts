@@ -1,89 +1,147 @@
-import { IUserRepository } from "../../../domain/user/user.repository";
-import { User } from "../../../domain/user/user.entity";
-import { Email } from "../../../domain/user/email.vo";
-import prisma from "../../../utils/prismaClient";
-import { UserMapper } from "../../../infrastructure/database/prisma/user.mapper";
-import { Phone } from "../../../domain/user/phone.vo";
+import { User } from "@domain/entities/user/user.entity";
+import { IUserRepository } from "@domain/repositories/user.repository";
+import { Email } from "@domain/value-objects/user/email.vo";
+import { Phone } from "@domain/value-objects/user/phone.vo";
+import { UserMapper } from "../../mappers/user.mapper";
+import prisma from "utils/prismaClient";
 
 export class PrismaUserRepository implements IUserRepository {
-    async save(user: User): Promise<void> {
-        const raw = UserMapper.toPersistence(user);
-        const roles = user.roles.map(r => ({ role: r as any }));
 
-        await prisma.user.upsert({
-            where: { user_id: raw.user_id },
-            update: {
-                name: raw.name,
-                email: raw.email,
-                phone: raw.phone,
-                address: raw.address,
-                avatar_url: raw.avatar_url,
-                password_hash: raw.password_hash,
-                is_blocked: raw.is_blocked,
-                is_verified: raw.is_verified,
-                is_profile_completed: raw.is_profile_completed,
-                UserRole: {
-                    deleteMany: {},
-                    create: roles
+    async save(user: User): Promise<void> {
+
+        const data = {
+            name: user.name,
+            email: user.email.getValue(),
+            phone: user.phone?.getValue() ?? null,
+            address: user.address,
+            avatar_url: user.avatar_url ?? null,
+            password_hash: user.password?.getValue() ?? null,
+            google_id: user.googleId ?? null,
+            is_blocked: user.is_blocked,
+            is_verified: user.is_verified,
+            is_profile_completed: user.is_profile_completed,
+            updated_at: new Date(),
+        };
+
+        if (!user.id) {
+            await prisma.user.create({
+                data: {
+                    ...data,
+                    created_at: user.created_at,
+                    UserRole: {
+                        create: user.roles.map(role => ({
+                            role
+                        }))
+                    }
                 }
-            },
-            create: {
-                user_id: raw.user_id,
-                name: raw.name,
-                email: raw.email,
-                phone: raw.phone,
-                address: raw.address,
-                avatar_url: raw.avatar_url,
-                password_hash: raw.password_hash,
-                is_blocked: raw.is_blocked,
-                is_verified: raw.is_verified,
-                updated_at: raw.updated_at,
-                created_at: raw.created_at,
-                is_profile_completed: raw.is_profile_completed,
-                UserRole: {
-                    create: roles
+            });
+        } else {
+            await prisma.user.update({
+                where: { user_id: user.id },
+                data: {
+                    ...data,
+                    UserRole: {
+                        deleteMany: {},
+                        create: user.roles.map(role => ({ role }))
+                    }
                 }
+            });
+        }
+    }
+
+
+    async findById(id: string): Promise<User | null> {
+
+        const user = await prisma.user.findUnique({
+            where: { user_id: id },
+            include: {
+                UserRole: true
             }
         });
+
+        return user ? UserMapper.toDomain(user).getValue() : null;
     }
 
     async findByEmail(email: Email): Promise<User | null> {
-        const raw = await prisma.user.findUnique({
-            where: { email: email.value },
-            include: { UserRole: true }
-        });
-
-        if (!raw) return null;
-
-        const user = UserMapper.toDomain(raw as any);
-
-        if (user.isFailure) return null;
-        return user.getValue();
-    }
-
-    async findById(id: string): Promise<User | null> {
-        const raw = await prisma.user.findUnique({
-            where: { user_id: id },
-            include: { UserRole: true }
-        });
-
-        if (!raw) return null;
-
-        const userOrError = UserMapper.toDomain(raw);
-        if (userOrError.isFailure) return null;
-
-        return userOrError.getValue();
-    }
-
-    async findAll(page: number, limit: number, search?: string, sortBy?: string, sortOrder: 'asc' | 'desc' = 'desc'): Promise<{ users: User[], total: number }> {
-        const skip = (page - 1) * limit;
-
-        const where: any = {
-            UserRole: {
-                none: {
-                    role: 'ADMIN'
-                }
+        const user = await prisma.user.findUnique({
+            where: { email: email.getValue() },
+            include: {
+                UserRole: true
             }
+        });
+
+        return user ? UserMapper.toDomain(user).getValue() : null;
+    }
+
+    async findByPhone(phone: Phone): Promise<User | null> {
+        const user = await prisma.user.findUnique({
+            where: { phone: phone.getValue() },
+            include: {
+                UserRole: true
+            }
+        });
+
+        return user ? UserMapper.toDomain(user).getValue() : null;
+    }
+
+
+    async findByPhoneOrEmail(phone: Phone, email: Email): Promise<User | null> {
+        const user = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { phone: phone.getValue() },
+                    { email: email.getValue() }
+                ]
+            },
+            include: {
+                UserRole: true
+            }
+        });
+
+        return user ? UserMapper.toDomain(user).getValue() : null;
+    }
+
+
+    async findByGoogleId(googleId: string): Promise<User | null> {
+        const user = await prisma.user.findUnique({
+            where: { google_id: googleId },
+            include: {
+                UserRole: true
+            }
+        });
+
+        return user ? UserMapper.toDomain(user).getValue() : null;
+    }
+
+    async findAll(page: number, limit: number, search?: string, sortBy?: string, sortOrder?: 'asc' | 'desc'): Promise<{ users: User[], total: number }> {
+        const where: any = {};
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        const [users, total] = await Promise.all([
+            prisma.user.findMany({
+                where,
+                skip: (page - 1) * limit,
+                take: limit,
+                orderBy: sortBy ? { [sortBy]: sortOrder || 'asc' } : { created_at: 'desc' },
+                include: { UserRole: true }
+            }),
+            prisma.user.count({ where })
+        ]);
+
+        return {
+            users: users.map(u => UserMapper.toDomain(u).getValue()),
+            total
+        };
+    }
+
+    async findSellers(page: number, limit: number, search?: string, sortBy?: string, sortOrder?: 'asc' | 'desc', kycStatus?: string): Promise<{ sellers: User[], total: number }> {
+        const where: any = {
+            UserRole: { some: { role: 'SELLER' } }
         };
 
         if (search) {
@@ -93,83 +151,29 @@ export class PrismaUserRepository implements IUserRepository {
             ];
         }
 
-        const orderBy: any = {};
-        if (sortBy) {
-            orderBy[sortBy] = sortOrder;
-        } else {
-            orderBy.created_at = 'desc';
+        if (kycStatus) {
+            where.Kyc = {
+                some: {
+                    verification_status: kycStatus
+                }
+            };
         }
 
-        const [rawUsers, total] = await Promise.all([
+        const [sellers, total] = await Promise.all([
             prisma.user.findMany({
                 where,
-                skip,
+                skip: (page - 1) * limit,
                 take: limit,
-                include: { UserRole: true },
-                orderBy
+                orderBy: sortBy ? { [sortBy]: sortOrder || 'asc' } : { created_at: 'desc' },
+                include: { UserRole: true }
             }),
             prisma.user.count({ where })
         ]);
 
-        const users: User[] = [];
-        for (const raw of rawUsers) {
-            const userOrError = UserMapper.toDomain(raw as any);
-            if (userOrError.isSuccess) {
-                users.push(userOrError.getValue());
-            }
-        }
-
-        return { users, total };
-    }
-
-
-    async update(id: string, data: User): Promise<User> {
-
-        const raw = UserMapper.toPersistence(data);
-        const updatedUser = await prisma.user.update({
-            where: { user_id: id },
-            data: raw
-        });
-
-        // const userOrError = UserMapper.toDomain(updatedUser);
-        // return userOrError.getValue();
-        return updatedUser as any;
-    }
-
-    async emailExists(email: Email): Promise<boolean> {
-        const count = await prisma.user.count({
-            where: { email: email.value }
-        });
-        return count > 0;
-    }
-
-
-
-    async phoneExists(phone: Phone): Promise<boolean> {
-        const count = await prisma.user.count({
-            where: { phone: phone.value }
-        });
-        return count > 0;
-    }
-
-
-    async findByGoogleId(googleId: string): Promise<User | null> {
-        const raw = await prisma.user.findUnique({
-            where: { google_id: googleId },
-            include: { UserRole: true }
-        });
-
-        if (!raw) return null;
-
-        const user = UserMapper.toDomain(raw as any);
-        if (user.isFailure) return null;
-        return user.getValue();
-    }
-
-    async delete(id: string): Promise<void> {
-        await prisma.user.delete({
-            where: { user_id: id }
-        });
+        return {
+            sellers: sellers.map(u => UserMapper.toDomain(u).getValue()),
+            total
+        };
     }
 
     async countAll(): Promise<number> {
@@ -178,12 +182,7 @@ export class PrismaUserRepository implements IUserRepository {
 
     async countSellers(): Promise<number> {
         return prisma.user.count({
-            where: {
-                UserRole: {
-                    some: { role: 'SELLER' }
-                },
-                is_blocked: false
-            }
+            where: { UserRole: { some: { role: 'SELLER' } } }
         });
     }
 
@@ -193,112 +192,9 @@ export class PrismaUserRepository implements IUserRepository {
         });
     }
 
-    async findSellers(
-        page: number,
-        limit: number,
-        search?: string,
-        sortBy?: string,
-        sortOrder: 'asc' | 'desc' = 'desc',
-        kycStatus?: string
-    ): Promise<{ sellers: any[], total: number }> {
-        const skip = (page - 1) * limit;
-
-        const where: any = {
-            OR: [
-                {
-                    UserRole: {
-                        some: { role: 'SELLER' as any }
-                    }
-                },
-                {
-                    KYCProfile: {
-                        some: {
-                            kyc_type: 'SELLER' as any,
-                            verification_status: { in: ['PENDING', 'REJECTED'] }
-                        }
-                    }
-                }
-            ]
-        };
-
-        if (search) {
-            where.AND = [
-                {
-                    OR: [
-                        { name: { contains: search, mode: 'insensitive' } },
-                        { email: { contains: search, mode: 'insensitive' } }
-                    ]
-                }
-            ];
-        }
-
-        if (kycStatus) {
-            if (kycStatus === 'NOT_SUBMITTED') {
-                where.AND = [
-                    ...(where.AND || []),
-                    {
-                        KYCProfile: {
-                            none: { kyc_type: 'SELLER' as any }
-                        }
-                    }
-                ];
-            } else {
-                where.AND = [
-                    ...(where.AND || []),
-                    {
-                        KYCProfile: {
-                            some: {
-                                kyc_type: 'SELLER' as any,
-                                verification_status: kycStatus
-                            }
-                        }
-                    }
-                ];
-            }
-        }
-
-        const orderBy: any = {};
-        if (sortBy) {
-            orderBy[sortBy] = sortOrder;
-        } else {
-            orderBy.created_at = 'desc';
-        }
-
-        const [rawUsers, total] = await Promise.all([
-            prisma.user.findMany({
-                where,
-                skip,
-                take: limit,
-                include: {
-                    UserRole: true,
-                    KYCProfile: {
-                        where: { kyc_type: 'SELLER' as any },
-                        orderBy: { updated_at: 'desc' },
-                        take: 1
-                    }
-                },
-                orderBy
-            }),
-            prisma.user.count({ where })
-        ]);
-
-        const sellers = (rawUsers as any[]).map(user => ({
-            id: user.user_id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            address: user.address,
-            avatar_url: user.avatar_url,
-            roles: user.UserRole.map((r: any) => r.role),
-            is_blocked: user.is_blocked,
-            is_verified: user.is_verified,
-            kyc_status: user.KYCProfile.length > 0
-                ? (user.KYCProfile[0] as any).verification_status
-                : 'NOT_SUBMITTED',
-            kyc_profile: user.KYCProfile.length > 0 ? user.KYCProfile[0] : null,
-            joined_at: user.created_at
-        }));
-
-        return { sellers, total };
+    async delete(id: string): Promise<void> {
+        await prisma.user.delete({
+            where: { user_id: id }
+        });
     }
 }

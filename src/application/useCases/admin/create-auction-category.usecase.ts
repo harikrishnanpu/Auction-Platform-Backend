@@ -1,8 +1,8 @@
-import { IAuctionCategoryRepository } from '../../../domain/auction/repositories/auction-category.repository';
-import { AuctionCategory } from '../../../domain/auction/auction-category.entity';
+import { IAuctionCategoryRepository } from '../../../domain/entities/auction/repositories/auction-category.repository';
+import { AuctionCategory } from '../../../domain/entities/auction/auction-category.entity';
 
 export class CreateAuctionCategoryUseCase {
-  constructor(private readonly categoryRepository: IAuctionCategoryRepository) {}
+  constructor(private readonly categoryRepository: IAuctionCategoryRepository) { }
 
   async execute(data: {
     name: string;

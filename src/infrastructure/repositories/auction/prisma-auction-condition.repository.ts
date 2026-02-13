@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
-import { IAuctionConditionRepository } from '../../../domain/auction/repositories/auction-condition.repository';
-import { AuctionCondition } from '../../../domain/auction/auction-condition.entity';
+import { IAuctionConditionRepository } from '../../../domain/entities/auction/repositories/auction-condition.repository';
+import { AuctionCondition } from '../../../domain/entities/auction/auction-condition.entity';
 
 export class PrismaAuctionConditionRepository implements IAuctionConditionRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient) { }
 
   async findAll(): Promise<AuctionCondition[]> {
     const conditions = await this.prisma.auctionCondition.findMany({

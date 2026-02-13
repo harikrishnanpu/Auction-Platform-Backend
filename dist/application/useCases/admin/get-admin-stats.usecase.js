@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetAdminStatsUseCase = void 0;
-const result_1 = require("../../../domain/shared/result");
+const result_1 = require("@result/result");
 class GetAdminStatsUseCase {
     constructor(userRepository, kycRepository) {
         this.userRepository = userRepository;
@@ -23,8 +23,7 @@ class GetAdminStatsUseCase {
             });
         }
         catch (error) {
-            console.log('Error fetching:', error);
-            return result_1.Result.fail('Failed to fetch admin stats');
+            return result_1.Result.fail(error.message || 'Failed to fetch admin stats');
         }
     }
 }

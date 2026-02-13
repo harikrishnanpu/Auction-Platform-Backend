@@ -5,10 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tokenService = exports.TokenService = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 class TokenService {
     constructor() {
         if (!process.env.JWT_SECRET_ACCESS_TOKEN || !process.env.JWT_SECRET_REFRESH_TOKEN) {
-            throw new Error('JWT secrets must be defined in environment variables');
+            throw new Error('JWT secrets not found');
         }
         this.accessTokenSecret = process.env.JWT_SECRET_ACCESS_TOKEN;
         this.refreshTokenSecret = process.env.JWT_SECRET_REFRESH_TOKEN;

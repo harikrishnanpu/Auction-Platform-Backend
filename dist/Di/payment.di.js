@@ -17,10 +17,10 @@ const respond_to_offer_usecase_1 = require("../application/useCases/offer/respon
 const handle_offer_expiry_usecase_1 = require("../application/useCases/offer/handle-offer-expiry.usecase");
 const mark_critical_usecase_1 = require("../application/useCases/critical-user/mark-critical.usecase");
 // Controllers
-const payment_controller_1 = require("../presentation/controllers/other/payment.controller");
-const offer_controller_1 = require("../presentation/controllers/other/offer.controller");
+const payment_controller_1 = require("../presentation/http/controllers/other/payment.controller");
+const offer_controller_1 = require("../presentation/http/controllers/other/offer.controller");
 // Cron
-const auction_cron_service_1 = require("../infrastructure/cron/auction-cron.service");
+// import { AuctionCronService } from '../infrastructure/cron/auction-cron.service';
 function setupPaymentDI(prisma) {
     // Repositories
     const paymentRepository = new prisma_payment_repository_1.PrismaPaymentRepository(prisma);
@@ -41,7 +41,12 @@ function setupPaymentDI(prisma) {
     const paymentController = new payment_controller_1.PaymentController(createPaymentOrderUseCase, verifyPaymentUseCase, paymentRepository, auctionRepository);
     const offerController = new offer_controller_1.OfferController(respondToOfferUseCase, offerRepository, auctionRepository);
     // Cron Service
-    const auctionCronService = new auction_cron_service_1.AuctionCronService(prisma, endAuctionUseCase, handlePaymentExpiryUseCase, handleOfferExpiryUseCase);
+    // const auctionCronService = new AuctionCronService(
+    //     prisma,
+    //     endAuctionUseCase,
+    //     handlePaymentExpiryUseCase,
+    //     handleOfferExpiryUseCase
+    // );
     return {
         // Repositories
         paymentRepository,
@@ -59,6 +64,6 @@ function setupPaymentDI(prisma) {
         paymentController,
         offerController,
         // Cron
-        auctionCronService
+        // auctionCronService
     };
 }

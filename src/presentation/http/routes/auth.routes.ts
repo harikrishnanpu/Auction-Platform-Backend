@@ -1,0 +1,46 @@
+import { Router } from "express";
+import { authenticate } from "../middlewares/authenticate.middleware";
+
+import { validateRequest } from "../middlewares/validation.middleware";
+import { completeProfileSchema, loginSchema, registerSchema, verifyEmailSchema } from "../../validators/auth.validator";
+import { AuthController } from "../controllers/auth/auth.controller";
+
+
+
+
+export class AuthRoutes {
+  private _router: Router;
+
+  constructor(private readonly _authController: AuthController) {
+    this._router = Router();
+  }
+
+  register(): Router {
+    this._router.post('/register', validateRequest(registerSchema), this._authController.register);
+    this._router.post('/verify-email', validateRequest(verifyEmailSchema), this._authController.verifyEmail);
+    this._router.post('/login', validateRequest(loginSchema), this._authController.login);
+
+    this._router.post('/send-verification-otp', authenticate, this._authController.sendVerificationOtp);
+    this._router.post('/resend-otp', this._authController.resendOtp);
+    this._router.post('/change-password/otp', authenticate, this._authController.sendChangePasswordOtp);
+
+
+    this._router.post('/refresh-token', this._authController.refreshToken);
+    this._router.post('/forgot-password', this._authController.forgotPassword);
+    this._router.post('/reset-password', this._authController.resetPassword);
+
+    this._router.get('/google', this._authController.googleAuth);
+    this._router.get('/google/callback', this._authController.googleAuthCallback);
+
+    this._router.get('/me', authenticate, this._authController.getProfile);
+    this._router.put('/complete-profile', authenticate, validateRequest(completeProfileSchema), this._authController.completeProfile);
+    this._router.patch('/profile', authenticate, this._authController.updateProfile);
+    this._router.patch('/avatar', authenticate, this._authController.updateAvatar);
+
+    this._router.patch('/change-password', authenticate, this._authController.updatePassword);
+    this._router.get('/logout', this._authController.logout);
+    this._router.post('/logout', this._authController.logout);
+
+    return this._router;
+  }
+}

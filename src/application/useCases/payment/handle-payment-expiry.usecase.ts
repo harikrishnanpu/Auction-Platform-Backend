@@ -1,9 +1,9 @@
-import { IAuctionRepository } from '../../../domain/auction/repositories/auction.repository';
-import { IBidRepository } from '../../../domain/auction/repositories/bid.repository';
+import { IAuctionRepository } from '../../../domain/entities/auction/repositories/auction.repository';
+import { IBidRepository } from '../../../domain/entities/auction/repositories/bid.repository';
 import { IPaymentRepository } from '../../../domain/payment/payment.repository';
-import { IOfferRepository } from '../../../domain/offer/offer.repository';
-import { ICriticalUserRepository } from '../../../domain/critical-user/critical-user.repository';
-import { IActivityRepository } from '../../../domain/auction/repositories/activity.repository';
+import { IOfferRepository } from '../../../domain/entities/offer/offer.repository';
+import { ICriticalUserRepository } from '../../../domain/entities/critical-user/critical-user.repository';
+import { IAuctionActivityRepository } from '../../../domain/entities/auction/repositories/activity.repository';
 
 export class HandlePaymentExpiryUseCase {
     constructor(
@@ -12,22 +12,22 @@ export class HandlePaymentExpiryUseCase {
         private paymentRepository: IPaymentRepository,
         private offerRepository: IOfferRepository,
         private criticalUserRepository: ICriticalUserRepository,
-        private activityRepository: IActivityRepository
-    ) {}
+        private activityRepository: IAuctionActivityRepository
+    ) { }
 
     async execute(auctionId: string): Promise<void> {
         console.log(`⏰ Handling payment expiry for auction ${auctionId}`);
 
         // 1. Get auction
         const auction = await this.auctionRepository.findById(auctionId);
-        if (!auction || !auction.winner_id) {
+        if (!auction || !auction.winnerId) {
             return;
         }
 
         // 2. Mark original winner as FAILED
         const payments = await this.paymentRepository.findByAuctionId(auctionId);
-        const winnerPayment = payments.find(p => p.userId === auction.winner_id && p.status === 'PENDING');
-        
+        const winnerPayment = payments.find(p => p.userId === auction.winnerId && p.status === 'PENDING');
+
         if (winnerPayment) {
             await this.paymentRepository.update(winnerPayment.id, {
                 status: 'FAILED',
@@ -37,29 +37,29 @@ export class HandlePaymentExpiryUseCase {
 
         // 3. Mark user as critical
         await this.criticalUserRepository.create({
-            userId: auction.winner_id,
+            userId: auction.winnerId,
             auctionId,
             reason: 'Failed to complete payment within deadline',
             description: `User won auction ${auctionId} but did not pay within 24 hours`,
             severity: 'HIGH'
         });
 
-        await this.criticalUserRepository.markUserAsCritical(auction.winner_id);
+        await this.criticalUserRepository.markUserAsCritical(auction.winnerId);
 
-        await this.activityRepository.create({
+        await this.activityRepository.logActivity(
             auctionId,
-            userId: auction.winner_id,
-            type: 'PAYMENT_EXPIRED',
-            description: 'Winner failed to pay within deadline, marked as critical user'
-        });
+            'PAYMENT_EXPIRED',
+            'Winner failed to pay within deadline, marked as critical user',
+            auction.winnerId
+        );
 
-        console.log(`❌ User ${auction.winner_id} marked as critical`);
+        console.log(`❌ User ${auction.winnerId} marked as critical`);
 
         // 4. Get all valid bids (excluding the failed winner)
-        const validBids = await this.bidRepository.findValidByAuction(auctionId);
+        const validBids = await this.bidRepository.findLatestValidByAuction(auctionId, 1000);
         const sortedBids = validBids
-            .filter(bid => bid.userId !== auction.winner_id)
-            .sort((a, b) => b.amount - a.amount);
+            .filter((bid: any) => bid.userId !== auction.winnerId)
+            .sort((a: any, b: any) => b.amount - a.amount);
 
         // 5. Offer to 2nd-5th highest bidders
         const topBidders = sortedBids.slice(0, 5);
@@ -79,28 +79,28 @@ export class HandlePaymentExpiryUseCase {
                 expiresAt
             });
 
-            await this.activityRepository.create({
+            await this.activityRepository.logActivity(
                 auctionId,
-                userId: nextBidder.userId,
-                type: 'OFFER_CREATED',
-                description: `Offer created for 2nd highest bidder: ₹${nextBidder.amount}`
-            });
+                'OFFER_CREATED',
+                `Offer created for 2nd highest bidder: ₹${nextBidder.amount}`,
+                nextBidder.userId
+            );
 
             console.log(`✅ Offer created for user ${nextBidder.userId}`);
         } else {
             // No more bidders - mark auction as FAILED
             await this.auctionRepository.update(auctionId, {
-                completion_status: 'FAILED',
-                winner_id: null,
-                winner_payment_deadline: null
+                completionStatus: 'FAILED',
+                winnerId: null,
+                winnerPaymentDeadline: null
             });
 
-            await this.activityRepository.create({
+            await this.activityRepository.logActivity(
                 auctionId,
-                userId: auction.sellerId,
-                type: 'AUCTION_FAILED',
-                description: 'No bidders available to fulfill auction'
-            });
+                'AUCTION_FAILED',
+                'No bidders available to fulfill auction',
+                auction.sellerId
+            );
 
             console.log(`❌ Auction ${auctionId} marked as FAILED`);
         }

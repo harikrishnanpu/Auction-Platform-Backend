@@ -1,9 +1,9 @@
-import { IAuctionRepository } from '../../../domain/auction/repositories/auction.repository';
-import { IBidRepository } from '../../../domain/auction/repositories/bid.repository';
-import { IOfferRepository } from '../../../domain/offer/offer.repository';
+import { IAuctionRepository } from '../../../domain/entities/auction/repositories/auction.repository';
+import { IBidRepository } from '../../../domain/entities/auction/repositories/bid.repository';
+import { IOfferRepository } from '../../../domain/entities/offer/offer.repository';
 import { IPaymentRepository } from '../../../domain/payment/payment.repository';
-import { IActivityRepository } from '../../../domain/auction/repositories/activity.repository';
-import { AuctionError } from '../../../domain/auction/auction.errors';
+import { IAuctionActivityRepository } from '../../../domain/entities/auction/repositories/activity.repository';
+import { AuctionError } from '../../../domain/entities/auction/auction.errors';
 
 export class RespondToOfferUseCase {
     constructor(
@@ -11,8 +11,8 @@ export class RespondToOfferUseCase {
         private bidRepository: IBidRepository,
         private offerRepository: IOfferRepository,
         private paymentRepository: IPaymentRepository,
-        private activityRepository: IActivityRepository
-    ) {}
+        private activityRepository: IAuctionActivityRepository
+    ) { }
 
     async execute(
         offerId: string,
@@ -24,17 +24,17 @@ export class RespondToOfferUseCase {
         // 1. Get offer
         const offer = await this.offerRepository.findById(offerId);
         if (!offer) {
-            throw new AuctionError('Offer not found', 'NOT_FOUND');
+            throw new Error('Offer not found');
         }
 
         // 2. Check if user matches
         if (offer.userId !== userId) {
-            throw new AuctionError('Unauthorized', 'NOT_ALLOWED');
+            throw new Error('Unauthorized');
         }
 
         // 3. Check if offer is pending
         if (offer.status !== 'PENDING') {
-            throw new AuctionError('Offer is no longer available', 'INVALID_STATUS');
+            throw new Error('Offer is no longer available');
         }
 
         // 4. Check if expired
@@ -43,7 +43,7 @@ export class RespondToOfferUseCase {
                 status: 'EXPIRED',
                 respondedAt: new Date()
             });
-            throw new AuctionError('Offer has expired', 'OFFER_EXPIRED');
+            throw new Error('Offer has expired');
         }
 
         const respondedAt = new Date();
@@ -61,9 +61,9 @@ export class RespondToOfferUseCase {
             // 6. Update auction with new winner
             const paymentDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
             await this.auctionRepository.update(offer.auctionId, {
-                winner_id: userId,
-                winner_payment_deadline: paymentDeadline,
-                completion_status: 'PENDING'
+                winnerId: userId,
+                winnerPaymentDeadline: paymentDeadline,
+                completionStatus: 'PENDING'
             });
 
             // 7. Create payment record
@@ -74,12 +74,12 @@ export class RespondToOfferUseCase {
             });
 
             // 8. Log activity
-            await this.activityRepository.create({
-                auctionId: offer.auctionId,
-                userId,
-                type: 'OFFER_ACCEPTED',
-                description: `Offer accepted by ${userId}. New winner: ₹${offer.bidAmount}`
-            });
+            await this.activityRepository.logActivity(
+                offer.auctionId,
+                'OFFER_ACCEPTED',
+                `Offer accepted by ${userId}. New winner: ₹${offer.bidAmount}`,
+                undefined
+            );
 
             return { success: true, message: 'Offer accepted. You are now the winner!' };
         } else {
@@ -93,17 +93,17 @@ export class RespondToOfferUseCase {
             });
 
             // 6. Log activity
-            await this.activityRepository.create({
-                auctionId: offer.auctionId,
-                userId,
-                type: 'OFFER_DECLINED',
-                description: `Offer declined by ${userId}`
-            });
+            await this.activityRepository.logActivity(
+                offer.auctionId,
+                'OFFER_DECLINED',
+                `Offer declined by ${userId}`,
+                undefined
+            );
 
             // 7. Find next bidder
-            const validBids = await this.bidRepository.findValidByAuction(offer.auctionId);
+            const validBids = await this.bidRepository.findLatestValidByAuction(offer.auctionId, 1000);
             const auction = await this.auctionRepository.findById(offer.auctionId);
-            
+
             // Get existing offers to know which ranks are taken
             const existingOffers = await this.offerRepository.findByAuctionId(offer.auctionId);
             const declinedRanks = existingOffers
@@ -111,14 +111,14 @@ export class RespondToOfferUseCase {
                 .map(o => o.offerRank);
 
             const sortedBids = validBids
-                .filter(bid => {
+                .filter((bid: any) => {
                     // Exclude original winner and users who already declined
                     const hasDeclinedOffer = existingOffers.some(
                         o => o.userId === bid.userId && (o.status === 'DECLINED' || o.status === 'EXPIRED')
                     );
-                    return bid.userId !== auction?.winner_id && !hasDeclinedOffer;
+                    return bid.userId !== auction?.winnerId && !hasDeclinedOffer;
                 })
-                .sort((a, b) => b.amount - a.amount);
+                .sort((a: any, b: any) => b.amount - a.amount);
 
             const nextRank = offer.offerRank + 1;
 
@@ -135,28 +135,28 @@ export class RespondToOfferUseCase {
                     expiresAt
                 });
 
-                await this.activityRepository.create({
-                    auctionId: offer.auctionId,
-                    userId: nextBidder.userId,
-                    type: 'OFFER_CREATED',
-                    description: `Offer created for bidder rank ${nextRank}: ₹${nextBidder.amount}`
-                });
+                await this.activityRepository.logActivity(
+                    offer.auctionId,
+                    'OFFER_CREATED',
+                    `Offer created for bidder rank ${nextRank}: ₹${nextBidder.amount}`,
+                    nextBidder.userId
+                );
 
                 console.log(`📨 Offer created for next bidder: ${nextBidder.userId} (rank ${nextRank})`);
             } else {
                 // All top 5 declined or no more bidders - mark auction as FAILED
                 await this.auctionRepository.update(offer.auctionId, {
-                    completion_status: 'FAILED',
-                    winner_id: null,
-                    winner_payment_deadline: null
+                    completionStatus: 'FAILED',
+                    winnerId: null,
+                    winnerPaymentDeadline: null
                 });
 
-                await this.activityRepository.create({
-                    auctionId: offer.auctionId,
-                    userId: auction?.sellerId || '',
-                    type: 'AUCTION_FAILED',
-                    description: 'All top bidders declined. Auction failed.'
-                });
+                await this.activityRepository.logActivity(
+                offer.auctionId,
+                'AUCTION_FAILED',
+                'All top bidders declined. Auction failed.',
+                auction?.sellerId || ''
+            );
 
                 console.log(`❌ Auction ${offer.auctionId} marked as FAILED`);
             }

@@ -1,9 +1,10 @@
-import { IUserRepository } from "../../../domain/user/user.repository";
-import { UserResponseDto } from "../../dtos/auth/auth.dto";
-import { Result } from "../../../domain/shared/result";
-import { IStorageService } from "../../services/storage/storage.service";
+import { IUserRepository } from "@domain/repositories/user.repository";
+import { UserResponseDto } from "@application/dtos/auth/auth.dto";
+import { Result } from "@result/result";
+import { IStorageService } from "@application/services/storage/storage.service";
+import { IGetProfileUseCase } from "@application/interfaces/use-cases/user.usecase.interface";
 
-export class GetProfileUseCase {
+export class GetProfileUseCase implements IGetProfileUseCase {
     constructor(
         private userRepository: IUserRepository,
         private storageService: IStorageService
@@ -23,23 +24,20 @@ export class GetProfileUseCase {
         let avatarUrl = user.avatar_url;
         if (avatarUrl && !avatarUrl.startsWith('http')) {
             try {
-                avatarUrl = await this.storageService.getPresignedDownloadUrl(avatarUrl, 3600); // 1 hour expiry
+                avatarUrl = await this.storageService.getPresignedDownloadUrl(avatarUrl, 3600);
             } catch (error) {
-                // Fallback or leave as key if signing fails? 
-                // Better to leave as key or null? Let's leave as null to avoid broken image.
-                // Or keep original to debug.
                 console.error("Failed to sign avatar URL", error);
             }
         }
 
         return Result.ok<UserResponseDto>({
-            id: user.id.toString(),
+            id: user.id!,
             name: user.name,
-            email: user.email.value,
+            email: user.email.getValue(),
             roles: user.roles,
             is_verified: user.is_verified,
             is_profile_completed: user.is_profile_completed,
-            phone: user.phone,
+            phone: user.phone?.getValue(),
             address: user.address,
             avatar_url: avatarUrl,
             created_at: user.created_at,

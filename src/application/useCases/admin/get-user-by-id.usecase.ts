@@ -1,25 +1,27 @@
-import { IUserRepository } from "../../../domain/user/user.repository";
-import { AdminUserDetailDto } from "../../dtos/admin/admin.dto";
-import { Result } from "../../../domain/shared/result";
+import { IUserRepository } from "@domain/repositories/user.repository";
+import { Result } from "@result/result";
+import { IGetUserByIdUseCase } from "@application/interfaces/use-cases/admin.usecase.interface";
+import { UserResponseDto } from "@application/dtos/auth/auth.dto";
 
-export class GetUserByIdUseCase {
+export class GetUserByIdUseCase implements IGetUserByIdUseCase {
     constructor(private userRepository: IUserRepository) { }
 
-    public async execute(id: string): Promise<Result<AdminUserDetailDto>> {
+    public async execute(id: string): Promise<Result<UserResponseDto>> {
         const user = await this.userRepository.findById(id);
         if (!user) return Result.fail("User not found");
 
-        return Result.ok<AdminUserDetailDto>({
-            id: user.id.toString(),
+        return Result.ok<UserResponseDto>({
+            id: user.id!,
             name: user.name,
-            email: user.email.value,
-            phone: user.phone,
-            address: user.address,
-            avatar_url: user.avatar_url,
+            email: user.email.getValue(),
             roles: user.roles,
             is_blocked: user.is_blocked,
             is_verified: user.is_verified,
-            joined_at: user.created_at
+            is_profile_completed: user.is_profile_completed,
+            phone: user.phone?.getValue(),
+            address: user.address,
+            avatar_url: user.avatar_url,
+            created_at: user.created_at
         });
     }
 }

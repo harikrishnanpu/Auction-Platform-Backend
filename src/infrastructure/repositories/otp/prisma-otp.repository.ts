@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { IOTPRepository } from "../../../domain/otp/otp.repository";
-import { OTP, OtpChannel, OtpPurpose, OtpStatus } from "../../../domain/otp/otp.entity";
+import { IOTPRepository } from "../../../domain/entities/otp/otp.repository";
+import { OTP, OtpChannel, OtpPurpose, OtpStatus } from "../../../domain/entities/otp/otp.entity";
 
 export class PrismaOTPRepository implements IOTPRepository {
     constructor(private prisma: PrismaClient) { }

@@ -23,8 +23,30 @@ class PrismaAuctionParticipantRepository {
     }
     async revokeParticipant(auctionId, userId) {
         const participant = await this.prisma.auctionParticipant.update({
-            where: { auction_id_user_id: { auction_id: auctionId, user_id: userId } },
-            data: { revoked_at: new Date(), is_online: false },
+            where: {
+                auction_id_user_id: {
+                    auction_id: auctionId,
+                    user_id: userId
+                }
+            },
+            data: {
+                revoked_at: new Date()
+            },
+            include: { User: { select: { user_id: true, name: true, email: true, avatar_url: true } } }
+        });
+        return this.map(participant);
+    }
+    async unrevokeParticipant(auctionId, userId) {
+        const participant = await this.prisma.auctionParticipant.update({
+            where: {
+                auction_id_user_id: {
+                    auction_id: auctionId,
+                    user_id: userId
+                }
+            },
+            data: {
+                revoked_at: null
+            },
             include: { User: { select: { user_id: true, name: true, email: true, avatar_url: true } } }
         });
         return this.map(participant);

@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
-import { ICriticalUserRepository } from '../../../domain/critical-user/critical-user.repository';
-import { CriticalUserEntity, CreateCriticalUserDTO, UpdateCriticalUserDTO } from '../../../domain/critical-user/critical-user.entity';
+import { ICriticalUserRepository } from '../../../domain/entities/critical-user/critical-user.repository';
+import { CriticalUserEntity, CreateCriticalUserDTO, UpdateCriticalUserDTO } from '../../../domain/entities/critical-user/critical-user.entity';
 
 export class PrismaCriticalUserRepository implements ICriticalUserRepository {
-    constructor(private prisma: PrismaClient) {}
+    constructor(private prisma: PrismaClient) { }
 
     async create(data: CreateCriticalUserDTO): Promise<CriticalUserEntity> {
         const record = await this.prisma.criticalUser.create({

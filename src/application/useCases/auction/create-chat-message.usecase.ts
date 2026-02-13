@@ -1,5 +1,5 @@
-import { IAuctionRepository } from "../../../domain/auction/repositories/auction.repository";
-import { ChatMessageEntity, IChatMessageRepository } from "../../../domain/auction/repositories/chat-message.repository";
+import { IAuctionRepository } from "../../../domain/entities/auction/repositories/auction.repository";
+import { ChatMessageEntity, IChatMessageRepository } from "../../../domain/entities/auction/repositories/chat-message.repository";
 
 export class CreateChatMessageUseCase {
     constructor(

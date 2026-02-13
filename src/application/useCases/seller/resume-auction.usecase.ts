@@ -1,40 +1,44 @@
-import { IAuctionRepository } from '../../../domain/auction/repositories/auction.repository';
-import { AuctionError } from '../../../domain/auction/auction.errors';
-import { EndAuctionUseCase } from '../auction/end-auction.usecase';
+import { IAuctionRepository } from "@domain/entities/auction/repositories/auction.repository";
+import { Result } from "@result/result";
+import { IResumeAuctionUseCase } from "@application/interfaces/use-cases/seller.usecase.interface";
+import { IEndAuctionUseCase } from "@application/interfaces/use-cases/auction.usecase.interface";
 
-export class ResumeAuctionUseCase {
+export class ResumeAuctionUseCase implements IResumeAuctionUseCase {
   constructor(
     private readonly auctionRepository: IAuctionRepository,
-    private readonly endAuctionUseCase: EndAuctionUseCase
+    private readonly endAuctionUseCase: IEndAuctionUseCase
   ) { }
 
-  async execute(auctionId: string, sellerId: string): Promise<void> {
-    const auction = await this.auctionRepository.findById(auctionId);
+  async execute(sellerId: string, auctionId: string): Promise<Result<void>> {
+    try {
+      const auction = await this.auctionRepository.findById(auctionId);
 
-    if (!auction) {
-      throw AuctionError.notFound();
+      if (!auction) {
+        return Result.fail("Auction not found");
+      }
+
+      if (auction.sellerId !== sellerId) {
+        return Result.fail("Unauthorized: Only the seller can resume this auction");
+      }
+
+      if (auction.status !== 'ACTIVE') {
+        return Result.fail("Can only resume active auctions");
+      }
+
+      if (!auction.isPaused) {
+        return Result.fail("Auction is not paused");
+      }
+
+      const now = new Date();
+      if (auction.endAt <= now) {
+        await this.endAuctionUseCase.execute(auctionId, 'SYSTEM');
+        return Result.ok<void>(undefined);
+      }
+
+      await this.auctionRepository.update(auctionId, { isPaused: false });
+      return Result.ok<void>(undefined);
+    } catch (error) {
+      return Result.fail((error as Error).message);
     }
-
-    // Verify seller ownership
-    if (auction.sellerId !== sellerId) {
-      throw new Error('Unauthorized: Only the seller can resume this auction');
-    }
-
-    // Can only resume paused auctions
-    if (auction.status !== 'ACTIVE') {
-      throw new Error('Can only resume active auctions');
-    }
-
-    if (!auction.isPaused) {
-      throw new Error('Auction is not paused');
-    }
-
-    const now = new Date();
-    if (auction.endAt <= now) {
-      await this.endAuctionUseCase.execute(auctionId, 'SYSTEM');
-      return;
-    }
-
-    await this.auctionRepository.update(auctionId, { isPaused: false });
   }
 }

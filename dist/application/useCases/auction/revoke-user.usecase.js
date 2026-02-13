@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RevokeUserUseCase = void 0;
-const auction_errors_1 = require("../../../domain/auction/auction.errors");
+const result_1 = require("@result/result");
 class RevokeUserUseCase {
     constructor(auctionRepository, participantRepository, bidRepository, activityRepository, transactionManager) {
         this.auctionRepository = auctionRepository;
@@ -10,57 +10,57 @@ class RevokeUserUseCase {
         this.activityRepository = activityRepository;
         this.transactionManager = transactionManager;
     }
-    async execute(auctionId, sellerId, userId) {
-        // Verify auction and seller
-        const auction = await this.auctionRepository.findById(auctionId);
-        if (!auction) {
-            throw new auction_errors_1.AuctionError("AUCTION_NOT_FOUND", "Auction not found");
-        }
-        if (auction.sellerId !== sellerId) {
-            throw new auction_errors_1.AuctionError("NOT_ALLOWED", "Only owner can revoke users");
-        }
-        // Check if user has any bids
-        const bidCount = await this.bidRepository.countUserBids(auctionId, userId);
-        return await this.transactionManager.runInTransaction(async (tx) => {
-            // Revoke participant
-            const participant = await this.participantRepository.revokeParticipant(auctionId, userId);
-            // Invalidate all user's bids
-            let invalidatedCount = 0;
-            let priceChanged = false;
-            let newPrice = auction.currentPrice;
-            if (bidCount > 0) {
-                invalidatedCount = await this.bidRepository.invalidateUserBids(auctionId, userId, tx);
-                // Find the highest valid bid after invalidation
-                const highestValidBid = await this.bidRepository.findHighestValidBid(auctionId, tx);
-                if (highestValidBid) {
-                    newPrice = highestValidBid.amount;
-                }
-                else {
-                    // No valid bids left, reset to start price
-                    newPrice = auction.startPrice;
-                }
-                // Update auction current price if it changed
-                if (newPrice !== auction.currentPrice) {
-                    await this.auctionRepository.updateCurrentPrice(auctionId, newPrice, tx);
-                    priceChanged = true;
-                }
+    async execute(auctionId, actorId, userId) {
+        try {
+            const auction = await this.auctionRepository.findById(auctionId);
+            if (!auction) {
+                return result_1.Result.fail("Auction not found");
             }
-            // Log activity
-            await this.activityRepository.logActivity(auctionId, "USER_REVOKED", `User revoked from auction. ${invalidatedCount} bid(s) invalidated.`, userId, {
-                sellerId,
-                invalidatedBids: invalidatedCount,
-                priceChanged,
-                oldPrice: auction.currentPrice,
-                newPrice
+            if (auction.sellerId !== actorId) {
+                // In some cases, admins might also revoke users. 
+                // For now, following the original logic of checking sellerId.
+                return result_1.Result.fail("Only owner can revoke users");
+            }
+            const bidCount = await this.bidRepository.countUserBids(auctionId, userId);
+            const result = await this.transactionManager.runInTransaction(async (tx) => {
+                const participant = await this.participantRepository.revokeParticipant(auctionId, userId);
+                let invalidatedCount = 0;
+                let priceChanged = false;
+                let newPrice = auction.currentPrice;
+                if (bidCount > 0) {
+                    invalidatedCount = await this.bidRepository.invalidateUserBids(auctionId, userId, tx);
+                    const highestValidBid = await this.bidRepository.findHighestValidBid(auctionId, tx);
+                    if (highestValidBid) {
+                        newPrice = highestValidBid.amount;
+                    }
+                    else {
+                        newPrice = auction.startPrice;
+                    }
+                    if (newPrice !== auction.currentPrice) {
+                        await this.auctionRepository.updateCurrentPrice(auctionId, newPrice, tx);
+                        priceChanged = true;
+                    }
+                }
+                await this.activityRepository.logActivity(auctionId, "USER_REVOKED", `User revoked from auction. ${invalidatedCount} bid(s) invalidated.`, userId, {
+                    actorId,
+                    invalidatedBids: invalidatedCount,
+                    priceChanged,
+                    oldPrice: auction.currentPrice,
+                    newPrice
+                });
+                return {
+                    participant,
+                    invalidatedBids: invalidatedCount,
+                    priceChanged,
+                    oldPrice: auction.currentPrice,
+                    newPrice
+                };
             });
-            return {
-                participant,
-                invalidatedBids: invalidatedCount,
-                priceChanged,
-                oldPrice: auction.currentPrice,
-                newPrice
-            };
-        });
+            return result_1.Result.ok(result);
+        }
+        catch (error) {
+            return result_1.Result.fail(error.message);
+        }
     }
 }
 exports.RevokeUserUseCase = RevokeUserUseCase;

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CompleteKycUploadUseCase = void 0;
-const result_1 = require("../../../domain/shared/result");
-const kyc_repository_1 = require("../../../domain/kyc/kyc.repository");
+const result_1 = require("@result/result");
+const kyc_repository_1 = require("@domain/entities/kyc/kyc.repository");
 class CompleteKycUploadUseCase {
     constructor(userRepository, kycRepository) {
         this.userRepository = userRepository;

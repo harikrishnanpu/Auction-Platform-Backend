@@ -1,5 +1,5 @@
 import { Bid, Prisma, PrismaClient } from "@prisma/client";
-import { BidEntity, IBidRepository } from "../../../domain/auction/repositories/bid.repository";
+import { BidEntity, IBidRepository } from "../../../domain/entities/auction/repositories/bid.repository";
 import { TransactionContext } from "../../../domain/shared/transaction";
 
 export class PrismaBidRepository implements IBidRepository {
@@ -45,7 +45,7 @@ export class PrismaBidRepository implements IBidRepository {
 
     async findLatestValidByAuction(auctionId: string, limit: number): Promise<BidEntity[]> {
         const bids = await this.prisma.bid.findMany({
-            where: { 
+            where: {
                 auction_id: auctionId,
                 is_valid: true
             },
@@ -65,9 +65,9 @@ export class PrismaBidRepository implements IBidRepository {
 
     async findByUserInAuction(auctionId: string, userId: string, limit: number): Promise<BidEntity[]> {
         const bids = await this.prisma.bid.findMany({
-            where: { 
-                auction_id: auctionId, 
-                user_id: userId 
+            where: {
+                auction_id: auctionId,
+                user_id: userId
             },
             orderBy: { created_at: 'desc' },
             take: limit
@@ -107,7 +107,7 @@ export class PrismaBidRepository implements IBidRepository {
             },
             orderBy: { amount: 'desc' }
         });
-        
+
         if (!bid) return null;
 
         return {
